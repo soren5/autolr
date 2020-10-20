@@ -10,15 +10,20 @@ from tensorflow.keras import backend as K
 from utils.custom_optimizer import CustomOptimizer
 from utils.data_functions import load_dataset
 
+from sge.parameters import (
+    params,
+    set_parameters
+)
+
 import numpy as np
 import datetime
 
 experiment_time = datetime.datetime.now()
 
-validation_size = 3500
-test_size = 3500
-batch_size = 1000
-epochs = 100
+validation_size = params['VALIDATION_SIZE']
+test_size = params['TEST_SIZE'] 
+batch_size = params['BATCH_SIZE']
+epochs = params['EPOCHS']
 img_rows, img_cols = 28, 28
 
 dataset = load_dataset(validation_size=validation_size, test_size=test_size, split=True, img_size = [img_rows, img_cols])
@@ -30,7 +35,7 @@ datagen_test = ImageDataGenerator(
 for train_data in dataset['x_train']:
     datagen_test.fit(train_data)
 
-model = load_model('models/my_model.h5', compile=False)
+model = load_model(params['MODEL'], compile=False)
 weights = model.get_weights()
 
 def train_model(phen):

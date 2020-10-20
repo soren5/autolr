@@ -2,23 +2,29 @@ import argparse
 import yaml
 
 """"Algorithm Parameters"""
-params = {'PARAMETERS': None,
-          'POPSIZE': 10,
-          'GENERATIONS': 10,
-          'ELITISM': 10,                    # number of individuals that survive
-          'SEED': None,
-          'PROB_CROSSOVER': 0.9,
-          'PROB_MUTATION': 0.1,
-          'TSIZE': 3,
-          'GRAMMAR': 'grammars/example_grammar.txt',
-          'EXPERIMENT_NAME': "results/example",
-          'RUN': 1,
-          'INCLUDE_GENOTYPE': True,
-          'SAVE_STEP': 1,
-          'VERBOSE': True,
-          'MIN_TREE_DEPTH': 6,
-          'MAX_TREE_DEPTH': 17,
-          }
+params = {
+    'PARAMETERS': None,
+    'POPSIZE': 5,
+    'GENERATIONS': 50,
+    'ELITISM': 1,
+    'PROB_CROSSOVER': 0.9,
+    'PROB_MUTATION': 0.15,
+    'TSIZE': 5,
+    'GRAMMAR': 'grammars/dynamic_grammar.txt',
+    'EXPERIMENT_NAME': "results/example",
+    'RUN': 1,
+    'INCLUDE_GENOTYPE': True,
+    'SAVE_STEP': 1,
+    'VERBOSE': True,
+    'MIN_TREE_DEPTH': 6,
+    'MAX_TREE_DEPTH': 17,
+    'MODEL': 'models/mnist_model.h5',
+    'VALIDATION_SIZE': 3500,
+    'TEST_SIZE': 3500,
+    'BATCH_SIZE': 1000,
+    'EPOCHS': 100,
+    'SEED': None,
+    }
 
 
 def load_parameters(file_name=None):
@@ -67,6 +73,10 @@ def set_parameters(arguments):
                         dest='TSIZE',
                         type=int,
                         help='Specifies the tournament size for parent selection.')
+    parser.add_argument('--model',
+                        dest='MODEL',
+                        type=str,
+                        help='Specifies the path to the grammar file.')
     parser.add_argument('--grammar',
                         dest='GRAMMAR',
                         type=str,

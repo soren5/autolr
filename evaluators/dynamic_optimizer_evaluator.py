@@ -12,13 +12,17 @@ import tensorflow as tf
 import random
 import time
 from utils.data_functions import load_dataset
+from sge.parameters import (
+    params,
+    set_parameters
+)
 
 experiment_time = datetime.datetime.now()
 
-validation_size = 3500
-test_size = 3500
-batch_size = 1000
-epochs = 100
+validation_size = params['VALIDATION_SIZE']
+test_size = params['TEST_SIZE'] 
+batch_size = params['BATCH_SIZE']
+epochs = params['EPOCHS']
 img_rows, img_cols = 28, 28
 
 dataset = load_dataset(validation_size=validation_size, test_size=test_size, split=False, img_size = [img_rows, img_cols])
@@ -50,7 +54,7 @@ def if_func(condition, state1, state2):
     else:
         return state2
 
-model = load_model('models/my_model.h5', compile=False)
+model = load_model(params['MODEL'], compile=False)
 weights = model.get_weights()
 
 def train_model(phen):

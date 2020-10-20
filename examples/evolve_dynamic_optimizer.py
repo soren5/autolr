@@ -18,19 +18,6 @@ class LRScheduler:
         #value, other_info = train_model(phen)
         return -value, other_info
 
-def test_lr_scheduler():
-    import core.grammar as grammar
-    import core.sge
-    class Test_LRScheduler:
-        def __init__(self):
-            pass
-        def evaluate(self, phen):
-            return (1, '')
-    experience_name = "test_LR" + str(datetime.datetime.now()) + "/"
-    grammar = grammar.Grammar("grammars/grammar_proposal.txt", 6, 17)
-    evaluation_function = Test_LRScheduler()
-    core.sge.evolutionary_algorithm(grammar = grammar, eval_func=evaluation_function, exp_name=experience_name)
-    return True
    
 if __name__ == "__main__":
     import sge.grammar as grammar
