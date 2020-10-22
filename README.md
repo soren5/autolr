@@ -51,4 +51,6 @@ In order to run your own experiments you will need to change the configuration u
 > python -m examples.evolve_dynamic_optimizer --parameters parameters/your_configuration_file.yml
 ```
 
+Additional guidelines on how to create custom evaluators coming soon.
+
 
