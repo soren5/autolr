@@ -115,6 +115,13 @@ def evaluate_cifar_model(dataset=None, optimizer=None, batch_size=1000, epochs=1
 
     if dataset is None:
         dataset = load_cifar10()
+    
+    from tensorflow.compat.v1 import ConfigProto
+    from tensorflow.compat.v1 import InteractiveSession
+
+    config = ConfigProto()
+    config.gpu_options.allow_growth = True
+    session = InteractiveSession(config=config)
 
     validation_size = len(dataset['x_val'])
 
