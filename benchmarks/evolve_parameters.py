@@ -16,7 +16,7 @@ toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
 def evaluate(individual):
     optimizer = Adam(learning_rate=individual[0], beta_1=individual[1], beta_2=individual[2], epsilon=individual[3])
-    return evaluate_cifar_model(optimizer=optimizer)[-1]
+    return evaluate_cifar_model(optimizer=optimizer, epochs= 10)[-1]
 
 toolbox.register("mate", tools.cxTwoPoint)
 toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=1, indpb=0.1)
