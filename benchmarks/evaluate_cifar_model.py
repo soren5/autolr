@@ -25,6 +25,10 @@ from tensorflow.python.ops import resource_variable_ops
 from tensorflow.python.training import training_ops
 from tensorflow.keras import backend as K
 from tensorflow.keras.layers import Dense
+import os
+import pandas as pd
+
+cwd_path = os.getcwd()
 
 def load_cifar10(n_classes=10, validation_size=3500, test_size=3500):
     #Confirmar mnist
@@ -110,7 +114,7 @@ def get_metric_dictionary(score):
             pain[metric].append(n)
     return pain
 
-def evaluate_cifar_model(dataset=None, optimizer=None, batch_size=1000, epochs=100, verbose=0):
+def evaluate_cifar_model(dataset=None, model=None, optimizer=None, batch_size=1000, epochs=100, verbose=0):
     assert optimizer != None
 
     if dataset is None:
@@ -125,19 +129,73 @@ def evaluate_cifar_model(dataset=None, optimizer=None, batch_size=1000, epochs=1
 
     validation_size = len(dataset['x_val'])
 
+    if model == None:
+        n_model = load_model('models/cifar_model.h5', compile=False)
+        model = n_model
+
+    model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+        filepath=os.path.join(cwd_path, f'models/checkpoints/cifar_model_checkpoint.h5'),
+        save_weights_only=True,
+        monitor='val_accuracy',
+        mode='max')
+
+    epoch_progress = 0
+
+    while epoch_progress < epochs:
+        if epochs - epoch_progress < 100:
+            run_epochs = epochs - epoch_progress
+        else:
+            run_epochs = 100
+        model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+        score = model.fit(dataset['x_train'], dataset['y_train'],
+            batch_size=batch_size,
+            epochs=run_epochs,
+            verbose=verbose,
+            validation_data=(dataset['x_val'], dataset['y_val']),
+            validation_steps= validation_size // batch_size,
+            callbacks=[model_checkpoint_callback])
+        K.clear_session()
+
+
+        metric_dictionary = get_metric_dictionary(score)
+        test_score = model.evaluate(dataset['x_test'], dataset['y_test'], batch_size=batch_size, verbose=verbose, callbacks=[keras.callbacks.History()])
+        result = [test_score[-1], metric_dictionary]
+
+        data_frame = pd.read_csv(os.path.join(cwd_path, 'results/' , "development_results.csv"))
+        col_values = [max(result[1]['val_accuracy']), min(result[1]['val_loss']), result[0]]
+        col_names = ["max_val_accuracy", "min_val_loss", "test_accuracy"] 
+
+        data_frame = data_frame.append(pd.DataFrame([col_values], columns=col_names), ignore_index=True)
+        data_frame.to_csv(os.path.join(cwd_path, 'results/' , "development_results.csv"), index=False)
+
+        epoch_progress += run_epochs
+
+
+     
+    return result
+
+def resume_cifar_model(dataset=None, optimizer=None, batch_size=1000, epochs=100, verbose=0):  
+    from tensorflow.compat.v1 import ConfigProto
+    from tensorflow.compat.v1 import InteractiveSession
+
+    config = ConfigProto()
+    config.gpu_options.allow_growth = True
+    session = InteractiveSession(config=config)
+
     n_model = load_model('models/cifar_model.h5', compile=False)
-    model = n_model
+    model = n_model 
+    model.load_weights(os.path.join(cwd_path, f'models/checkpoints/cifar_model_checkpoint.h5'))
+    evaluate_cifar_model(model=model, optimizer=optimizer, epochs=epochs, verbose=verbose)
 
-    model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
-    score = model.fit(dataset['x_train'], dataset['y_train'],
-        batch_size=batch_size,
-        epochs=epochs,
-        verbose=verbose,
-        validation_data=(dataset['x_val'], dataset['y_val']),
-        validation_steps= validation_size // batch_size,
-        callbacks=[])
-    K.clear_session()
 
-    metric_dictionary = get_metric_dictionary(score)
-    test_score = model.evaluate(dataset['x_test'], dataset['y_test'], batch_size=batch_size, verbose=verbose, callbacks=[keras.callbacks.History()])
-    return test_score[-1], metric_dictionary
+
+if __name__ == "__main__":
+
+    resume = True
+    if resume:
+        resume_cifar_model(optimizer=Adam(), epochs=100000, verbose=2)
+    else:
+        col_names = ["epochs", "max_val_accuracy", "min_val_loss", "test_accuracy"] 
+        data_frame = pd.DataFrame(columns=col_names)
+        data_frame.to_csv(os.path.join(cwd_path, 'results/' , "development_results.csv"), index=False)
+        evaluate_cifar_model(optimizer=Adam(), epochs=100000, verbose=2)
