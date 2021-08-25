@@ -4,3 +4,4 @@ ENV LC_ALL en_US.UTF-8
 ENV APP_DIR /home/pfcarvalho/autolr
 WORKDIR ${APP_DIR}
 RUN pip3 install --upgrade pip
+RUN pip3 install -r requirements.txt
