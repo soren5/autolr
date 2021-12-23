@@ -23,6 +23,14 @@ def make_initial_population():
     for i in range(params['POPSIZE']):
         yield generate_random_individual()
 
+def initialize_population(solutions=[]):
+    population = list(make_initial_population())
+    for i in range(len(solutions)):
+        population[i] = solutions[i]
+    return population
+    
+
+
 
 def evaluate(ind, eval_func):
     mapping_values = [0 for i in ind['genotype']]
@@ -56,7 +64,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1):
         logger.load_random_state()
         it = resume_generation
     else:
-        population = list(make_initial_population())
+        population = initialize_population()
         it = 0
     start_time = time.time()
     while it <= params['GENERATIONS']:

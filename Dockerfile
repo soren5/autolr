@@ -3,5 +3,5 @@ RUN apt-get update && apt-get install -y python3 python3-pip libjpeg8-dev git zl
 ENV LC_ALL en_US.UTF-8
 ENV APP_DIR /home/pfcarvalho/autolr
 WORKDIR ${APP_DIR}
+COPY . /home/pfcarvalho/autolr
 RUN pip3 install --upgrade pip
-RUN pip3 install -r requirements.txt

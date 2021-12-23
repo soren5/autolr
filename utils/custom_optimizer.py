@@ -59,3 +59,6 @@ class CustomOptimizer(keras.optimizers.Optimizer):
         }
         base_config = super(CustomOptimizer, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
+
+
+
