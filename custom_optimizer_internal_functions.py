@@ -1,4 +1,7 @@
 import tensorflow as tf
+from sge.grammar import *
+
+tf.compat.v1.disable_eager_execution()
 
 def alpha_func_filler(alpha, grad):
     return grad
@@ -293,3 +296,66 @@ def grad_func_adamax(alpha, beta, sigma, grad):
         )
     ) 
     return foo
+
+def print_op(tensor):
+    inputs = ''
+    for input in tensor.op.inputs:
+        inputs += print_op(input) + ","
+    return f"{tensor.name}({inputs[:-1]})"
+if __name__ == "__main__":
+    foo = grad_func_adagrad(tf.Variable(0.0),tf.Variable(0.0),tf.Variable(0.0),tf.Variable(0.0))
+    print(print_op(foo))
+    random.seed(42)
+    g = Grammar()
+    g.set_path("grammars/adaptive_autolr_grammar.txt")
+    g.set_min_init_tree_depth(1)
+    g.set_max_tree_depth(17)
+    g.read_grammar()
+    genome = [
+        #start
+        [0], 
+        #alpha expr
+        [0], 
+        #alpha func
+        [0], 
+        #alpha terminal
+        [0], 
+        #alpha const
+        [0],
+        #beta expr
+        [0], 
+        #beta func
+        [0], 
+        #beta terminal
+        [0], 
+        #beta const
+        [0], 
+        #sigma expr
+        [0], 
+        #sigma func
+        [0], 
+        #sigma terminal
+        [0], 
+        #sigma const
+        [0], 
+        #grad expr
+        [0], 
+        #grad func
+        [0], 
+        #grad terminal
+        [0], 
+        #grad const
+        [0], 
+        ]
+    mapping_numbers = [0] * len(genome)
+    bar = g.mapping(genome, mapping_numbers)[0]
+    foo = {"tf": tf}
+    exec(bar, foo)
+    alpha_func = foo["alpha_func"]
+    beta_func = foo["beta_func"]
+    sigma_func = foo["sigma_func"]
+    grad_func = foo["grad_func"]
+
+    tensor = grad_func(tf.Variable(0.0).shape, tf.Variable(0.0), tf.Variable(0.0), tf.Variable(0.0), tf.Variable(0.0))
+
+    print(print_op(tensor))
