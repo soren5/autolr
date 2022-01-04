@@ -7,7 +7,7 @@ from multiprocessing import Pool
 class LROptimizer:
     def __init__(self):
         pass
-    def evaluate(self, phen):
+    def evaluate(self, phen, params):
         multiprocessing.set_start_method('spawn', True)
         num_pool_workers=1 
         value, other_info = None, None

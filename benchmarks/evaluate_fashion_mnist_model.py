@@ -2,6 +2,7 @@
 
 import csv
 import tensorflow as tf
+from tensorflow.python.keras.backend import var
 gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
   # Restrict TensorFlow to only allocate 4GB of memory on the first GPU
@@ -134,6 +135,16 @@ def evaluate_fashion_mnist_model(dataset=None, model=None, optimizer=None, batch
         n_model = load_model('models/mnist_model.h5', compile=False)
         model = n_model
 
+    try:
+        if optimizer.check_slots:
+            var_list = []
+            for layer in model.layers:
+                for trainable_weight in layer._trainable_weights:
+                    var_list.append(trainable_weight)
+            optimizer.init_variables(var_list)
+    except:
+        pass
+
     model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
         filepath=os.path.join(cwd_path,f'models/checkpoints/fashion_mnist_model_checkpoint_{experiment_name}.h5'),
         save_weights_only=True,
@@ -172,10 +183,7 @@ def evaluate_fashion_mnist_model(dataset=None, model=None, optimizer=None, batch
         data_frame = data_frame.append(pd.DataFrame([col_values], columns=col_names), ignore_index=True)
         data_frame.to_csv(os.path.join(cwd_path, 'results/' , experiment_name + ".csv"), index=False)
 
-        epoch_progress += run_epochs
-
-
-     
+        epoch_progress += run_epochs 
     return result
 
 def resume_fashion_mnist_model(dataset=None, optimizer=None, batch_size=1000, epochs=100, verbose=0):  
@@ -190,8 +198,6 @@ def resume_fashion_mnist_model(dataset=None, optimizer=None, batch_size=1000, ep
     model = n_model 
     model.load_weights(os.path.join(cwd_path, f'models/checkpoints/mnist_model_checkpoint.h5'))
     evaluate_fashion_mnist_model(model=model, optimizer=optimizer, epochs=epochs, verbose=verbose)
-
-
 
 if __name__ == "__main__":
     resume = True

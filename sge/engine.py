@@ -11,6 +11,7 @@ from sge.parameters import (
     params,
     set_parameters
 )
+from genotypes import *
 
 
 def generate_random_individual():
@@ -26,7 +27,7 @@ def make_initial_population():
 def initialize_population(solutions=[]):
     population = list(make_initial_population())
     for i in range(len(solutions)):
-        population[i] = solutions[i]
+        population[i] = {"genotype": solutions[i], "fitness": None}
     return population
     
 
@@ -64,7 +65,10 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1):
         logger.load_random_state()
         it = resume_generation
     else:
-        population = initialize_population()
+        if params['PREPOPULATE']:
+            population = initialize_population([get_adam_genotype(), get_momentum_genotype(), get_rmsprop_genotype()])
+        else:
+            population = list(make_initial_population())
         it = 0
     start_time = time.time()
     while it <= params['GENERATIONS']:
