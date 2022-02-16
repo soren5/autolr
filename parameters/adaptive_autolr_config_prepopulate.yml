@@ -1,11 +1,11 @@
 POPSIZE: 5 
-GENERATIONS: 250
-ELITISM: 1                    # number of individuals that survive
+GENERATIONS: 1000
+ELITISM: 1                   # number of individuals that survive
 PROB_CROSSOVER: 0.9
 PROB_MUTATION: 0.15
 TSIZE: 5
 GRAMMAR: 'grammars/adaptive_autolr_grammar.txt'
-EXPERIMENT_NAME: 'dumps/adaptiveTest'
+EXPERIMENT_NAME: 'dumps/adaptivePrepopulateTestProtected'
 RUN: 1
 INCLUDE_GENOTYPE: True
 SAVE_STEP: 1
@@ -16,5 +16,7 @@ MODEL: 'models/mnist_model.h5'
 VALIDATION_SIZE: 3500
 TEST_SIZE: 3500
 BATCH_SIZE: 1000
-EPOCHS: 100
+EPOCHS: 10000
 PREPOPULATE: True
+PROTECT: True
+GENES: 'all'

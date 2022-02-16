@@ -59,25 +59,41 @@ def setup():
 
 def evolutionary_algorithm(evaluation_function=None, resume_generation=-1):
     setup()
-    #print(sys.argv)
+    print(params)
     if resume_generation > -1:
         population = logger.load_population(resume_generation)
         logger.load_random_state()
         it = resume_generation
     else:
+        print(params['EPOCHS'])
         if params['PREPOPULATE']:
-            population = initialize_population([get_adam_genotype(), get_momentum_genotype(), get_rmsprop_genotype()])
+            genes_dict={
+                'all': [get_adam_genotype(), get_momentum_genotype(), get_rmsprop_genotype()],
+                'adam': [get_adam_genotype()],
+                'rmsprop': [get_rmsprop_genotype()],
+                'momentum': [get_momentum_genotype()],
+            }
+            population = initialize_population(genes_dict[params["GENES"]])
         else:
             population = list(make_initial_population())
         it = 0
+    history = {}
     start_time = time.time()
     while it <= params['GENERATIONS']:
+        if params['PROTECT']:
+            for solution in genes_dict[params["GENES"]]:
+                population.append({"genotype": solution, "fitness": None})
         for i in population:
             if i['fitness'] is None:
-                evaluate(i, evaluation_function)
+                if str(i['genotype']) in history:
+                    i['fitness'] = history[str(i['genotype'])]
+                else:
+                    print(params['EPOCHS'])
+                    evaluate(i, evaluation_function)
+                    #history[str(i['phenotype'])] = i['fitness']
         population.sort(key=lambda x: x['fitness'])
         logger.evolution_progress(it, population)
-        logger.bee_report(it, population, start_time)
+        #logger.bee_report(it, population, start_time)
         logger.save_random_state()
 
         new_population = population[:params['ELITISM']]

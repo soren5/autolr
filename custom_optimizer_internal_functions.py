@@ -3,7 +3,7 @@ import tensorflow as tf
 from tensorflow.python.keras.optimizer_v2 import rmsprop
 from sge.grammar import *
 
-#tf.compat.v1.disable_eager_execution()
+tf.compat.v1.disable_eager_execution()
 
 def alpha_func_filler(shape, alpha, grad):
     return grad
@@ -272,13 +272,12 @@ def read_genotype(genome):
     sigma_tensor = sigma_func(tf.Variable(0.0).shape, tf.Variable(0.0), tf.Variable(0.0),tf.Variable(0.0), tf.Variable(0.0),)
     grad_tensor = grad_func(tf.Variable(0.0).shape, tf.Variable(0.0), tf.Variable(0.0), tf.Variable(0.0), tf.Variable(0.0),)
 
-    return [alpha_tensor, beta_tensor, sigma_tensor, grad_tensor], [alpha_func, beta_func, sigma_func, grad_func]
+    return [alpha_tensor, beta_tensor, sigma_tensor, grad_tensor], [alpha_func, beta_func, sigma_func, grad_func], bar
 
 if __name__ == "__main__":
-    from benchmarks.evaluate_fashion_mnist_model import evaluate_fashion_mnist_model
-    from utils.custom_optimizer import CustomOptimizer
+    #from benchmarks.evaluate_fashion_mnist_model import evaluate_fashion_mnist_model
+    #from utils.custom_optimizer import CustomOptimizer
     from genotypes import *
-    import tensorflow as tf
     
 
     #print(print_op(alpha_func_adam(tf.Variable(0.0).shape,tf.Variable(0.0),tf.Variable(0.0))))
@@ -287,12 +286,16 @@ if __name__ == "__main__":
     #print(print_op(grad_func_adam(tf.Variable(0.0).shape,tf.Variable(0.0),tf.Variable(0.0),tf.Variable(0.0),tf.Variable(0.0))))
 
 
-    tensors, funcs = read_genotype(get_adam_genotype()) 
+    tensors, funcs, phen = read_genotype(get_rmsprop_genotype()) 
 
-    #print(print_op(tensors[3]))
+    print(phen)
+    print("#")
+    phen2 = "alpha_func, beta_func, sigma_func, grad_func = lambda shape,  alpha, grad: tf.math.negative(tf.math.add(tf.math.multiply(tf.math.subtract(tf.constant(0.0, shape=shape, dtype=tf.float32), tf.constant(1.07052146e-01, shape=shape, dtype=tf.float32)), alpha), tf.math.multiply(tf.constant(1.07052146e-01, shape=shape, dtype=tf.float32), tf.math.square(grad)))), lambda shape,  alpha, beta, grad: tf.math.negative(tf.math.add(tf.math.negative(beta), tf.math.divide_no_nan(tf.math.multiply(tf.constant(1.14904229e-03, shape=shape, dtype=tf.float32), grad), tf.math.sqrt(tf.math.add(alpha, tf.constant(5.55606489e-05, shape=shape, dtype=tf.float32)))))), lambda shape,  alpha, beta, sigma, grad: tf.math.negative(tf.math.add(tf.constant(5.55606489e-05, shape=shape, dtype=tf.float32), grad)), lambda shape,  alpha, beta, sigma, grad: beta"
+    print(phen2)
+    #print(print_op(tensors[0]))
 
-    opt = CustomOptimizer(grad_func=funcs[3], alpha_func=funcs[0], beta_func=funcs[1], sigma_func=funcs[2])
-    evaluate_fashion_mnist_model(optimizer=opt, batch_size=1000, epochs=10,experiment_name="momentum_functions", verbose=2)
+    #opt = CustomOptimizer(grad_func=funcs[3], alpha_func=funcs[0], beta_func=funcs[1], sigma_func=funcs[2])
+    #evaluate_fashion_mnist_model(optimizer=opt, batch_size=1000, epochs=10,experiment_name="momentum_functions", verbose=2)
     #foo = grad_func_momentum(tf.Variable(0.0),tf.Variable(0.0),tf.Variable(0.0),tf.Variable(0.0),)
     #print(print_op(foo))
 
