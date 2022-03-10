@@ -1,0 +1,42 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+
+  
+    {
+      "name": "Python: Current File",
+      "type": "python",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Evolve Adam Parameters",
+      "type": "python",
+      "request": "launch",
+      "module": "benchmarks.evolve_parameters"
+    },    
+    {
+      "name": "Evolve Adaptive Optimizer (Prepopulated)",
+      "type": "python",
+      "request": "launch",
+      "module": "examples.evolve_adaptive_optimizer",
+      "args": ["--parameters=parameters/adaptive_autolr_config_prepopulate.yml"]
+    },
+    {
+      "name": "Evolve Dynamic Optimizer (Default)",
+      "type": "python",
+      "request": "launch",
+      "module": "examples.evolve_dynamic_optimizer"
+    },
+    {
+      "name": "Test hand-made genotypes",
+      "type": "python",
+      "request": "launch",
+      "module": "custom_optimizer_internal_functions"
+    }
+  ]
+}

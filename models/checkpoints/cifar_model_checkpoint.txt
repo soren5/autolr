@@ -1,0 +1,1 @@
+{'epochs': 100000, 'epoch_progress': 50}

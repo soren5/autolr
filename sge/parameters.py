@@ -10,7 +10,7 @@ params = {
     'PROB_CROSSOVER': 0.9,
     'PROB_MUTATION': 0.15,
     'TSIZE': 5,
-    'GRAMMAR': 'grammars/dynamic_grammar.txt',
+    'GRAMMAR': 'grammars/dynamic_autolr_grammar.txt',
     'EXPERIMENT_NAME': "results/example",
     'RUN': 1,
     'INCLUDE_GENOTYPE': True,
