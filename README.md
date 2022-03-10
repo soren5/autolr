@@ -1,56 +1,73 @@
-# AutoLR: An evolutionary framework for learning rate optimizers
-AutoLR is a framework based on the [SGE](https://github.com/nunolourenco/sge3 "SGE") engine capable of evolving learning rate optimizers for specific neural network architectures and problems. This repository is part of a published work; if you end up using this framework it would be appreciated that you reference the following:
+# DSGE: Dynamic Structured Grammatical Evolution
+
+Structured Grammatical Evolution (SGE) is a recent Grammatical Evolution (GE) variant that aims at addressing some of its locality and redundancy issues. The SGE distinctive feature is having a one-to-one correspondence between genes and non-terminals of the grammar being used. If you use this code, a reference to the following work would be greatly appreciated:
+
 ```
-@inproceedings{carvalho20,
-author = {Carvalho, Pedro and Louren\c{c}o, Nuno and Assun\c{c}\~{a}o, Filipe and Machado, Penousal},
-title = {AutoLR: An Evolutionary Approach to Learning Rate Policies},
-year = {2020},
-isbn = {9781450371285},
-publisher = {Association for Computing Machinery},
-address = {New York, NY, USA},
-url = {https://doi.org/10.1145/3377930.3390158},
-doi = {10.1145/3377930.3390158},
-pages = {672–680},
-numpages = {9},
-keywords = {learning rate schedulers, structured grammatical evolution},
-location = {Canc\'{u}n, Mexico},
-series = {GECCO '20}
+@article{Lourenco2016,
+ title={Unveiling the properties of structured grammatical evolution},
+  author={Louren{\c{c}}o, Nuno and Pereira, Francisco B and Costa, Ernesto},
+  journal={Genetic Programming and Evolvable Machines},
+  volume={17},
+  number={3},
+  pages={251--289},
+  year={2016},
+  publisher={Springer}
+}
+
+@incollection{lourencco2018structured,
+  title={Structured grammatical evolution: a dynamic approach},
+  author={Louren{\c{c}}o, Nuno and Assun{\c{c}}{\~a}o, Filipe and Pereira, Francisco B and Costa, Ernesto and Machado, Penousal},
+  booktitle={Handbook of Grammatical Evolution},
+  pages={137--161},
+  year={2018},
+  publisher={Springer}
 }
 ```
 
-
-This system utilizes a grammar to generate a population of potential optimizers. The quality of these optimizers is then assessed using an evaluator. The best optimizers are then combined amongst themselves and altered in order to create a new population.
-
-## Quickstart
-This section will briefly explain how to run a simple AutoLR experiment.
-The repository includes a `requirements.txt` file that should be used to install all necessary dependencies using the command:
-
-```bash
-> pip install -r requirements.txt
-```
-
-In order for the framework to function it requires a **grammar**, **evaluator** and **model**. This repository includes example grammars and evaluators but an additional step is required to create the models.
-
-Sample model architectures are included in the `models/json/` directory. A utility script is included that converts these `.json` files into usable `.h5` files. 
-**After installing the dependencies** use the following command to create the models:
-
-```bash
-> python -m utils.create_models
-```
-
-With the models created we can start using the framework. In order to run a sample experiment one can use the following command:
-
-```bash
-> python -m examples.evolve_dynamic_optimizer
-```
-
-## How to use
-In order to run your own experiments you will need to change the configuration used by the framework. While it is possible to set evey parameter manually through the command line (see `sge/parameters.py`) this approach is laborous and error prone. The recommended approach is to create your own parameter configuration file in the `parameters/` directory and loading it before the experiment. This can be done through the following command:
-
-```bash
-> python -m examples.evolve_dynamic_optimizer --parameters parameters/your_configuration_file.yml
-```
-
-Additional guidelines on how to create custom evaluators coming soon.
+This project corresponds to a new implementation of the SGE engine. SGE has been criticised for the fact that we need to specify the maximum levels of recursion in order to remove it from the grammar beforehand. In this new version we specify the maximum tree depth (similarly to what happens in standard tree-based GP), and the algorithm adds the mapping numbers as required during the evolutionary search. Thus, we do not need to pre-process the grammar to remove the recursive productions. Additionally, we provide mechanisms and operators to ensure that the generated trees are always within the allowed limits.
 
 
+As in for the SGE framework we provide the implementations of some problems that we used to test the DSGE. Extending it to your own needs should be fairly easy. 
+
+
+When running the framework a folder called *dumps* will be created together with an additional one that corresponds to the experience. Inside, there will be directories for each run. Each run folder contains snapshots of the population at a given generation, and a file called *progress_report.csv*,  which is assembled by the end of the evolutionary run. By default we take snapshots of the population at the following generations: 0,25 and 50. This can be changed, together with all the numeric values in the *configs* folder.
+
+### Requirements
+Currently this codebase only works with python 2. 
+
+### Instalation
+
+To run the default examples, you should be inside the *src* directory and then type:
+
+`python -m examples.[problem_name] [run] --parameters parameters/[config_file].yml`
+
+### Support
+
+Any questions, comments or suggestion should be directed to Nuno Lourenço ([naml@dei.uc.pt](mailto:naml@dei.uc.pt))
+
+### Acknowledgments
+
+I am gratefull to my advisors Francisco B. Pereira and Ernesto Costa for their guidance during my PhD. I am also gratefull to Filipe Assunção and Joaquim Ferrer for their help and comments on the development of this framework. 
+
+### Works using or referencing SGE
+
+Nicolau, Miguel. "Understanding grammatical evolution: initialisation." Genetic Programming and Evolvable Machines: 1-41.
+
+Medvet, Eric, Fabio Daolio, and Danny Tagliapietra. "Evolvability in Grammatical Evolution." Proceedings of the Genetic and Evolutionary Computation Conference, GECCO. 2017.
+
+Medvet, Eric, and Tea Tušar. "The DU Map: A Visualization to Gain Insights into Genotype-Phenotype Mapping and Diversity." (2017).
+
+Assunçao, F., Lourenço, N., Machado, P., & Ribeiro, B. (2017). Towards the Evolution of Multi-Layered Neural Networks: A Dynamic Structured Grammatical Evolution Approach.
+
+Assunçao, F., Lourenço, N., Machado, P., & Ribeiro, B. (2017). Automatic Generation of Neural Networks with Structured Grammatical Evolution. In 2017 IEEE Congress on Evolutionary Computation (CEC). IEEE.
+
+Lourenço, N., Ferrer, J., Pereira, F. B., & Costa, E. (2017, April). A Comparative Study of Different Grammar-Based Genetic Programming Approaches. In European Conference on Genetic Programming (pp. 311-325). Springer, Cham.
+
+Medvet, E., Bartoli, A., & Talamini, J. (2017, April). Road Traffic Rules Synthesis Using Grammatical Evolution. In European Conference on the Applications of Evolutionary Computation (pp. 173-188). Springer, Cham.
+
+Medvet, E. (2017, April). A Comparative Analysis of Dynamic Locality and Redundancy in Grammatical Evolution. In European Conference on Genetic Programming (pp. 326-342). Springer, Cham.
+
+Lourenço, N., Pereira, F. B., & Costa, E. (2015, October). SGE: a structured representation for grammatical evolution. In International Conference on Artificial Evolution (Evolution Artificielle) (pp. 136-148). Springer International Publishing.
+
+
+###
