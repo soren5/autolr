@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.datasets import fashion_mnist
 from tensorflow.keras import backend as K
-from utils.custom_optimizer import CustomOptimizer
+from optimizers.custom_optimizer import CustomOptimizer
 import numpy as np
 
 def resize_data(args):
@@ -34,7 +34,7 @@ def resize_data(args):
 
     return content
 
-def load_dataset(n_classes=10, validation_size=None, test_size=None, split=False, img_size = None, channels=1):
+def load_data_evolution(n_classes=10, validation_size=None, test_size=None, split=False, img_size = None, channels=1):
     img_rows, img_cols = img_size[0], img_size[1]
     (x_train, y_train), (_, _) = fashion_mnist.load_data()
     #x_train = resize_data((x_train, (img_rows, img_cols)))

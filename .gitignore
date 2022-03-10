@@ -147,3 +147,7 @@ dmypy.json
 .DS_Store
 *.h5
 secret.py
+experiments*
+results/
+dumps/
+
