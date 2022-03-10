@@ -1,8 +1,8 @@
 from deap import creator, base, tools
 from benchmarks.evaluate_fashion_mnist_model import evaluate_fashion_mnist_model
 from tensorflow.keras.optimizers import Adam, SGD, RMSprop
-from optimizers.ades import ADES
-from optimizers.sign import Sign
+from optimizers.evolved.ades import ADES
+from optimizers.evolved.signved.sign import Sign
 import random
 import os
 import pandas as pd

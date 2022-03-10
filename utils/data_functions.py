@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.datasets import fashion_mnist
 from tensorflow.keras import backend as K
-from utils.custom_optimizer import CustomOptimizer
+from optimizers.custom_optimizer import CustomOptimizer
 import numpy as np
 
 def resize_data(args):

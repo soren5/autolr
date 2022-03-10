@@ -1,4 +1,3 @@
-import datetime
 from evaluators.adaptive_optimizer_evaluator import train_model
 import contextlib
 import multiprocessing
