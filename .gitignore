@@ -149,4 +149,5 @@ dmypy.json
 secret.py
 experiments*
 results/
+dumps/
 
