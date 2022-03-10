@@ -1,0 +1,1 @@
+epochs,max_val_accuracy,min_val_loss,test_accuracy,learning_rate,beta_1,beta_2,epsilon,momentum
