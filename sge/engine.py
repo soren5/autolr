@@ -80,7 +80,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1):
     history = {}
     start_time = time.time()
     while it <= params['GENERATIONS']:
-        if params['PROTECT']:
+        if params['PREPOPULATE'] and params['PROTECT']:
             for solution in genes_dict[params["GENES"]]:
                 population.append({"genotype": solution, "fitness": None})
         for i in population:

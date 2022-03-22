@@ -24,6 +24,8 @@ params = {
     'BATCH_SIZE': 1000,
     'EPOCHS': 100,
     'SEED': None,
+    'PREPOPULATE': False,
+    'PATIENCE': False,
     }
 
 
