@@ -7,6 +7,8 @@ from sge.operators.recombination import crossover
 from sge.operators.mutation import mutate
 from sge.operators.selection import tournament
 import time
+import statistics
+from scipy import stats
 from sge.parameters import (
     params,
     set_parameters
@@ -59,11 +61,12 @@ def setup():
 
 def evolutionary_algorithm(evaluation_function=None, resume_generation=-1):
     setup()
-    print(params)
-    if resume_generation > -1:
-        population = logger.load_population(resume_generation)
+    #print(sys.argv)
+    hard_cap = 5
+    if params['RESUME'] > -1:
+        population = logger.load_population(params['RESUME'])
         logger.load_random_state()
-        it = resume_generation
+        it = params['RESUME']
     else:
         print(params['EPOCHS'])
         if params['PREPOPULATE']:
@@ -79,34 +82,46 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1):
         it = 0
     history = {}
     start_time = time.time()
-    while it <= params['GENERATIONS']:
-        if params['PREPOPULATE'] and params['PROTECT']:
-            for solution in genes_dict[params["GENES"]]:
-                population.append({"genotype": solution, "fitness": None})
-        for i in population:
-            if i['fitness'] is None:
-                if str(i['genotype']) in history:
-                    i['fitness'] = history[str(i['genotype'])]
-                else:
-                    print(params['EPOCHS'])
-                    evaluate(i, evaluation_function)
-                    #history[str(i['phenotype'])] = i['fitness']
-        population.sort(key=lambda x: x['fitness'])
+    for i in population:
+        i["evaluations"] = [] 
+        for x in range(5):
+            evaluate(i, evaluation_function)
+            i['evaluations'].append(i['fitness'])
+            i['fitness'] = statistics.mean(i['evaluations'])
+    while it <= params['GENERATIONS'] * params['POPSIZE']:
+        i = population[0]
+        evaluate(i, evaluation_function)
+        i['evaluations'].append(i['fitness'])
+        i['fitness'] = statistics.mean(i['evaluations'])
+        stat, p_value = stats.kruskal(*[x['evaluations'] for x in population])
+        print("kruskall wallis pvalue ", p_value)
+        if p_value < 0.05:
+            print("There is a significant difference in the population")
+            population.sort(key=lambda x: x['fitness'])
+            best = population[0]
+            for indv in population:
+                stat, p_value = stats.mannwhitneyu(best['evaluations'], indv['evaluations'])
+                print(f"best_fitness: {best['fitness']}, indiv_fitness: {indv['fitness']}, mannwhitneyu pvalue: {p_value}")
+                #print(best["evaluations"], indv['evaluations'])
+                if p_value < (0.05 / len(population)):
+                    population.remove(indv)
+                    if random.random() < params['PROB_CROSSOVER']:
+                        p1 = tournament(population, params['TSIZE'])
+                        p2 = tournament(population, params['TSIZE'])
+                        ni = crossover(p1, p2)
+                    else:
+                        ni = tournament(population, params['TSIZE'])
+                    ni = mutate(ni, params['PROB_MUTATION'])
+                    ni["evaluations"] = [] 
+                    for x in range(5):
+                        evaluate(ni, evaluation_function)
+                        ni['evaluations'].append(ni['fitness'])
+                        ni['fitness'] = statistics.mean(ni['evaluations'])
+                    population.append(ni)
+        population.sort(key=lambda x: len(x["evaluations"]))
         logger.evolution_progress(it, population)
         #logger.bee_report(it, population, start_time)
         logger.save_random_state()
-
-        new_population = population[:params['ELITISM']]
-        while len(new_population) < params['POPSIZE']:
-            if random.random() < params['PROB_CROSSOVER']:
-                p1 = tournament(population, params['TSIZE'])
-                p2 = tournament(population, params['TSIZE'])
-                ni = crossover(p1, p2)
-            else:
-                ni = tournament(population, params['TSIZE'])
-            ni = mutate(ni, params['PROB_MUTATION'])
-            new_population.append(ni)
-        population = new_population
         it += 1
     return population
 
