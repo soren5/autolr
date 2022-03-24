@@ -37,68 +37,12 @@ from tensorflow.python.ops import resource_variable_ops
 from tensorflow.python.training import training_ops
 from tensorflow.keras import backend as K
 from tensorflow.keras.layers import Dense
+from utils.data_functions import load_fashion_mnist_full
 import os
 import pandas as pd
 
 cwd_path = os.getcwd()
 
-def load_fashion_mnist(n_classes=10, validation_size=3500, test_size=3500):
-    (x_train, y_train), (x_test, y_test) = fashion_mnist.load_data()
-
-    x_train, x_val, y_train, y_val = train_test_split(x_train, y_train,
-                                                    test_size=validation_size + test_size,
-                                                    stratify=y_train,
-                                                    random_state=0)
-
-
-
-    img_rows, img_cols, channels = 28, 28, 1
-
-    x_train = x_train.astype('float32')
-    x_val = x_val.astype('float32')
-    x_test = x_test.astype('float32')
-
-    x_train /= 255
-    x_val /= 255
-    x_test /= 255
-
-    #subraction of the mean image
-    x_mean = 0
-    for x in x_train:
-        x_mean += x
-    x_mean /= len(x_train)
-    x_train -= x_mean
-    x_val -= x_mean
-    x_test -= x_mean
-
-
-    # input image dimensions
-
-
-    if K.image_data_format() == 'channels_first':
-        x_train = x_train.reshape(x_train.shape[0], channels, img_rows, img_cols)
-        x_val = x_val.reshape(x_val.shape[0], channels, img_rows, img_cols)
-        x_test = x_test.reshape(x_test.shape[0], channels, img_rows, img_cols)
-        input_shape = (channels, img_rows, img_cols)
-    else:
-        x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, channels)
-        x_val = x_val.reshape(x_val.shape[0], img_rows, img_cols, channels)
-        x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, channels)
-        input_shape = (img_rows, img_cols, channels)
-
-    y_train = keras.utils.to_categorical(y_train, n_classes)
-    y_val = keras.utils.to_categorical(y_val, n_classes)
-    y_test = keras.utils.to_categorical(y_test, n_classes)
-
-    dataset = { 
-            'x_train': x_train,
-            'y_train': y_train,
-            'x_val': x_val,
-            'y_val': y_val,
-            'x_test': x_test,
-            'y_test': y_test}
-
-    return dataset
 
 def get_metric_dictionary(score):
     #This is cursed code I did during my masters
@@ -118,7 +62,7 @@ def evaluate_fashion_mnist_model(dataset=None, model=None, optimizer=None, batch
     assert optimizer != None
 
     if dataset is None:
-        dataset = load_fashion_mnist()
+        dataset = load_fashion_mnist_full()
     
     from tensorflow.compat.v1 import ConfigProto
     from tensorflow.compat.v1 import InteractiveSession

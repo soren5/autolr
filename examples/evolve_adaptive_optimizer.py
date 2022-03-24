@@ -1,4 +1,5 @@
-from evaluators.adaptive_optimizer_evaluator import train_model
+#from evaluators.adaptive_optimizer_evaluator import train_model
+from evaluators.adaptive_optimizer_evaluator_f_race import train_model
 import contextlib
 import multiprocessing
 from multiprocessing import Pool
