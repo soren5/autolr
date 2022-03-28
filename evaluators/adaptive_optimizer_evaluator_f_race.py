@@ -40,9 +40,10 @@ def train_model(phen):
     epochs = params['EPOCHS']
     patience = params['PATIENCE']
 
-    dataset = load_fashion_mnist_training(validation_size=validation_size, test_size=test_size, split=True, img_size=(28,28))
+    dataset = load_fashion_mnist_training(validation_size=validation_size, test_size=test_size)
     model = load_model(params['MODEL'], compile=False)
     weights = model.get_weights()
+    print(len(dataset['x_train']))
 
     model.set_weights(weights)
 
@@ -69,7 +70,7 @@ def train_model(phen):
     score = model.fit(dataset['x_train'], dataset['y_train'],
         batch_size=batch_size,
         epochs=epochs,
-        verbose=2,
+        verbose=0,
         validation_data=(dataset['x_val'], dataset['y_val']),
         validation_steps= validation_size // batch_size,
         callbacks=[
@@ -83,5 +84,4 @@ def train_model(phen):
         for n in score.history[metric]:
             results[metric].append(n)
     test_score = model.evaluate(x=dataset['x_test'],y=dataset["y_test"], verbose=0, callbacks=[keras.callbacks.History()])
-    print("fitness: ", test_score)
-    return test_score, results
+    return test_score[-1], results

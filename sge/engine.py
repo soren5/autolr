@@ -30,6 +30,8 @@ def initialize_population(solutions=[]):
     population = list(make_initial_population())
     for i in range(len(solutions)):
         population[i] = {"genotype": solutions[i], "fitness": None}
+    for i in range(len(population)):
+        population[i]['id'] = i
     return population
     
 
@@ -62,7 +64,6 @@ def setup():
 def evolutionary_algorithm(evaluation_function=None, resume_generation=-1):
     setup()
     #print(sys.argv)
-    hard_cap = 5
     if params['RESUME'] > -1:
         population = logger.load_population(params['RESUME'])
         logger.load_random_state()
@@ -78,7 +79,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1):
             }
             population = initialize_population(genes_dict[params["GENES"]])
         else:
-            population = list(make_initial_population())
+            population = initialize_population()
         it = 0
     history = {}
     start_time = time.time()
@@ -86,24 +87,35 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1):
         i["evaluations"] = [] 
         for x in range(5):
             evaluate(i, evaluation_function)
+            with open("log.txt", 'a') as f:
+                print(f"[{i['id']}] new_fitness {i['fitness']}, evaluations {i['evaluations']}", file=f)
             i['evaluations'].append(i['fitness'])
             i['fitness'] = statistics.mean(i['evaluations'])
+
+    id = len(population)
     while it <= params['GENERATIONS'] * params['POPSIZE']:
         i = population[0]
         evaluate(i, evaluation_function)
+        with open("log.txt", 'a') as f:
+            print(f"[{i['id']}] new_fitness {i['fitness']}, evaluations {i['evaluations']}", file=f)
         i['evaluations'].append(i['fitness'])
         i['fitness'] = statistics.mean(i['evaluations'])
         stat, p_value = stats.kruskal(*[x['evaluations'] for x in population])
-        print("kruskall wallis pvalue ", p_value)
+        with open("log.txt", 'a') as f:
+            print("kruskall wallis pvalue ", p_value, file=f)
         if p_value < 0.05:
-            print("There is a significant difference in the population")
+            with open("log.txt", 'a') as f:
+                print("There is a significant difference in the population", file=f)
             population.sort(key=lambda x: x['fitness'])
             best = population[0]
             for indv in population:
                 stat, p_value = stats.mannwhitneyu(best['evaluations'], indv['evaluations'])
-                print(f"best_fitness: {best['fitness']}, indiv_fitness: {indv['fitness']}, mannwhitneyu pvalue: {p_value}")
+                #with open("log.txt", 'a') as f:
+                    #print(f"best_fitness: {best['fitness']}, indiv_fitness: {indv['fitness']}, mannwhitneyu pvalue: {p_value}", file=f)
                 #print(best["evaluations"], indv['evaluations'])
-                if p_value < (0.05 / len(population)):
+                #if p_value < (0.05 / len(population)):
+                if p_value < (0.05 / 1):
+                    print("Creating new individual.")
                     population.remove(indv)
                     if random.random() < params['PROB_CROSSOVER']:
                         p1 = tournament(population, params['TSIZE'])
@@ -113,8 +125,12 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1):
                         ni = tournament(population, params['TSIZE'])
                     ni = mutate(ni, params['PROB_MUTATION'])
                     ni["evaluations"] = [] 
+                    ni['id'] = id 
+                    id += 1
                     for x in range(5):
                         evaluate(ni, evaluation_function)
+                        with open("log.txt", 'a') as f:
+                            print(f"[{ni['id']}] new_fitness {ni['fitness']}, evaluations {ni['evaluations']}", file=f)
                         ni['evaluations'].append(ni['fitness'])
                         ni['fitness'] = statistics.mean(ni['evaluations'])
                     population.append(ni)
