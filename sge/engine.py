@@ -1,7 +1,9 @@
+from operator import inv
 import random
 import sys
 import sge.grammar as grammar
 import sge.logger as logger
+import copy
 from datetime import datetime
 from sge.operators.recombination import crossover
 from sge.operators.mutation import mutate
@@ -85,59 +87,91 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1):
     start_time = time.time()
     for i in population:
         i["evaluations"] = [] 
-        for x in range(5):
-            evaluate(i, evaluation_function)
-            with open("log.txt", 'a') as f:
-                print(f"[{i['id']}] new_fitness {i['fitness']}, evaluations {i['evaluations']}", file=f)
-            i['evaluations'].append(i['fitness'])
-            i['fitness'] = statistics.mean(i['evaluations'])
-
     id = len(population)
-    while it <= params['GENERATIONS'] * params['POPSIZE']:
-        i = population[0]
-        evaluate(i, evaluation_function)
-        with open("log.txt", 'a') as f:
-            print(f"[{i['id']}] new_fitness {i['fitness']}, evaluations {i['evaluations']}", file=f)
-        i['evaluations'].append(i['fitness'])
-        i['fitness'] = statistics.mean(i['evaluations'])
-        stat, p_value = stats.kruskal(*[x['evaluations'] for x in population])
-        with open("log.txt", 'a') as f:
-            print("kruskall wallis pvalue ", p_value, file=f)
-        if p_value < 0.05:
+    counter = id
+    while it <= params['GENERATIONS']:
+        evaluation_indices = list(range(len(population)))
+        for i in population:
+            for _ in range(5):
+                evaluate(i, evaluation_function)
+                i['evaluations'].append(i['fitness'])
+                i['fitness'] = statistics.mean(i['evaluations'])
+                with open("log.txt", 'a') as f:
+                    print(f"[{i['id']}] new_fitness {i['fitness']}, n_evaluations {len(i['evaluations'])}, evaluations {i['evaluations']}", file=f)
+        stat, p_value_kruskal = stats.kruskal(*[population[x]['evaluations'] for x in evaluation_indices])
+        while p_value_kruskal < 0.05 and len(evaluation_indices) > 1:
             with open("log.txt", 'a') as f:
-                print("There is a significant difference in the population", file=f)
-            population.sort(key=lambda x: x['fitness'])
-            best = population[0]
-            for indv in population:
-                stat, p_value = stats.mannwhitneyu(best['evaluations'], indv['evaluations'])
+                print(f"Running iteration {it}...",file=f)
+            #population.sort(key=lambda x: x['fitness'])
+            #best = population[0]
+            best_fit = 0
+            for indiv in population:
+                if indiv['fitness'] < best_fit:
+                    best = indiv
+                    best_fit = indiv['fitness']
+            to_remove = []
+            for eval_index in evaluation_indices:
+                indv = population[eval_index]
+                with open("log.txt", 'a') as f:
+                    print(f"Testing {indv['id']}",  file=f)
+                try:
+                    stat, p_value = stats.mannwhitneyu(best['evaluations'], indv['evaluations'])
+                except ValueError as e:
+                    with open("log.txt", 'a') as f:
+                        print(f"Value error: {e}. Continuing search", file=f)
+                    p_value = 1
                 #with open("log.txt", 'a') as f:
                     #print(f"best_fitness: {best['fitness']}, indiv_fitness: {indv['fitness']}, mannwhitneyu pvalue: {p_value}", file=f)
                 #print(best["evaluations"], indv['evaluations'])
                 #if p_value < (0.05 / len(population)):
-                if p_value < (0.05 / 1):
-                    print("Creating new individual.")
-                    population.remove(indv)
-                    if random.random() < params['PROB_CROSSOVER']:
-                        p1 = tournament(population, params['TSIZE'])
-                        p2 = tournament(population, params['TSIZE'])
-                        ni = crossover(p1, p2)
-                    else:
-                        ni = tournament(population, params['TSIZE'])
-                    ni = mutate(ni, params['PROB_MUTATION'])
-                    ni["evaluations"] = [] 
-                    ni['id'] = id 
-                    id += 1
-                    for x in range(5):
-                        evaluate(ni, evaluation_function)
-                        with open("log.txt", 'a') as f:
-                            print(f"[{ni['id']}] new_fitness {ni['fitness']}, evaluations {ni['evaluations']}", file=f)
-                        ni['evaluations'].append(ni['fitness'])
-                        ni['fitness'] = statistics.mean(ni['evaluations'])
-                    population.append(ni)
+                if p_value < (0.05):
+                    with open("log.txt", 'a') as f:
+                        print(f"Removing individual [{indv['id']}].",  file=f)
+                    to_remove.append(eval_index)
+                else:
+                    with open("log.txt", 'a') as f:
+                        print(f"Evaluating individual [{indv['id']}].",  file=f)
+                    evaluate(indv, evaluation_function)
+                    indv['evaluations'].append(indv['fitness'])
+                    indv['fitness'] = statistics.mean(indv['evaluations']) 
+                    with open("log.txt", 'a') as f:
+                        print(f"[{indv['id']}] new_fitness {indv['fitness']}, n_evaluations {len(indv['evaluations'])}, evaluations {indv['evaluations']}", file=f)
+            for remove_index in to_remove:
+                evaluation_indices.remove(remove_index)
+            ids_left = [population[x]["id"] for x in evaluation_indices]
+            if len(evaluation_indices) > 1:
+                stat, p_value_kruskal = stats.kruskal(*[population[x]['evaluations'] for x in evaluation_indices])
+                if p_value_kruskal < 0.05:
+                    with open("log.txt", 'a') as f:
+                        print(f"{p_value_kruskal} - There is a significant difference in the population, indivs left: {ids_left}", file=f)
+                else:
+                    with open("log.txt", 'a') as f:
+                        print(f"{p_value_kruskal} - There is no significant difference in the population, concluding iteration {it}", file=f)
+            else:
+                with open("log.txt", 'a') as f:
+                    print(f"Only one individual left, concluding iteration {it}", file=f)
+            
+            
+                    
         population.sort(key=lambda x: len(x["evaluations"]))
         logger.evolution_progress(it, population)
+        new_population = population[:params['ELITISM']]
+        while len(new_population) < params['POPSIZE']:
+            if random.random() < params['PROB_CROSSOVER']:
+                p1 = tournament(population, params['TSIZE'])
+                p2 = tournament(population, params['TSIZE'])
+                ni = crossover(p1, p2)
+            else:
+                ni = tournament(population, params['TSIZE'])
+            ni = mutate(ni, params['PROB_MUTATION'])
+            counter += 1
+            ni['id'] = counter
+            ni['evaluations'] = []
+            new_population.append(ni)
+        population = new_population
+        it += 1
+        print(population)
         #logger.bee_report(it, population, start_time)
         logger.save_random_state()
-        it += 1
     return population
 
