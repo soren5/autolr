@@ -6,7 +6,7 @@ import sge.logger as logger
 import copy
 from datetime import datetime
 from sge.operators.recombination import crossover
-from sge.operators.mutation import mutate
+from sge.operators.mutation import mutate_level as mutate
 from sge.operators.selection import tournament
 import time
 import statistics
@@ -89,6 +89,8 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1):
         i["evaluations"] = [] 
     id = len(population)
     counter = id
+        
+
     while it <= params['GENERATIONS']:
         evaluation_indices = list(range(len(population)))
         for i in population:
