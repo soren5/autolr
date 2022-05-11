@@ -1,0 +1,24 @@
+POPSIZE: 25
+GENERATIONS: 500
+ELITISM: 1                   # number of individuals that survive
+PROB_CROSSOVER: 0.0
+PROB_MUTATION: 0.15
+TSIZE: 3
+GRAMMAR: 'grammars/adaptive_autolr_grammar_original.txt'
+EXPERIMENT_NAME: 'dumps/frace'
+RUN: 5
+INCLUDE_GENOTYPE: True
+SAVE_STEP: 1
+VERBOSE: True
+MIN_TREE_DEPTH: 6
+MAX_TREE_DEPTH: 17
+MODEL: 'models/mnist_model.h5'
+VALIDATION_SIZE: 3500
+TEST_SIZE: 55000
+BATCH_SIZE: 1000
+EPOCHS: 10000
+PREPOPULATE: False
+PROTECT: False
+GENES: 'adam'
+PATIENCE: 5
+RESUME: -1
