@@ -89,8 +89,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1):
         i["evaluations"] = [] 
     id = len(population)
     counter = id
-        
-
+    
     while it <= params['GENERATIONS']:
         evaluation_indices = list(range(len(population)))
         for i in population:
@@ -124,8 +123,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1):
                     p_value = 1
                 #with open("log.txt", 'a') as f:
                     #print(f"best_fitness: {best['fitness']}, indiv_fitness: {indv['fitness']}, mannwhitneyu pvalue: {p_value}", file=f)
-                #print(best["evaluations"], indv['evaluations'])
-                #if p_value < (0.05 / len(population)):
+
                 if p_value < (0.05):
                     with open("log.txt", 'a') as f:
                         print(f"Removing individual [{indv['id']}].",  file=f)
