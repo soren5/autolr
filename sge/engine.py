@@ -149,11 +149,8 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1):
                         print(f"{p_value_kruskal} - There is no significant difference in the population, concluding iteration {it}", file=f)
             else:
                 with open("log.txt", 'a') as f:
-                    print(f"Only one individual left, concluding iteration {it}", file=f)
-            
-            
-                    
-        population.sort(key=lambda x: len(x["evaluations"]))
+                    print(f"Only one individual left, concluding iteration {it}", file=f)            
+        population.sort(key=lambda x: x['fitness'])
         logger.evolution_progress(it, population)
         new_population = population[:params['ELITISM']]
         while len(new_population) < params['POPSIZE']:
