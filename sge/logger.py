@@ -38,7 +38,7 @@ def load_random_state():
 
 
 def save_progress_to_file(data):
-    with open('%s/run_%d/progress_report.csv' % (params['EXPERIMENT_NAME'], params['RUN']), 'a') as f:
+    with open('%s/run_%d/_progress_report.csv' % (params['EXPERIMENT_NAME'], params['RUN']), 'a') as f:
         f.write(data + '\n')
 
 
