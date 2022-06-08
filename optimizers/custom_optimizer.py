@@ -28,9 +28,9 @@ class CustomOptimizer(keras.optimizers.Optimizer):
             self._grad_func = grad_func
         else:
             import numpy as np
-            alpha_dict = {}
-            beta_dict = {}
-            sigma_dict = {}
+            self._alpha_dict = {}
+            self._beta_dict = {}
+            self._sigma_dict = {}
             for layer in model.layers:
                 for trainable_weight in layer._trainable_weights:
                     self._alpha_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="alpha" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
