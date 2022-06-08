@@ -72,7 +72,7 @@ def setup(params=None):
 
 
 def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, params=None):
-    setup()
+    setup(params)
     #print(sys.argv)
     if params['RESUME'] > -1:
         population = logger.load_population(params['RESUME'])
