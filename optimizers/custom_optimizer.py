@@ -33,15 +33,15 @@ class CustomOptimizer(keras.optimizers.Optimizer):
             sigma_dict = {}
             for layer in model.layers:
                 for trainable_weight in layer._trainable_weights:
-                    alpha_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="alpha" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
-                    beta_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="beta" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
-                    sigma_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="sigma" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
+                    self._alpha_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="alpha" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
+                    self._beta_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="beta" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
+                    self._sigma_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="sigma" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
             exec_env = {"tf": tf}
             exec(phen, exec_env)
-            alpha_func = exec_env["alpha_func"]
-            beta_func = exec_env["beta_func"]
-            sigma_func = exec_env["sigma_func"]
-            grad_func = exec_env["grad_func"]
+            self._alpha_func = exec_env["alpha_func"]
+            self._beta_func = exec_env["beta_func"]
+            self._sigma_func = exec_env["sigma_func"]
+            self._grad_func = exec_env["grad_func"]
 
     def check_slots(self):
         return self._alpha_dict == None and self._beta_dict == None and self._sigma_dict == None
