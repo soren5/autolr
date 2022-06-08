@@ -1,4 +1,8 @@
 def smart_phenotype(phenotype):
+    phenotype = phenotype.replace(", shape=shape, dtype=tf.float32", "")
+    phenotype = phenotype.replace("tf.math.", "")
+    phenotype = phenotype.replace("tf.", "")
+
     functions = phenotype.split(r'lambda shape,  alpha')
     alpha_func_string = functions[1][8:-2]
     beta_func_string =functions[2][14:-2] 
