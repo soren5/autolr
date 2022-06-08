@@ -57,8 +57,9 @@ def evaluate(ind, eval_func):
     ind['tree_depth'] = tree_depth
 
 
-def setup():
-    set_parameters(sys.argv[1:])
+def setup(params=None):
+    if params is None:
+        set_parameters(sys.argv[1:])
     #print(params)
     if params['SEED'] is None:
         params['SEED'] = int(datetime.now().microsecond)
@@ -70,7 +71,7 @@ def setup():
     grammar.set_min_init_tree_depth(params['MIN_TREE_DEPTH'])
 
 
-def evolutionary_algorithm(evaluation_function=None, resume_generation=-1):
+def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, params=None):
     setup()
     #print(sys.argv)
     if params['RESUME'] > -1:
