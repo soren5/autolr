@@ -230,5 +230,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
         if "COLAB" in params and params["COLAB"]:
             drive.flush_and_unmount()
             drive.mount('/content/drive')
+            import os
+            print(os.listdir(f"{params['EXPERIMENT_NAME']}/run_{params['RUN']}"))
     return population
 
