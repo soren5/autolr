@@ -85,9 +85,9 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
         drive.mount('/content/drive')
     #print(sys.argv)
     if params['RESUME'] > -1:
-        population = logger.load_population(params['RESUME'])
-        archive = logger.load_archive(params['RESUME'])
-        logger.load_random_state()
+        #population = logger.load_population(params['RESUME'])
+        #archive = logger.load_archive(params['RESUME'])
+        #logger.load_random_state()
         it = params['RESUME']
         counter = len(archive) 
     else:
@@ -225,8 +225,8 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
         population = new_population
         it += 1
         print(population)
-        logger.save_archive(it, archive)
-        logger.save_random_state()
+        #logger.save_archive(it, archive)
+        #logger.save_random_state()
         if "COLAB" in params and params["COLAB"]:
             drive.flush_and_unmount()
             drive.mount('/content/drive')
