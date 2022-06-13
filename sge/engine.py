@@ -11,6 +11,7 @@ from sge.operators.selection import tournament
 import time
 import statistics
 from scipy import stats
+import numpy as np
 from sge.parameters import (
     params,
     set_parameters
@@ -44,12 +45,15 @@ def evaluate(ind, eval_func):
     mapping_values = [0 for i in ind['genotype']]
     phen, tree_depth = grammar.mapping(ind['genotype'], mapping_values)
     if 'grad' in smart_phenotype(phen):
-        quality, other_info = eval_func.evaluate(phen, params)
+        import numpy as np
+        import tensorflow as tf
+        #quality, other_info = eval_func.evaluate(phen, params)
+        #quality = -(random.random() + np.random.random() + tf.random.Generator.from_seed(random.randint(0, 100)).normal([]).numpy())/3
+        quality = -(random.random() + np.random.random())/2
+        other_info = {}
     else:
         quality = -0.1
         other_info = {}
-    #quality = -random.random()
-    #other_info = {}
     ind['phenotype'] = phen 
     ind['fitness'] = quality
     ind['other_info'] = other_info
@@ -57,9 +61,12 @@ def evaluate(ind, eval_func):
     ind['tree_depth'] = tree_depth
 
 
-def setup(params=None):
-    if params is None:
+def setup(parameters=None):
+    if parameters is None:
         set_parameters(sys.argv[1:])
+    else:
+        global params
+        params = parameters
     #print(params)
     if params['SEED'] is None:
         params['SEED'] = int(datetime.now().microsecond)
@@ -71,13 +78,18 @@ def setup(params=None):
     grammar.set_min_init_tree_depth(params['MIN_TREE_DEPTH'])
 
 
-def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, params=None):
-    setup(params)
+def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, parameters=None):
+    setup(parameters)
+    if "COLAB" in params and params["COLAB"]:
+        from google.colab import drive
+        drive.mount('/content/drive')
     #print(sys.argv)
     if params['RESUME'] > -1:
         population = logger.load_population(params['RESUME'])
+        archive = logger.load_archive(params['RESUME'])
         logger.load_random_state()
         it = params['RESUME']
+        counter = len(archive) 
     else:
         print(params['EPOCHS'])
         if params['PREPOPULATE']:
@@ -90,34 +102,34 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
             population = initialize_population(genes_dict[params["GENES"]])
         else:
             population = initialize_population()
+        archive = {}
+        for indiv in population:
+            indiv["evaluations"] = [] 
+            mapping_values = [0 for i in indiv['genotype']]
+            phen, tree_depth = grammar.mapping(indiv['genotype'], mapping_values)
+            indiv['phenotype'] = phen
+            indiv['mapping_values'] = mapping_values
+        id = len(population)
+        counter = id
         it = 0
-    history = {}
-    start_time = time.time()
-    for indiv in population:
-        indiv["evaluations"] = [] 
-        mapping_values = [0 for i in indiv['genotype']]
-        phen, tree_depth = grammar.mapping(indiv['genotype'], mapping_values)
-        indiv['phenotype'] = phen
-        indiv['mapping_values'] = mapping_values
-    id = len(population)
-    counter = id
+    
     
     while it <= params['GENERATIONS']:
         evaluation_indices = list(range(len(population)))
         for indiv in population:
             indiv['smart_phenotype'] = smart_phenotype(indiv['phenotype'])
-            if indiv['smart_phenotype'] not in history:
+            if indiv['smart_phenotype'] not in archive:
                 key = indiv['smart_phenotype']
-                history[key] = {'evaluations': []}
-                history[key]['id'] = indiv['id']
+                archive[key] = {'evaluations': []}
+                archive[key]['id'] = indiv['id']
                 for _ in range(5):
                     evaluate(indiv, evaluation_function)
-                    history[key]['evaluations'].append(indiv['fitness'])
-                    history[key]['fitness'] = statistics.mean(history[key]['evaluations'])
+                    archive[key]['evaluations'].append(indiv['fitness'])
+                    archive[key]['fitness'] = statistics.mean(archive[key]['evaluations'])
                     with open("log.txt", 'a') as f:
-                        print(f"[{it}][{indiv['id']}] new_fitness { history[key]['fitness']}, n_evaluations {len( history[key]['evaluations'])}, smart phenotype {key}", file=f)
+                        print(f"[{it}][{indiv['id']}] new_fitness { archive[key]['fitness']}, n_evaluations {len( archive[key]['evaluations'])}, smart phenotype {key}", file=f)
         try:
-            stat, p_value_kruskal = stats.kruskal(*[history[population[x]['smart_phenotype']]['evaluations'] for x in evaluation_indices])
+            stat, p_value_kruskal = stats.kruskal(*[archive[population[x]['smart_phenotype']]['evaluations'] for x in evaluation_indices])
         except ValueError as e:
             with open("log.txt", 'a') as f:
                 print(f"[{it}] Value error: {e}. Next Iteration.", file=f)
@@ -130,9 +142,9 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
             best_fit = 0
             for indiv in population:
                 key = indiv['smart_phenotype']
-                if history[key]['fitness'] < best_fit:
-                    best = history[key]
-                    best_fit = history[key]['fitness']
+                if archive[key]['fitness'] < best_fit:
+                    best = archive[key]
+                    best_fit = archive[key]['fitness']
             to_remove = []
             for eval_index in evaluation_indices:
                 indiv = population[eval_index]
@@ -140,7 +152,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
                     print(f"[{it}] Testing {indiv['id']}",  file=f)
                 if indiv['id'] != best['id']:
                     try:
-                        stat, p_value = stats.mannwhitneyu(best['evaluations'], history[indiv['smart_phenotype']]['evaluations'])
+                        stat, p_value = stats.mannwhitneyu(best['evaluations'], archive[indiv['smart_phenotype']]['evaluations'])
                     except ValueError as e:
                         with open("log.txt", 'a') as f:
                             print(f"[{it}] [{indiv['id']}] is equal to best [{best['id']}. Value error: {e}", file=f) 
@@ -154,16 +166,16 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
                             print(f"[{it}] Evaluating individual [{indiv['id']}], similar to best [{best['id']}].",  file=f)
                         key = indiv['smart_phenotype']             
                         evaluate(indiv, evaluation_function)
-                        history[key]['evaluations'].append(indiv['fitness'])
-                        history[key]['fitness'] = statistics.mean(history[key]['evaluations']) 
+                        archive[key]['evaluations'].append(indiv['fitness'])
+                        archive[key]['fitness'] = statistics.mean(archive[key]['evaluations']) 
                         with open("log.txt", 'a') as f:
-                            print(f"[{it}][{indiv['id']}] new_fitness {history[key]['fitness']}, n_evaluations {len(history[key]['evaluations'])}, smart phenotype {key}", file=f)
+                            print(f"[{it}][{indiv['id']}] new_fitness {archive[key]['fitness']}, n_evaluations {len(archive[key]['evaluations'])}, smart phenotype {key}", file=f)
             for remove_index in to_remove:
                 evaluation_indices.remove(remove_index)
             ids_left = [population[x]["id"] for x in evaluation_indices]
             if len(evaluation_indices) > 1:
                 try:
-                    stat, p_value_kruskal = stats.kruskal(*[history[population[x]['smart_phenotype']]['evaluations'] for x in evaluation_indices])
+                    stat, p_value_kruskal = stats.kruskal(*[archive[population[x]['smart_phenotype']]['evaluations'] for x in evaluation_indices])
                 except ValueError as e:
                     with open("log.txt", 'a') as f:
                         print(f"[{it}] Entire population is equal. Concluding iteration. Value error: {e}. ", file=f)
@@ -179,7 +191,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
                     print(f"[{it}] Only one individual left, concluding iteration.", file=f)
         for indiv in population:
             key = indiv['smart_phenotype']
-            indiv['fitness'] = history[key]['fitness']
+            indiv['fitness'] = archive[key]['fitness']
         print(f"{[x['id'] for x in population]}")
         population.sort(key=lambda x: x['fitness'])
         logger.evolution_progress(it, population)
@@ -200,10 +212,10 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
             phen, tree_depth = grammar.mapping(new_indiv['genotype'], mapping_values)
             new_indiv['phenotype'] = phen
             new_indiv['smart_phenotype'] = smart_phenotype(phen)
-            if new_indiv['smart_phenotype'] in history:
+            if new_indiv['smart_phenotype'] in archive:
                 with open("log.txt", 'a') as f:
-                    print(f"[{it}][{len(new_population)}/{params['POPSIZE']}] New individual found in history with id {history[new_indiv['smart_phenotype']]['id']}", file=f)
-                new_indiv['id'] = history[new_indiv['smart_phenotype']]['id']
+                    print(f"[{it}][{len(new_population)}/{params['POPSIZE']}] New individual found in archive with id {archive[new_indiv['smart_phenotype']]['id']}", file=f)
+                new_indiv['id'] = archive[new_indiv['smart_phenotype']]['id']
             else:
                 with open("log.txt", 'a') as f:
                     print(f"[{it}][{len(new_population)}/{params['POPSIZE']}] New individual with new behaviour, assigned id {counter + 1}", file=f)
@@ -213,7 +225,10 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
         population = new_population
         it += 1
         print(population)
-        #logger.bee_report(it, population, start_time)
+        logger.save_archive(it, archive)
         logger.save_random_state()
+        if "COLAB" in params and params["COLAB"]:
+            drive.flush_and_unmount()
+            drive.mount('/content/drive')
     return population
 
