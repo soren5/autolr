@@ -2,7 +2,6 @@ from operator import inv
 import random
 import sys
 import sge.grammar as grammar
-import sge.logger as logger
 import copy
 from datetime import datetime
 from sge.operators.recombination import crossover
@@ -83,6 +82,8 @@ def setup(parameters=None, logger=None):
 def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, parameters=None, logger_module=None):
     if logger_module != None:
         logger = logger_module
+    else:
+        import sge.logger as logger
     setup(parameters)
     if "COLAB" in params and params["COLAB"]:
         from google.colab import drive
