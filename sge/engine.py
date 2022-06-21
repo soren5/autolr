@@ -145,7 +145,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
                 print(f"[{it}] Running iteration...",file=f)
             #population.sort(key=lambda x: x['fitness'])
             #best = population[0]
-            best_fit = 100000
+            best_fit = 1000001
             for indiv in population:
                 key = indiv['smart_phenotype']
                 if archive[key]['fitness'] < best_fit:
