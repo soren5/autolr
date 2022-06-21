@@ -61,7 +61,7 @@ def evaluate(ind, eval_func):
     ind['tree_depth'] = tree_depth
 
 
-def setup(parameters=None):
+def setup(parameters=None, logger=None):
     if parameters is None:
         set_parameters(sys.argv[1:])
     else:
@@ -70,6 +70,8 @@ def setup(parameters=None):
     #print(params)
     if params['SEED'] is None:
         params['SEED'] = int(datetime.now().microsecond)
+    if logger is None:
+        import logger
     logger.prepare_dumps()
     random.seed(params['SEED'])
     grammar.set_path(params['GRAMMAR'])
