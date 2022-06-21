@@ -46,12 +46,12 @@ def evaluate(ind, eval_func):
     if 'grad' in smart_phenotype(phen):
         import numpy as np
         import tensorflow as tf
-        #quality, other_info = eval_func.evaluate(phen, params)
+        quality, other_info = eval_func.evaluate(phen, params)
         #quality = -(random.random() + np.random.random() + tf.random.Generator.from_seed(random.randint(0, 100)).normal([]).numpy())/3
-        quality = -(random.random() + np.random.random())/2
+        #quality = -(random.random() + np.random.random())/2
         other_info = {}
     else:
-        quality = -0.1
+        quality = 100000
         other_info = {}
     ind['phenotype'] = phen 
     ind['fitness'] = quality
