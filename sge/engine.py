@@ -85,7 +85,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
         logger = logger_module
     else:
         import sge.logger as logger
-    setup(parameters)
+    setup(parameters, logger_module)
     if "COLAB" in params and params["COLAB"]:
         from google.colab import drive
         drive.mount('/content/drive')
