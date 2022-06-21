@@ -78,7 +78,9 @@ def setup(parameters=None):
     grammar.set_min_init_tree_depth(params['MIN_TREE_DEPTH'])
 
 
-def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, parameters=None):
+def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, parameters=None, logger_module=None):
+    if logger_module != None:
+        logger = logger_module
     setup(parameters)
     if "COLAB" in params and params["COLAB"]:
         from google.colab import drive
