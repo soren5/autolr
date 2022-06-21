@@ -70,7 +70,8 @@ def setup(parameters=None, logger=None):
     if params['SEED'] is None:
         params['SEED'] = int(datetime.now().microsecond)
     if logger is None:
-        import logger
+        import sge.logger
+        print("Using Native Logger")
     logger.prepare_dumps()
     random.seed(params['SEED'])
     grammar.set_path(params['GRAMMAR'])
