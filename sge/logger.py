@@ -18,24 +18,55 @@ def evolution_progress(generation, pop):
         save_step(generation, pop)
 
 def elicit_progress(generation, pop):
-    
+    def translate_operation_to_elicit(operation):
+        if operation == "initialization":
+            return -1
+        elif operation == "copy":
+            return 0
+        elif operation == "crossover":
+            return 1
+        elif operation == "mutation":
+            return 2
+        elif operation == "elitism":
+            return 3
+        elif operation == "crossover+mutation":
+            return 4
+        else:
+            pass
+    data = ""
+    for indiv in pop:
+        parent_1 = -1
+        parent_2 = -1
+        if 'parent' in indiv and len(indiv['parent']) >= 1:
+            parent_1 = indiv['parent'][0]
+            if len(indiv['parent']) >= 2:
+                parent_2 = indiv['parent'][1]
+        data += f"{generation} {indiv['id']} {translate_operation_to_elicit(indiv['operation'])} {parent_1} {parent_2} {indiv['fitness'] * -1}\n"
+    with open('%s/run_%d/elicit_report.txt' % (params['EXPERIMENT_NAME'], params['RUN']), 'a') as f:
+        f.write(data)  
 
 def save_random_state():
+    import sys
     builtin_state = random.getstate()
+    tf_seed = random.randint(0, sys.maxsize)
+    tf.random.set_seed(tf_seed)
+    numpy_state = np.random.get_state()
     with open(str(params['EXPERIMENT_NAME']) + '/run_' + str(params['RUN']) + '/builtinstate', 'wb') as f:
         pickle.dump(builtin_state, f)
-    np.random.seed(random.randint(0, 1000000))
-    #pickle.dump(numpy_state, str(params['EXPERIMENT_NAME']) + '/run_' + str(params['RUN']) + '/numpystate')
-    tf.random.set_seed(random.randint(0, 1000000))
+    with open(str(params['EXPERIMENT_NAME']) + '/run_' + str(params['RUN']) + '/numpystate', 'wb') as f:
+        pickle.dump(numpy_state, f)
     
 
 def load_random_state():
+    import sys
     with open(str(params['EXPERIMENT_NAME']) + '/run_' + str(params['RUN']) + '/builtinstate', 'rb') as f:
         builtin_state = pickle.load(f)
-    #numpy_state = pickle.load(str(params['EXPERIMENT_NAME']) + '/run_' + str(params['RUN']) + '/numpystate')
+    with open(str(params['EXPERIMENT_NAME']) + '/run_' + str(params['RUN']) + '/numpystate', 'rb') as f:
+        numpy_state = pickle.load(f)
+    np.random.set_state(numpy_state)
     random.setstate(builtin_state)
-    np.random.seed(random.randint(0, 1000000))
-    tf.random.set_seed(random.randint(0, 1000000))
+    tf_seed = random.randint(0, sys.maxsize)
+    tf.random.set_seed(tf_seed)
 
 
 def save_progress_to_file(data):
@@ -51,6 +82,15 @@ def load_population(generation):
     with open('%s/run_%d/iteration_%d.json' % (params['EXPERIMENT_NAME'], params['RUN'], generation), 'r') as f:
         population = json.load(f)
     return population
+
+def save_archive(generation, archive):
+    with open('%s/run_%d/z-archive_%d.json' % (params['EXPERIMENT_NAME'], params['RUN'], generation), 'w') as f:
+        json.dump(archive, f)
+
+def load_archive(generation):
+    with open('%s/run_%d/z-archive_%d.json' % (params['EXPERIMENT_NAME'], params['RUN'], generation), 'r') as f:
+        archive = json.load(f)
+    return archive
 
 def save_parameters():
     params_lower = dict((k.lower(), v) for k, v in params.items())

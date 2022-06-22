@@ -46,22 +46,7 @@ def train_model(phen):
     print(len(dataset['x_train']))
 
     model.set_weights(weights)
-
-    alpha_dict = {}
-    beta_dict = {}
-    sigma_dict = {}
-    for layer in model.layers:
-        for trainable_weight in layer._trainable_weights:
-            alpha_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="alpha" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
-            beta_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="beta" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
-            sigma_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="sigma" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
-    foo = {"tf": tf}
-    exec(phen, foo)
-    alpha_func = foo["alpha_func"]
-    beta_func = foo["beta_func"]
-    sigma_func = foo["sigma_func"]
-    grad_func = foo["grad_func"]
-    opt = CustomOptimizer(alpha=alpha_dict, alpha_func=alpha_func, beta=beta_dict, beta_func=beta_func, sigma=sigma_dict, sigma_func=sigma_func, grad_func=grad_func)
+    opt = CustomOptimizer(phen=phen, model=model)
     
     
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
