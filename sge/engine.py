@@ -21,7 +21,7 @@ from genotypes import *
 def generate_random_individual():
     genotype = [[] for key in grammar.get_non_terminals()]
     tree_depth = grammar.recursive_individual_creation(genotype, grammar.start_rule()[0], 0)
-    return {'genotype': genotype, 'fitness': None, 'tree_depth' : tree_depth}
+    return {'genotype': genotype, 'fitness': None, 'tree_depth' : tree_depth, 'operation': "initialization"}
 
 
 def make_initial_population():
@@ -155,6 +155,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1):
                     
         population.sort(key=lambda x: len(x["evaluations"]))
         logger.evolution_progress(it, population)
+        logger.elicit_progress(it, population)
         new_population = population[:params['ELITISM']]
         while len(new_population) < params['POPSIZE']:
             if random.random() < params['PROB_CROSSOVER']:
