@@ -206,9 +206,6 @@ def evaluate_sign_cifar(beta_1):
 
     return max(result[1]['val_accuracy'])
 
-for seed in range(20, 50):
-
-
 
 
 

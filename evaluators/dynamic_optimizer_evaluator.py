@@ -59,6 +59,7 @@ weights = model.get_weights()
 
 def train_model(phen):
     model.compile(loss='categorical_crossentropy', optimizer=keras.optimizers.SGD(lr=0.01, momentum=0.0, decay=0.0, nesterov=False), metrics=['accuracy'])
+    scheduler = None
     function_string ='''
 def scheduler(epoch, learning_rate):
     print('epoch: ', epoch)

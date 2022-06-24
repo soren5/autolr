@@ -39,13 +39,6 @@ class ADES(tf.keras.optimizers.Optimizer):
         return foo
 
 
-
-    def get_config(self):
-        config = {
-                'lr': bfloat16(K.get_value(self.lr)),
-        }
-        base_config = super(ADES, self).get_config()
-        return dict(list(base_config.items()) + list(config.items()))
 class CustomOptimizer(keras.optimizers.Optimizer):
     def __init__(self,
                             name="CustomOptimizer",
@@ -120,12 +113,6 @@ class CustomOptimizer(keras.optimizers.Optimizer):
                 var.handle, tf.constant(1.0), self._grad_func(var.shape, self._alpha_dict[variable_name], self._beta_dict[variable_name], self._sigma_dict[variable_name], grad), use_locking=self._use_locking)
         return foo
 
-    def get_config(self):
-        config = {
-                'lr': bfloat16(K.get_value(self.lr)),
-        }
-        base_config = super(CustomOptimizer, self).get_config()
-        return dict(list(base_config.items()) + list(config.items()))
 
 
 
