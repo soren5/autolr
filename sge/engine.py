@@ -15,7 +15,7 @@ from sge.parameters import (
     params,
     set_parameters
 )
-from genotypes import *
+from utils.genotypes import *
 from utils.smart_phenotype import smart_phenotype
 
 
