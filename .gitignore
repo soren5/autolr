@@ -151,3 +151,4 @@ experiments*
 results/
 dumps/
 deprecated_custom_optimizer.tst
+.vscode/
