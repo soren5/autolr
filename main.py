@@ -20,7 +20,6 @@ class LROptimizer:
         return -value, other_info
 
 if __name__ == "__main__":
-    import sge.grammar as grammar
     import sge
     evaluation_function = LROptimizer()
     sge.evolutionary_algorithm(evaluation_function=evaluation_function)
