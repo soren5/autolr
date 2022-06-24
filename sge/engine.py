@@ -39,16 +39,16 @@ def initialize_population(solutions=[]):
 def evaluate(ind, eval_func):
     mapping_values = [0 for i in ind['genotype']]
     phen, tree_depth = grammar.mapping(ind['genotype'], mapping_values)
-    if 'grad' in smart_phenotype(phen):
+    other_info = {}
+    if "FAKE_FITNESS" in params and params['FAKE_FITNESS']:
         import numpy as np
         import tensorflow as tf
-        #quality, other_info = eval_func.evaluate(phen, params)
-        #quality = -(random.random() + np.random.random() + tf.random.Generator.from_seed(random.randint(0, 100)).normal([]).numpy())/3
         quality = -(random.random() + np.random.random())/2
-        other_info = {}
     else:
-        quality = 0
-        other_info = {}
+        if 'grad' in smart_phenotype(phen):
+            quality, other_info = eval_func.evaluate(phen, params)
+        else:
+            quality = params['FITNESS_FLOOR']
     ind['phenotype'] = phen 
     ind['fitness'] = quality
     ind['other_info'] = other_info
@@ -86,15 +86,14 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
         from google.colab import drive
         drive.mount('/content/drive')
     #print(sys.argv)
-    if params['RESUME'] > -1:
+    if 'RESUME' in params:
         #population = logger.load_population(params['RESUME'])
         #archive = logger.load_archive(params['RESUME'])
         #logger.load_random_state()
         it = params['RESUME']
         counter = len(archive) 
     else:
-        print(params['EPOCHS'])
-        if params['PREPOPULATE']:
+        if 'PREPOPULATE' in params and params['PREPOPULATE']:
             genes_dict={
                 'all': [get_adam_genotype(), get_momentum_genotype(), get_rmsprop_genotype()],
                 'adam': [get_adam_genotype()],
@@ -113,9 +112,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
             indiv['mapping_values'] = mapping_values
         id = len(population)
         counter = id
-        it = 0
-    
-    
+        it = 0 
     while it <= params['GENERATIONS']:
         evaluation_indices = list(range(len(population)))
         for indiv in population:
