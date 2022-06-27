@@ -46,6 +46,8 @@ def test_short_run():
     import sge.grammar as grammar
     import sge
     from main import LROptimizer
+    from utils import create_models
+    create_models.create_models()
     params = {
         "POPSIZE": 2,
         "GENERATIONS": 2,
