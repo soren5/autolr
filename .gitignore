@@ -150,4 +150,8 @@ secret.py
 experiments*
 results/
 dumps/
-
+deprecated_custom_optimizer.tst
+.vscode/
+*.pdf
+*.png
+log.txt

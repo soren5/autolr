@@ -17,7 +17,33 @@ def evolution_progress(generation, pop):
     if generation % params['SAVE_STEP'] == 0:
         save_step(generation, pop)
 
-
+def elicit_progress(generation, pop):
+    def translate_operation_to_elicit(operation):
+        if operation == "initialization":
+            return -1
+        elif operation == "copy":
+            return 0
+        elif operation == "crossover":
+            return 1
+        elif operation == "mutation":
+            return 2
+        elif operation == "elitism":
+            return 3
+        elif operation == "crossover+mutation":
+            return 4
+        else:
+            pass
+    data = ""
+    for indiv in pop:
+        parent_1 = -1
+        parent_2 = -1
+        if 'parent' in indiv and len(indiv['parent']) >= 1:
+            parent_1 = indiv['parent'][0]
+            if len(indiv['parent']) >= 2:
+                parent_2 = indiv['parent'][1]
+        data += f"{generation} {indiv['id']} {translate_operation_to_elicit(indiv['operation'])} {parent_1} {parent_2} {indiv['fitness'] * -1}\n"
+    with open('%s/run_%d/elicit_report.txt' % (params['EXPERIMENT_NAME'], params['RUN']), 'a') as f:
+        f.write(data)  
 
 def save_random_state():
     import sys
@@ -69,7 +95,7 @@ def load_archive(generation):
 def save_parameters():
     params_lower = dict((k.lower(), v) for k, v in params.items())
     c = json.dumps(params_lower)
-    open('%s/run_%d/parameters.json' % (params['EXPERIMENT_NAME'], params['RUN']), 'a').write(c)
+    open('%s/run_%d/_parameters.json' % (params['EXPERIMENT_NAME'], params['RUN']), 'a').write(c)
 
 
 def prepare_dumps():

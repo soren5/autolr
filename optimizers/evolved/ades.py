@@ -38,3 +38,18 @@ class ADES(CustomOptimizer):
             )
         self._grad_func = lambda shape, alpha, grad: tf.math.negative(alpha)
 
+
+    def _resource_apply_dense(self, grad, var, apply_state=None):
+        #print("_resource_apply_dense")
+        variable_name = var.name
+        #print(variable_name)
+        var_device, var_dtype = var.device, var.dtype.base_dtype
+        coefficients = ((apply_state or {}).get((var_device, var_dtype))
+                                        or self._fallback_apply_state(var_device, var_dtype))
+        
+        training_ops.resource_apply_gradient_descent(
+                    self._alpha_dict[variable_name].handle, tf.constant(1.0), self._alpha_func(var.shape, self._alpha_dict[variable_name], grad), use_locking=self._use_locking)
+            
+        foo = training_ops.resource_apply_gradient_descent(
+                var.handle, tf.constant(1.0), self._grad_func(var.shape, self._alpha_dict[variable_name], grad), use_locking=self._use_locking)
+        return foo

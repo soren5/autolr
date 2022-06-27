@@ -15,15 +15,14 @@ from sge.parameters import (
     params,
     set_parameters
 )
-from genotypes import *
+from utils.genotypes import *
 from utils.smart_phenotype import smart_phenotype
 
 
 def generate_random_individual():
     genotype = [[] for key in grammar.get_non_terminals()]
     tree_depth = grammar.recursive_individual_creation(genotype, grammar.start_rule()[0], 0)
-    return {'genotype': genotype, 'fitness': None, 'tree_depth' : tree_depth}
-
+    return {'genotype': genotype, 'fitness': None, 'tree_depth' : tree_depth, 'operation': "initialization"}
 
 def make_initial_population():
     for i in range(params['POPSIZE']):
@@ -32,27 +31,24 @@ def make_initial_population():
 def initialize_population(solutions=[]):
     population = list(make_initial_population())
     for i in range(len(solutions)):
-        population[i] = {"genotype": solutions[i], "fitness": None, "parent": "X"}
+        population[i] = {"genotype": solutions[i], "fitness": None, "parent": "X", 'operation': "initialization"}
     for i in range(len(population)):
         population[i]['id'] = i
     return population
-    
-
-
 
 def evaluate(ind, eval_func):
     mapping_values = [0 for i in ind['genotype']]
     phen, tree_depth = grammar.mapping(ind['genotype'], mapping_values)
-    if 'grad' in smart_phenotype(phen):
+    other_info = {}
+    if "FAKE_FITNESS" in params and params['FAKE_FITNESS']:
         import numpy as np
         import tensorflow as tf
-        quality, other_info = eval_func.evaluate(phen, params)
-        #quality = -(random.random() + np.random.random() + tf.random.Generator.from_seed(random.randint(0, 100)).normal([]).numpy())/3
-        #quality = -(random.random() + np.random.random())/2
-        other_info = {}
+        quality = -(random.random() + np.random.random())/2
     else:
-        quality = 100000
-        other_info = {}
+        if 'grad' in smart_phenotype(phen):
+            quality, other_info = eval_func.evaluate(phen, params)
+        else:
+            quality = params['FITNESS_FLOOR']
     ind['phenotype'] = phen 
     ind['fitness'] = quality
     ind['other_info'] = other_info
@@ -90,15 +86,14 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
         from google.colab import drive
         drive.mount('/content/drive')
     #print(sys.argv)
-    if params['RESUME'] > -1:
+    if 'RESUME' in params:
         #population = logger.load_population(params['RESUME'])
         #archive = logger.load_archive(params['RESUME'])
         #logger.load_random_state()
         it = params['RESUME']
         counter = len(archive) 
     else:
-        print(params['EPOCHS'])
-        if params['PREPOPULATE']:
+        if 'PREPOPULATE' in params and params['PREPOPULATE']:
             genes_dict={
                 'all': [get_adam_genotype(), get_momentum_genotype(), get_rmsprop_genotype()],
                 'adam': [get_adam_genotype()],
@@ -117,9 +112,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
             indiv['mapping_values'] = mapping_values
         id = len(population)
         counter = id
-        it = 0
-    
-    
+        it = 0 
     while it <= params['GENERATIONS']:
         evaluation_indices = list(range(len(population)))
         for indiv in population:
@@ -201,19 +194,18 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
         print(f"{[x['id'] for x in population]}")
         population.sort(key=lambda x: x['fitness'])
         logger.evolution_progress(it, population)
+        logger.elicit_progress(it, population)
         new_population = population[:params['ELITISM']]
+        for indiv in new_population:
+            indiv['operation'] = 'elitism'
         while len(new_population) < params['POPSIZE']:
             if random.random() < params['PROB_CROSSOVER']:
                 p1 = tournament(population, params['TSIZE'])
                 p2 = tournament(population, params['TSIZE'])
                 new_indiv = crossover(p1, p2)
-                new_indiv["parent"] = [p1['id'], p2['id']]
             else:
                 new_indiv = tournament(population, params['TSIZE'])
-                new_indiv["parent"] = [new_indiv['id']]
-
             new_indiv = mutate(new_indiv, params['PROB_MUTATION'])
-
             mapping_values = [0 for i in new_indiv['genotype']]
             phen, tree_depth = grammar.mapping(new_indiv['genotype'], mapping_values)
             new_indiv['phenotype'] = phen
