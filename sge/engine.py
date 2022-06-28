@@ -70,6 +70,7 @@ def setup(parameters=None, logger=None):
         print("Using Native Logger")
     logger.prepare_dumps()
     random.seed(params['SEED'])
+    np.random.seed(params['SEED'])
     grammar.set_path(params['GRAMMAR'])
     grammar.read_grammar()
     grammar.set_max_tree_depth(params['MAX_TREE_DEPTH'])
