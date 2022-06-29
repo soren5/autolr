@@ -38,7 +38,8 @@ def test_engine():
         "MIN_TREE_DEPTH": 6,
         "MAX_TREE_DEPTH": 17,
         "PREPOPULATE": False,
-        "FAKE_FITNESS": True
+        "FAKE_FITNESS": True,
+        "FITNESS_FLOOR": 0,
     }
     sge.evolutionary_algorithm(parameters=params)
 
@@ -85,14 +86,15 @@ def test_short_run():
         "EPOCHS": 2,
         "MODEL": 'models/mnist_model.h5',
         "VALIDATION_SIZE": 10,
-        "TEST_SIZE": 59590,
+        "TEST_SIZE": 59980,
         "BATCH_SIZE": 5,
         "MIN_TREE_DEPTH": 6,
         "MAX_TREE_DEPTH": 17,
         "FITNESS_FLOOR": 0,
         "PREPOPULATE": False,
+        "PATIENCE": 0,
     }
     evaluation_function = LROptimizer()
     sge.evolutionary_algorithm(parameters=params, evaluation_function=evaluation_function)
-
-test_short_run()
+if __name__ == "__main__":
+    test_short_run()    

@@ -118,5 +118,3 @@ def test_engine_resume():
     params['RUN'] = 2
     pop2 = sge.evolutionary_algorithm(parameters=params, evaluation_function=None)
     assert pop1 == pop2    
-
-test_engine_resume()
