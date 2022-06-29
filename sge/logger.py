@@ -83,24 +83,20 @@ def save_step(generation, population):
 def save_population(generation, population):
     with open('%s/run_%d/population_%d.json' % (params['EXPERIMENT_NAME'], params['RUN'], generation), 'w') as f:
         json.dump(population, f)
-    #print(f"SAVE POP: {generation}, {[x['id'] for x in population]}")
 
 def load_population(generation):
     with open('%s/run_%d/population_%d.json' % (params['EXPERIMENT_NAME'], params['RUN'], generation), 'r') as f:
         population = json.load(f)
-    #print(f"LOAD POP: {generation}, {[x['id'] for x in population]}")
     return population
 
 def save_archive(generation, archive):
     with open('%s/run_%d/z-archive_%d.json' % (params['EXPERIMENT_NAME'], params['RUN'], generation), 'w') as f:
         json.dump(archive, f)
-    print(f"SAVE ARC: {generation}, {[archive[x]['id'] for x in archive]}")
 
 
 def load_archive(generation):
     with open('%s/run_%d/z-archive_%d.json' % (params['EXPERIMENT_NAME'], params['RUN'], generation), 'r') as f:
         archive = json.load(f)
-    print(f"LOAD ARC: {generation}, {[archive[x]['id'] for x in archive]}")
     return archive
 
 def save_parameters():
