@@ -37,7 +37,6 @@ def test_engine():
         "VERBOSE": True,
         "MIN_TREE_DEPTH": 6,
         "MAX_TREE_DEPTH": 17,
-        "PREPOPULATE": False,
         "FAKE_FITNESS": True,
         "FITNESS_FLOOR": 0,
     }
@@ -96,5 +95,3 @@ def test_short_run():
     }
     evaluation_function = LROptimizer()
     sge.evolutionary_algorithm(parameters=params, evaluation_function=evaluation_function)
-if __name__ == "__main__":
-    test_short_run()    

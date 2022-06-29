@@ -61,11 +61,10 @@ def test_engine_random():
         "PREPOPULATE": False,
         "FAKE_FITNESS": True,
     }
-    while True:
-        pop1 = sge.evolutionary_algorithm(parameters=params, evaluation_function=None)
-        params["RUN"] = 2
-        pop2 = sge.evolutionary_algorithm(parameters=params, evaluation_function=None)
-        assert pop1 == pop2
+    pop1 = sge.evolutionary_algorithm(parameters=params, evaluation_function=None)
+    params["RUN"] = 2
+    pop2 = sge.evolutionary_algorithm(parameters=params, evaluation_function=None)
+    assert pop1 == pop2
 
 def test_engine_resume():
     import sge
@@ -118,3 +117,4 @@ def test_engine_resume():
     params['RUN'] = 2
     pop2 = sge.evolutionary_algorithm(parameters=params, evaluation_function=None)
     assert pop1 == pop2    
+
