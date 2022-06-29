@@ -23,6 +23,7 @@ class LROptimizer:
 if __name__ == "__main__":
     import sge
     evaluation_function = LROptimizer()
+    
     sge.evolutionary_algorithm(evaluation_function=evaluation_function)
         
 
