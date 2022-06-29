@@ -22,17 +22,12 @@ import sys
 
 import numpy as np
 import datetime
-from sge.parameters import (
-    params,
-    set_parameters
-)
-set_parameters(sys.argv[1:])
-
 experiment_time = datetime.datetime.now()
 
 
 
-def train_model(phen):
+def train_model(phen_params):
+    phen, params = phen_params
     print(params['EPOCHS'])
     validation_size = params['VALIDATION_SIZE']
     test_size = params['TEST_SIZE'] 
@@ -55,7 +50,7 @@ def train_model(phen):
     score = model.fit(dataset['x_train'], dataset['y_train'],
         batch_size=batch_size,
         epochs=epochs,
-        verbose=0,
+        verbose=2,
         validation_data=(dataset['x_val'], dataset['y_val']),
         validation_steps= validation_size // batch_size,
         callbacks=[
