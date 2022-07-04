@@ -45,28 +45,30 @@ def elicit_progress(generation, pop):
     with open('%s/run_%d/elicit_report.txt' % (params['EXPERIMENT_NAME'], params['RUN']), 'a') as f:
         f.write(data)  
 
-def save_random_state():
+def save_random_state(it):
     import sys
     builtin_state = random.getstate()
-    tf_seed = random.randint(0, sys.maxsize)
-    tf.random.set_seed(tf_seed)
+    #tf_seed = random.randint(0, sys.maxsize)
+    #tf.random.set_seed(tf_seed)
     numpy_state = np.random.get_state()
-    with open(str(params['EXPERIMENT_NAME']) + '/run_' + str(params['RUN']) + '/builtinstate', 'wb') as f:
+    with open(str(params['EXPERIMENT_NAME']) + '/run_' + str(params['RUN']) + f'/builtinstate_{it}', 'wb') as f:
         pickle.dump(builtin_state, f)
-    with open(str(params['EXPERIMENT_NAME']) + '/run_' + str(params['RUN']) + '/numpystate', 'wb') as f:
+    with open(str(params['EXPERIMENT_NAME']) + '/run_' + str(params['RUN']) + f'/numpystate_{it}', 'wb') as f:
         pickle.dump(numpy_state, f)
+    #np.random.set_state(numpy_state)
+    #random.setstate(builtin_state)
     
 
-def load_random_state():
+def load_random_state(it):
     import sys
-    with open(str(params['EXPERIMENT_NAME']) + '/run_' + str(params['RUN']) + '/builtinstate', 'rb') as f:
+    with open(str(params['EXPERIMENT_NAME']) + '/run_' + str(params['RUN']) + f'/builtinstate_{it}', 'rb') as f:
         builtin_state = pickle.load(f)
-    with open(str(params['EXPERIMENT_NAME']) + '/run_' + str(params['RUN']) + '/numpystate', 'rb') as f:
+    with open(str(params['EXPERIMENT_NAME']) + '/run_' + str(params['RUN']) + f'/numpystate_{it}', 'rb') as f:
         numpy_state = pickle.load(f)
     np.random.set_state(numpy_state)
     random.setstate(builtin_state)
-    tf_seed = random.randint(0, sys.maxsize)
-    tf.random.set_seed(tf_seed)
+    #tf_seed = random.randint(0, sys.maxsize)
+    #tf.random.set_seed(tf_seed)
 
 
 def save_progress_to_file(data):
@@ -78,14 +80,19 @@ def save_step(generation, population):
     with open('%s/run_%d/iteration_%d.json' % (params['EXPERIMENT_NAME'], params['RUN'], generation), 'w') as f:
         json.dump(population, f)
 
+def save_population(generation, population):
+    with open('%s/run_%d/population_%d.json' % (params['EXPERIMENT_NAME'], params['RUN'], generation), 'w') as f:
+        json.dump(population, f)
+
 def load_population(generation):
-    with open('%s/run_%d/iteration_%d.json' % (params['EXPERIMENT_NAME'], params['RUN'], generation), 'r') as f:
+    with open('%s/run_%d/population_%d.json' % (params['EXPERIMENT_NAME'], params['RUN'], generation), 'r') as f:
         population = json.load(f)
     return population
 
 def save_archive(generation, archive):
     with open('%s/run_%d/z-archive_%d.json' % (params['EXPERIMENT_NAME'], params['RUN'], generation), 'w') as f:
         json.dump(archive, f)
+
 
 def load_archive(generation):
     with open('%s/run_%d/z-archive_%d.json' % (params['EXPERIMENT_NAME'], params['RUN'], generation), 'r') as f:

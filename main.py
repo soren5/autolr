@@ -12,7 +12,8 @@ class LROptimizer:
         num_pool_workers=1 
         value, other_info = None, None
         with contextlib.closing(Pool(num_pool_workers)) as po: 
-            foo = po.map(train_model, [phen])
+            phen_params = (phen, params)
+            foo = po.map(train_model, [phen_params])
             value = foo[0][0]
             other_info = foo[0][1]
         
@@ -22,6 +23,7 @@ class LROptimizer:
 if __name__ == "__main__":
     import sge
     evaluation_function = LROptimizer()
+    
     sge.evolutionary_algorithm(evaluation_function=evaluation_function)
         
 

@@ -26,6 +26,7 @@ params = {
     'SEED': None,
     'PREPOPULATE': False,
     'PATIENCE': False,
+    'FITNESS_FLOOR': 0,
     }
 
 
