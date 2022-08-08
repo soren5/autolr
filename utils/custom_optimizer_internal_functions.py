@@ -277,7 +277,7 @@ def read_genotype(genome):
 if __name__ == "__main__":
     #from benchmarks.evaluate_fashion_mnist_model import evaluate_fashion_mnist_model
     #from utils.custom_optimizer import CustomOptimizer
-    from genotypes import *
+    from utils.genotypes import *
     
 
     #print(print_op(alpha_func_adam(tf.Variable(0.0).shape,tf.Variable(0.0),tf.Variable(0.0))))

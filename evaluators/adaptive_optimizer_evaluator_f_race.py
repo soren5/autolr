@@ -22,17 +22,12 @@ import sys
 
 import numpy as np
 import datetime
-from sge.parameters import (
-    params,
-    set_parameters
-)
-set_parameters(sys.argv[1:])
-
 experiment_time = datetime.datetime.now()
 
 
 
-def train_model(phen):
+def train_model(phen_params):
+    phen, params = phen_params
     print(params['EPOCHS'])
     validation_size = params['VALIDATION_SIZE']
     test_size = params['TEST_SIZE'] 
@@ -46,22 +41,7 @@ def train_model(phen):
     print(len(dataset['x_train']))
 
     model.set_weights(weights)
-
-    alpha_dict = {}
-    beta_dict = {}
-    sigma_dict = {}
-    for layer in model.layers:
-        for trainable_weight in layer._trainable_weights:
-            alpha_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="alpha" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
-            beta_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="beta" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
-            sigma_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="sigma" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
-    foo = {"tf": tf}
-    exec(phen, foo)
-    alpha_func = foo["alpha_func"]
-    beta_func = foo["beta_func"]
-    sigma_func = foo["sigma_func"]
-    grad_func = foo["grad_func"]
-    opt = CustomOptimizer(alpha=alpha_dict, alpha_func=alpha_func, beta=beta_dict, beta_func=beta_func, sigma=sigma_dict, sigma_func=sigma_func, grad_func=grad_func)
+    opt = CustomOptimizer(phen=phen, model=model)
     
     
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
@@ -70,7 +50,7 @@ def train_model(phen):
     score = model.fit(dataset['x_train'], dataset['y_train'],
         batch_size=batch_size,
         epochs=epochs,
-        verbose=0,
+        verbose=2,
         validation_data=(dataset['x_val'], dataset['y_val']),
         validation_steps= validation_size // batch_size,
         callbacks=[

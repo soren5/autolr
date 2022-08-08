@@ -5,6 +5,8 @@ from tensorflow.python.training import training_ops
 class CustomOptimizer(keras.optimizers.Optimizer):
     def __init__(self,
                             name="CustomOptimizer",
+                            phen=None,
+                            model=None,
                             grad_func=None,
                             alpha=None,
                             alpha_func=None,
@@ -15,15 +17,31 @@ class CustomOptimizer(keras.optimizers.Optimizer):
                             **kwargs):
 
         super(CustomOptimizer, self).__init__(name, **kwargs)
+        if phen == None:
+            self._alpha_dict = alpha
+            self._beta_dict = beta
+            self._sigma_dict = sigma
 
-        self._alpha_dict = alpha
-        self._beta_dict = beta
-        self._sigma_dict = sigma
-
-        self._alpha_func = alpha_func
-        self._beta_func = beta_func
-        self._sigma_func = sigma_func
-        self._grad_func = grad_func
+            self._alpha_func = alpha_func
+            self._beta_func = beta_func
+            self._sigma_func = sigma_func
+            self._grad_func = grad_func
+        else:
+            import numpy as np
+            self._alpha_dict = {}
+            self._beta_dict = {}
+            self._sigma_dict = {}
+            for layer in model.layers:
+                for trainable_weight in layer._trainable_weights:
+                    self._alpha_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="alpha" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
+                    self._beta_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="beta" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
+                    self._sigma_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="sigma" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
+            exec_env = {"tf": tf}
+            exec(phen, exec_env)
+            self._alpha_func = exec_env["alpha_func"]
+            self._beta_func = exec_env["beta_func"]
+            self._sigma_func = exec_env["sigma_func"]
+            self._grad_func = exec_env["grad_func"]
 
     def check_slots(self):
         return self._alpha_dict == None and self._beta_dict == None and self._sigma_dict == None
@@ -75,13 +93,3 @@ class CustomOptimizer(keras.optimizers.Optimizer):
         foo = training_ops.resource_apply_gradient_descent(
                 var.handle, tf.constant(1.0), self._grad_func(var.shape, self._alpha_dict[variable_name], self._beta_dict[variable_name], self._sigma_dict[variable_name], grad), use_locking=self._use_locking)
         return foo
-
-    def get_config(self):
-        config = {
-                'lr': bfloat16(K.get_value(self.lr)),
-        }
-        base_config = super(CustomOptimizer, self).get_config()
-        return dict(list(base_config.items()) + list(config.items()))
-
-
-

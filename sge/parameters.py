@@ -26,6 +26,7 @@ params = {
     'SEED': None,
     'PREPOPULATE': False,
     'PATIENCE': False,
+    'FITNESS_FLOOR': 0,
     }
 
 
@@ -103,7 +104,54 @@ def set_parameters(arguments):
                         dest='VERBOSE',
                         type=bool,
                         help='Turns on the verbose output of the program')
+    parser.add_argument('--resume',
+                        dest="RESUME",
+                        type=int,
+                        help="")
+    parser.add_argument('--prepopulate',
+                        dest="PREPOPULATE",
+                        type=bool,
+                        help="")
+    parser.add_argument('--protect',
+                    dest="PROTECT",
+                    type=bool,
+                    help="")
+    parser.add_argument('--genes',
+                    dest="GENES",
+                    type=str,
+                    help="")
+    parser.add_argument('--patience',
+                dest="PATIENCE",
+                type=int,
+                help="")
+    parser.add_argument('--validation_size',
+                dest="VALIDATION_SIZE",
+                type=int,
+                help="")
+    parser.add_argument('--test_size',
+                dest="TEST_SIZE",
+                type=int,
+                help="")
+    parser.add_argument('--batch_size',
+                dest="BATCH_SIZE",
+                type=int,
+                help="")
+    parser.add_argument('--epochs',
+                dest="EPOCHS",
+                type=int,
+                help="")    
+    parser.add_argument('--fake',
+                dest="FAKE_FITNESS",
+                type=bool,
+                help="")
+    parser.add_argument('--fitness_floor',
+            dest="FITNESS_FLOOR",
+            type=bool,
+            help="")
 
+    
+    
+        
     # Parse command line arguments using all above information.
     args, _ = parser.parse_known_args(arguments)
 
