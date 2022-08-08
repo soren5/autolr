@@ -20,11 +20,11 @@
       "module": "benchmarks.evolve_parameters"
     },    
     {
-      "name": "Evolve Adaptive Optimizer (Prepopulated)",
+      "name": "Evolve Adaptive Optimizer",
       "type": "python",
       "request": "launch",
       "module": "examples.evolve_adaptive_optimizer",
-      "args": ["--parameters=parameters/adaptive_autolr_config_prepopulate.yml"]
+      "args": ["--parameters=parameters/adaptive_autolr.yml"]
     },
     {
       "name": "Evolve Dynamic Optimizer (Default)",
