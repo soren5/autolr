@@ -5,7 +5,7 @@ import sge.grammar as grammar
 import copy
 from datetime import datetime
 from sge.operators.recombination import crossover
-from sge.operators.mutation import mutate_level as mutate
+from sge.operators.mutation import mutate_level, mutate
 from sge.operators.selection import tournament
 import time
 import statistics
@@ -183,7 +183,11 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
                 new_indiv = crossover(p1, p2)
             else:
                 new_indiv = tournament(population, params['TSIZE'])
-            new_indiv = mutate(new_indiv, params['PROB_MUTATION'])
+            if type(params['PROB_MUTATION']) == float:
+                new_indiv = mutate(new_indiv, params['PROB_MUTATION'])
+            elif type(params['PROB_MUTATION']) == list:
+                assert len(params['PROB_MUTATION']) == len(new_indiv['genotype'])
+                new_indiv = mutate_level(new_indiv, params['PROB_MUTATION'])
             mapping_values = [0 for i in new_indiv['genotype']]
             phen, tree_depth = grammar.mapping(new_indiv['genotype'], mapping_values)
             new_indiv['phenotype'] = phen
