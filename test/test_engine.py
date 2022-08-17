@@ -42,6 +42,37 @@ def test_engine():
     }
     sge.evolutionary_algorithm(parameters=params)
 
+def test_default_parameters():
+    import sge.grammar as grammar
+    import sge    
+    from main import LROptimizer
+    from utils import create_models
+    create_models.create_models()
+    evaluation_function = LROptimizer()
+
+    sge.evolutionary_algorithm(evaluation_function=evaluation_function)
+
+def test_mutation_errors():
+    import sge.grammar as grammar
+    import sge
+    import yaml
+    from main import LROptimizer
+    from utils import create_models
+
+    create_models.create_models()
+    evaluation_function = LROptimizer()
+
+    with open("parameters/adaptive_autolr.yml", 'r') as ymlfile:
+        params = yaml.load(ymlfile, Loader=yaml.FullLoader)
+    params['PROB_MUTATION'] = [0.2, 0.2]
+    params['FAKE_FITNESS'] = True
+    try:
+        sge.evolutionary_algorithm(parameters=params, evaluation_function=evaluation_function)
+    except AssertionError:
+        print("Caught Error successfully")
+    else:
+        raise AssertionError
+
 def test_short_run():
     import sge.grammar as grammar
     import sge
@@ -95,3 +126,6 @@ def test_short_run():
     }
     evaluation_function = LROptimizer()
     sge.evolutionary_algorithm(parameters=params, evaluation_function=evaluation_function)
+
+if __name__ == "__main__":
+    test_default_parameters()
