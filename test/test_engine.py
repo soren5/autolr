@@ -45,10 +45,10 @@ def test_engine():
 def test_default_parameters():
     import sge.grammar as grammar
     import sge    
-    from main import LROptimizer
+    from main import Optimizer_Evaluator
     from utils import create_models
     create_models.create_models()
-    evaluation_function = LROptimizer()
+    evaluation_function = Optimizer_Evaluator()
 
     sge.evolutionary_algorithm(evaluation_function=evaluation_function)
 
@@ -56,11 +56,11 @@ def test_mutation_errors():
     import sge.grammar as grammar
     import sge
     import yaml
-    from main import LROptimizer
+    from main import Optimizer_Evaluator
     from utils import create_models
 
     create_models.create_models()
-    evaluation_function = LROptimizer()
+    evaluation_function = Optimizer_Evaluator()
 
     with open("parameters/adaptive_autolr.yml", 'r') as ymlfile:
         params = yaml.load(ymlfile, Loader=yaml.FullLoader)
@@ -76,7 +76,7 @@ def test_mutation_errors():
 def test_short_run():
     import sge.grammar as grammar
     import sge
-    from main import LROptimizer
+    from main import Optimizer_Evaluator
     from utils import create_models
     create_models.create_models()
     params = {
@@ -124,7 +124,7 @@ def test_short_run():
         "PREPOPULATE": False,
         "PATIENCE": 0,
     }
-    evaluation_function = LROptimizer()
+    evaluation_function = Optimizer_Evaluator()
     sge.evolutionary_algorithm(parameters=params, evaluation_function=evaluation_function)
 
 def test_pytorch():
