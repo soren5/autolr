@@ -24,8 +24,6 @@ import numpy as np
 import datetime
 experiment_time = datetime.datetime.now()
 
-
-
 def train_model(phen_params):
     phen, params = phen_params
     print(params['EPOCHS'])

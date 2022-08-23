@@ -16,7 +16,7 @@ experiment_time = datetime.datetime.now()
 
 def train_model_torch(phen_params):
     phen, params = phen_params
-    print(params['EPOCHS'])
+    #print(params['EPOCHS'])
     validation_size = params['VALIDATION_SIZE']
     test_size = params['TEST_SIZE'] 
     batch_size = params['BATCH_SIZE']
@@ -87,11 +87,10 @@ def train_model_torch(phen_params):
             # print statistics
             running_loss += loss.item()
             if i % 2000 == 1999:    # print every 2000 mini-batches
-                print('[%d, %5d] loss: %.3f' %
-                    (epoch + 1, i + 1, running_loss / 2000))
+                #print('[%d, %5d] loss: %.3f' %(epoch + 1, i + 1, running_loss / 2000))
                 running_loss = 0.0
 
-    print('Finished Training')
+    #print('Finished Training')
 
     PATH = './cifar_net.pth'
     torch.save(net.state_dict(), PATH)
@@ -100,7 +99,7 @@ def train_model_torch(phen_params):
     images, labels = dataiter.next()
 
     # print images
-    print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
+    #print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
 
     net = Net()
     net.load_state_dict(torch.load(PATH))
@@ -110,8 +109,7 @@ def train_model_torch(phen_params):
 
     _, predicted = torch.max(outputs, 1)
 
-    print('Predicted: ', ' '.join('%5s' % classes[predicted[j]]
-                                for j in range(4)))
+    #print('Predicted: ', ' '.join('%5s' % classes[predicted[j]] for j in range(4)))
 
     correct = 0
     total = 0
@@ -126,8 +124,7 @@ def train_model_torch(phen_params):
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
 
-    print('Accuracy of the network on the 10000 test images: %d %%' % (
-        100 * correct / total))
+    #print('Accuracy of the network on the 10000 test images: %d %%' % (100 * correct / total))
 
     # prepare to count predictions for each class
     correct_pred = {classname: 0 for classname in classes}
@@ -151,8 +148,7 @@ def train_model_torch(phen_params):
     for classname, correct_count in correct_pred.items():
         accuracy = 100 * float(correct_count) / total_pred[classname]
         total_accuracy += accuracy
-        print("Accuracy for class {:5s} is: {:.1f} %".format(classname, 
-                                                    accuracy))
+        #print("Accuracy for class {:5s} is: {:.1f} %".format(classname, accuracy))
     total_accuracy /= len(classes)
-    print(f"Total Accuracy {total_accuracy}")
+    #print(f"Total Accuracy {total_accuracy}")
     return total_accuracy / 100, 0
