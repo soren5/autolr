@@ -133,8 +133,6 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
         except ValueError as e:
             p_value_kruskal = 1
         while p_value_kruskal < 0.05 and len(evaluation_indices) > 1:
-            #population.sort(key=lambda x: x['fitness'])
-            #best = population[0]
             best_fit = params['FITNESS_FLOOR'] + 1
             for indiv in population:
                 key = indiv['smart_phenotype']
@@ -144,8 +142,6 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
             to_remove = []
             for eval_index in evaluation_indices:
                 indiv = population[eval_index]
-                with open("log.txt", 'a') as f:
-                    print(f"[{it}] Testing {indiv['id']}",  file=f)
                 if indiv['id'] != best['id']:
                     try:
                         stat, p_value = stats.mannwhitneyu(best['evaluations'], archive[indiv['smart_phenotype']]['evaluations'])

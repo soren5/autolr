@@ -1,7 +1,7 @@
 import torch
 import torchvision
 import torchvision.transforms as transforms
-from utils.custom_optimizer_pytorch import CustomOptimizerTorch
+from optimizers.custom_optimizer import CustomOptimizerTorch
 
 transform = transforms.Compose(
     [transforms.ToTensor(),

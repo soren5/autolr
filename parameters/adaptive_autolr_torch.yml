@@ -1,6 +1,6 @@
 POPSIZE: 50
-GENERATIONS: 50
-ELITISM: 0                   # number of individuals that survive
+GENERATIONS: 200
+ELITISM: 0                 
 PROB_CROSSOVER: 0.0
 PROB_MUTATION: 0.15 
 TSIZE: 2
@@ -19,4 +19,4 @@ BATCH_SIZE: 1000
 EPOCHS: 10000
 PREPOPULATE: False
 PATIENCE: 5
-FAKE_FITNESS: True
+FAKE_FITNESS: False

@@ -1,16 +1,12 @@
-#from evaluators.adaptive_optimizer_evaluator import train_model
-import contextlib
-import multiprocessing
-from multiprocessing import Pool
-
-from evaluators.adaptive_optimizer_evaluator_f_race_torch import train_model_torch
-
 class Optimizer_Evaluator:
     def __init__(self):    
         from evaluators.adaptive_optimizer_evaluator_f_race import train_model
         self.train_model = train_model
-        pass
+    
     def evaluate(self, phen, params):
+        import contextlib
+        import multiprocessing
+        from multiprocessing import Pool    
         multiprocessing.set_start_method('spawn', True)
         num_pool_workers=1 
         value, other_info = None, None
