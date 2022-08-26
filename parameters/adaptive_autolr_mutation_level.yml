@@ -30,7 +30,7 @@ EXPERIMENT_NAME: 'dumps/mutate_level'
 RUN: 1
 INCLUDE_GENOTYPE: True
 SAVE_STEP: 1
-VERBOSE: True
+VERBOSE: False
 EPOCHS: 10000
 MODEL: 'models/mnist_model.h5'
 VALIDATION_SIZE: 3500
