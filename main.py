@@ -1,6 +1,7 @@
-class Optimizer_Evaluator:
-    def __init__(self):    
-        from evaluators.adaptive_optimizer_evaluator_f_race import train_model
+class Optimizer_Evaluator_Tensorflow:
+    def __init__(self, train_model=None):   
+        if train_model == None: 
+            from evaluators.adaptive_optimizer_evaluator_f_race import train_model
         self.train_model = train_model
     
     def evaluate(self, phen, params):
@@ -18,8 +19,9 @@ class Optimizer_Evaluator:
         return -value, other_info
 
 class Optimizer_Evaluator_Torch:
-    def __init__(self):
-        from evaluators.adaptive_optimizer_evaluator_f_race_torch import train_model_torch
+    def __init__(self, train_model=None):   
+        if train_model == None: 
+            from evaluators.adaptive_optimizer_evaluator_f_race_torch import train_model_torch
         self.train_model = train_model_torch
 
     def evaluate(self, phen, params):
@@ -28,7 +30,7 @@ class Optimizer_Evaluator_Torch:
 
 if __name__ == "__main__":
     import sge
-    evaluation_function = Optimizer_Evaluator()
+    evaluation_function = Optimizer_Evaluator_Tensorflow()
     
     sge.evolutionary_algorithm(evaluation_function=evaluation_function)
         
