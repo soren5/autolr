@@ -169,7 +169,7 @@ def test_short_run_cifar10():
         "VERBOSE": True,
         "EPOCHS": 2,
         "VALIDATION_SIZE": 10,
-        "TEST_SIZE": 59980,
+        "TEST_SIZE": 49980,
         "BATCH_SIZE": 5,
         "MIN_TREE_DEPTH": 6,
         "MAX_TREE_DEPTH": 17,
