@@ -13,7 +13,7 @@ if gpus:
         # Memory growth must be set before GPUs have been initialized
         print(e)
 
-from tensorflow.keras.models import load_model
+from keras.models import load_model
 from tensorflow import keras
 from keras import backend as K
 from optimizers.custom_optimizer import CustomOptimizer
