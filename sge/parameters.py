@@ -20,7 +20,7 @@ params = {
     'MAX_TREE_DEPTH': 17,
     'MODEL': 'models/mnist_model.h5',
     'VALIDATION_SIZE': 10,
-    'TEST_SIZE': 59590,
+    'FITNESS_SIZE': 59590,
     'BATCH_SIZE': 5,
     'EPOCHS': 5,
     'SEED': None,
@@ -79,7 +79,7 @@ def set_parameters(arguments):
     parser.add_argument('--model',
                         dest='MODEL',
                         type=str,
-                        help='Specifies the path to the grammar file.')
+                        help='Specifies the path to the model file.')
     parser.add_argument('--grammar',
                         dest='GRAMMAR',
                         type=str,
@@ -128,8 +128,8 @@ def set_parameters(arguments):
                 dest="VALIDATION_SIZE",
                 type=int,
                 help="")
-    parser.add_argument('--test_size',
-                dest="TEST_SIZE",
+    parser.add_argument('--fitness_size',
+                dest="FITNESS_SIZE",
                 type=int,
                 help="")
     parser.add_argument('--batch_size',

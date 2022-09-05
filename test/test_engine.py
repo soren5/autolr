@@ -116,7 +116,7 @@ def test_short_run():
         "EPOCHS": 2,
         "MODEL": 'models/mnist_model.h5',
         "VALIDATION_SIZE": 10,
-        "TEST_SIZE": 59980,
+        "FITNESS_SIZE": 59980,
         "BATCH_SIZE": 5,
         "MIN_TREE_DEPTH": 6,
         "MAX_TREE_DEPTH": 17,
