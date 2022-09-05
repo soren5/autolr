@@ -27,12 +27,12 @@ experiment_time = datetime.datetime.now()
 def train_model_tensorflow_cifar10(phen_params):
     phen, params = phen_params
     validation_size = params['VALIDATION_SIZE']
-    test_size = params['TEST_SIZE'] 
+    fitness_size =params['FITNESS_SIZE'] 
     batch_size = params['BATCH_SIZE']
     epochs = params['EPOCHS']
     patience = params['PATIENCE']
 
-    dataset = load_cifar10_training(validation_size=validation_size, test_size=test_size)
+    dataset = load_cifar10_training(validation_size=validation_size, test_size=fitness_size)
     if 'MODEL' in params:
         model = load_model(params['MODEL'], compile=False)
     else:
@@ -70,12 +70,12 @@ def train_model_tensorflow_fmnist(phen_params):
     phen, params = phen_params
     print(params['EPOCHS'])
     validation_size = params['VALIDATION_SIZE']
-    test_size = params['TEST_SIZE'] 
+    fitness_size =params['FITNESS_SIZE'] 
     batch_size = params['BATCH_SIZE']
     epochs = params['EPOCHS']
     patience = params['PATIENCE']
 
-    dataset = load_fashion_mnist_training(validation_size=validation_size, test_size=test_size)
+    dataset = load_fashion_mnist_training(validation_size=validation_size, test_size=fitness_size)
 
     if 'MODEL' in params:
         model = load_model(params['MODEL'], compile=False)
@@ -115,12 +115,12 @@ def train_model_tensorflow_mnist(phen_params):
     phen, params = phen_params
     print(params['EPOCHS'])
     validation_size = params['VALIDATION_SIZE']
-    test_size = params['TEST_SIZE'] 
+    fitness_size =params['FITNESS_SIZE'] 
     batch_size = params['BATCH_SIZE']
     epochs = params['EPOCHS']
     patience = params['PATIENCE']
 
-    dataset = load_mnist_training(validation_size=validation_size, test_size=test_size)
+    dataset = load_mnist_training(validation_size=validation_size, test_size=fitness_size)
 
     if 'MODEL' in params:
         model = load_model(params['MODEL'], compile=False)
