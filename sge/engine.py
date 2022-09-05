@@ -56,12 +56,15 @@ def evaluate(ind, eval_func):
     ind['tree_depth'] = tree_depth
 
 
+
+
 def setup(parameters=None, logger=None):
     if parameters is None:
         set_parameters(sys.argv[1:])
     else:
         global params
         params = parameters
+    
     #print(params)
     if 'SEED' not in params:
         params['SEED'] = int(datetime.now().microsecond)
@@ -76,14 +79,12 @@ def setup(parameters=None, logger=None):
     grammar.set_max_tree_depth(params['MAX_TREE_DEPTH'])
     grammar.set_min_init_tree_depth(params['MIN_TREE_DEPTH'])
 
-
 def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, parameters=None, logger_module=None):
     if logger_module != None:
         logger = logger_module
     else:
         import sge.logger as logger
     setup(parameters, logger_module)
-    
     if "COLAB" in params and params["COLAB"]:
         from google.colab import drive
         drive.mount('/content/drive')
@@ -147,7 +148,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
                         stat, p_value = stats.mannwhitneyu(best['evaluations'], archive[indiv['smart_phenotype']]['evaluations'])
                     except ValueError as e:
                         p_value = 1
-                    if p_value < 0.05:
+                    if p_value < 0.05 or len(archive[key]['evaluations']) >= 30:
                         to_remove.append(eval_index)
                     else:
                         key = indiv['smart_phenotype']             
