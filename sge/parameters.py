@@ -171,5 +171,9 @@ def set_parameters(arguments):
 
     if 'PARAMETERS' in cmd_args:
         load_parameters(cmd_args['PARAMETERS'])
+    else:
+       print("No parameter file found, using default parameters")
+
+
     params.update(cmd_args)
 
