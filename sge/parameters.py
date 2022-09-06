@@ -34,6 +34,7 @@ params = {
 def load_parameters(file_name="parameters/adaptive_autolr.yml"):
     with open(file_name, 'r') as ymlfile:
         cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
+    print("using ",file_name, "for parameters")
     params.update(cfg)
 
 
