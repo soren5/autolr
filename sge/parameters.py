@@ -1,4 +1,5 @@
 import argparse
+
 import yaml
 
 """"Algorithm Parameters"""
@@ -30,8 +31,8 @@ params = {
     }
 
 
-def load_parameters(file_name=None):
-    with open("parameters/adaptive_autolr.yml", 'r') as ymlfile:
+def load_parameters(file_name="parameters/adaptive_autolr.yml"):
+    with open(file_name, 'r') as ymlfile:
         cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
     params.update(cfg)
 
