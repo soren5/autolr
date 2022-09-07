@@ -1,3 +1,4 @@
+
 class Optimizer_Evaluator_Tensorflow:
     def __init__(self, train_model=None):   
         if train_model == None: 
@@ -29,6 +30,8 @@ class Optimizer_Evaluator_Torch:
         return -value, other_info
 
 if __name__ == "__main__":
+    import os
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
     import sge
     evaluation_function = Optimizer_Evaluator_Tensorflow()
     

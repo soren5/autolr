@@ -2,9 +2,9 @@ import tensorflow as tf
 from tensorflow import keras
 from keras.preprocessing.image import ImageDataGenerator
 from sklearn.model_selection import train_test_split
-from tensorflow.keras.models import Sequential, load_model
-from tensorflow.keras.datasets import fashion_mnist, cifar10, mnist
-from tensorflow.keras import backend as K
+from keras.models import Sequential, load_model
+from keras.datasets import fashion_mnist, cifar10, mnist
+from keras import backend as K
 from optimizers.custom_optimizer import CustomOptimizer
 import numpy as np
 
