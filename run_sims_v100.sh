@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --partition=gpushort
+#SBATCH --partition=gpu
 #SBATCH --gres=gpu:v100:1
-#SBATCH --time=01:00:00
+#SBATCH --time=63:00:00
 #SBATCH --job-name=autorl
 #SBATCH --output=autorl_gpu_v100%j.log
 export PATH=$HOME/.local/bin:$PATH
@@ -11,4 +11,4 @@ module load cuDNN
 pip install --upgrade pip
 pip install -r requirements.txt
 python -m utils.create_models
-python3 -m main --parameters parameters/adaptive_autolr_mutation_level.yml
+python3 -m main --parameters parameters/adaptive_autolr_mutation_level_v100.yml

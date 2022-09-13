@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --partition=gpushort
+#SBATCH --partition=gpu
 #SBATCH --gres=gpu:1
-#SBATCH --time=01:00:00
+#SBATCH --time=63:00:00
 #SBATCH --job-name=autorl_gpu
 #SBATCH --output=autorl_gpu%j.log
 export PATH=$HOME/.local/bin:$PATH
