@@ -27,6 +27,7 @@ params = {
     'PREPOPULATE': False,
     'PATIENCE': False,
     'FITNESS_FLOOR': 0,
+    'LOAD_ARCHIVE': True,
     }
 
 
@@ -146,6 +147,10 @@ def set_parameters(arguments):
                 help="")
     parser.add_argument('--fitness_floor',
             dest="FITNESS_FLOOR",
+            type=float,
+            help="")
+    parser.add_argument('--load_archive',
+            dest="LOAD_ARCHIVE",
             type=bool,
             help="")
 
