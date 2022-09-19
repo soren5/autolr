@@ -18,7 +18,7 @@ def test_pytorch():
         "VERBOSE": True,
         "EPOCHS": 2,
         "VALIDATION_SIZE": 10,
-        "TEST_SIZE": 59980,
+        "FITNESS_SIZE": 59980,
         "BATCH_SIZE": 5,
         "MIN_TREE_DEPTH": 6,
         "MAX_TREE_DEPTH": 17,
