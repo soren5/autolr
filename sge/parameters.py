@@ -21,7 +21,7 @@ params = {
     'MAX_TREE_DEPTH': 17,
     'MODEL': 'models/mnist_model.h5',
     'VALIDATION_SIZE': 10,
-    'TEST_SIZE': 5000,
+    'FITNESS_SIZE': 5000,
     'BATCH_SIZE': 5,
     'EPOCHS': 5,
     'SEED': None,
@@ -131,7 +131,7 @@ def set_parameters(arguments):
                 type=int,
                 help="")
     parser.add_argument('--test_size',
-                dest="TEST_SIZE",
+                dest="FITNESS_SIZE",
                 type=int,
                 help="")
     parser.add_argument('--batch_size',
