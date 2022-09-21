@@ -159,7 +159,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
                         archive[key]['fitness'] = statistics.mean(archive[key]['evaluations']) 
             for remove_index in to_remove:
                 evaluation_indices.remove(remove_index)
-            ids_left = [population[x]["id"] for x in evaluation_indices]
+            #ids_left = [population[x]["id"] for x in evaluation_indices]
             if len(evaluation_indices) > 1:
                 try:
                     stat, p_value_kruskal = stats.kruskal(*[archive[population[x]['smart_phenotype']]['evaluations'] for x in evaluation_indices])
