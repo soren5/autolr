@@ -1,4 +1,7 @@
-
+from sge.parameters import (
+    params,
+    set_parameters
+)
 class Optimizer_Evaluator_Tensorflow:
     def __init__(self, train_model=None):  #should give a function 
         if train_model == None: 
@@ -33,11 +36,19 @@ if __name__ == "__main__":
     import os
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
     import sge
-    #rember to import a function if necessary
-    #from evaluators.adaptive_optimizer_evaluator_f_race import train_model_tensorflow_fmnist as train_model
-    #evaluation_function = Optimizer_Evaluator_Tensorflow(train_model)
-    evaluation_function = Optimizer_Evaluator_Tensorflow()
-    
+    import sge.logger as logger
+    import sys
+
+    set_parameters(sys.argv[1:])   
+
+    if 'MODEL' in params and params['MODEL'] == 'models/cifar_model.h5': 
+        from evaluators.adaptive_optimizer_evaluator_f_race import train_model_tensorflow_cifar10
+        evaluation_function = Optimizer_Evaluator_Tensorflow(train_model=train_model_tensorflow_cifar10)
+    else:    #rember to import a function if necessary
+        from evaluators.adaptive_optimizer_evaluator_f_race import train_model_tensorflow_fmnist 
+        evaluation_function = Optimizer_Evaluator_Tensorflow(train_model_tensorflow_fmnist)
+    #evaluation_function = Optimizer_Evaluator_Tensorflow()
+
     sge.evolutionary_algorithm(evaluation_function=evaluation_function)
         
 
