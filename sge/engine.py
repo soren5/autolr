@@ -129,7 +129,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
             if key not in archive or 'fitness' not in archive[key]:
                 archive[key] = {'evaluations': []}
                 archive[key]['id'] = indiv['id']
-                for _ in range(1):
+                for _ in range(5):
                     evaluate(indiv, evaluation_function)
                     archive[key]['evaluations'].append(indiv['fitness'])
                     archive[key]['fitness'] = statistics.mean(archive[key]['evaluations'])
