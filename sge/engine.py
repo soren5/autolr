@@ -64,8 +64,8 @@ def setup(parameters=None, logger=None):
     else:
         global params
         params = parameters
-    
-    #print(params)
+    if 'VERBOSE' in params and params['VERBOSE']:
+        print(params)
     if 'SEED' not in params:
         params['SEED'] = int(datetime.now().microsecond)
     if logger is None:
