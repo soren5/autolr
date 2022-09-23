@@ -129,7 +129,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
             if key not in archive or 'fitness' not in archive[key]:
                 archive[key] = {'evaluations': []}
                 archive[key]['id'] = indiv['id']
-                for _ in range(5):
+                for _ in range(1):
                     evaluate(indiv, evaluation_function)
                     archive[key]['evaluations'].append(indiv['fitness'])
                     archive[key]['fitness'] = statistics.mean(archive[key]['evaluations'])
@@ -186,7 +186,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
                 new_indiv = tournament(population, params['TSIZE'])
             if type(params['PROB_MUTATION']) == float:
                 new_indiv = mutate(new_indiv, params['PROB_MUTATION'])
-            elif type(params['PROB_MUTATION']) == list:
+            elif type(params['PROB_MUTATION']) == dict:
                 assert len(params['PROB_MUTATION']) == len(new_indiv['genotype'])
                 new_indiv = mutate_level(new_indiv, params['PROB_MUTATION'])
             mapping_values = [0 for i in new_indiv['genotype']]
