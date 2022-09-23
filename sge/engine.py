@@ -90,7 +90,8 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
     
     if 'RESUME' in params:
         population = logger.load_population(params['RESUME'])
-        archive = logger.load_archive(params['RESUME'])
+        if 'LOAD_ARCHIVE' in params and params['LOAD_ARCHIVE'] == True
+            archive = logger.load_archive(params['RESUME'])
         logger.load_random_state(params['RESUME'])
         it = params['RESUME']
         counter = int(np.max([archive[x]['id'] for x in archive]))
