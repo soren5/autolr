@@ -64,15 +64,22 @@ def test_mutation_errors():
 
     with open("parameters/adaptive_autolr.yml", 'r') as ymlfile:
         parameters = yaml.load(ymlfile, Loader=yaml.FullLoader)
-    parameters['PROB_MUTATION'] = [0.2, 0.2]
+    parameters['PROB_MUTATION'] = {0.2, 0.2}
     parameters['FAKE_FITNESS'] = True
     try:
         sge.evolutionary_algorithm(parameters=parameters, evaluation_function=evaluation_function)
     except AssertionError:
-        print("Caught Error successfully")
+        print("Caught Invalid Size Error successfully")
     else:
         raise AssertionError
-
+    parameters['PROB_MUTATION'] = [0.2, 0.2]
+    try:
+        sge.evolutionary_algorithm(parameters=parameters, evaluation_function=evaluation_function)
+    except Exception:
+        print("Invalid Mutation Type Error successfully")
+    else:
+        raise AssertionError
+        
 def test_short_run():
     import sge.grammar as grammar
     import sge
