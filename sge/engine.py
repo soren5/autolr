@@ -182,9 +182,11 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
                 new_indiv = tournament(population, params['TSIZE'])
             if type(params['PROB_MUTATION']) == float:
                 new_indiv = mutate(new_indiv, params['PROB_MUTATION'])
-            elif type(params['PROB_MUTATION']) == list:
+            elif type(params['PROB_MUTATION']) == dict:
                 assert len(params['PROB_MUTATION']) == len(new_indiv['genotype'])
                 new_indiv = mutate_level(new_indiv, params['PROB_MUTATION'])
+            else:
+                raise Exception("Invalid mutation type.")
             mapping_values = [0 for i in new_indiv['genotype']]
             phen, tree_depth = grammar.mapping(new_indiv['genotype'], mapping_values)
             new_indiv['phenotype'] = phen
