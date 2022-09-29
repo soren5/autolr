@@ -1,6 +1,7 @@
 from operator import inv
 import random
 import sys
+from xml.etree.ElementTree import tostring
 import sge.grammar as grammar
 import copy
 from datetime import datetime
@@ -122,6 +123,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
         it = 0 
     
     while it <= params['GENERATIONS']:
+        print("GENERATION: " + str(it))
         evaluation_indices = list(range(len(population)))
         for indiv in population:
             indiv['smart_phenotype'] = smart_phenotype(indiv['phenotype'])
@@ -213,4 +215,3 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
             import os
             print(os.listdir(f"{params['EXPERIMENT_NAME']}/run_{params['RUN']}"))
     return population
-
