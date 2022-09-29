@@ -1,2 +1,2 @@
-START python -m main --parameters ./parameters/adaptive_mutation_level_1 &
-START python -m main --parameters ./parameters/adaptive_mutation_level_2 
+python -m main --parameters .\parameters\adaptive_autolr_mutate_level_1.yml 
+python -m main --parameters .\parameters\adaptive_autolr_mutate_level_2.yml 
