@@ -18,11 +18,7 @@ def train_model_torch(phen_params):
     phen, params = phen_params
     #print(params['EPOCHS'])
     validation_size = params['VALIDATION_SIZE']
-<<<<<<< HEAD
-    fitness_size =params['FITNESS_SIZE'] 
-=======
     fitness_size = params['FITNESS_SIZE'] 
->>>>>>> origin/master
     batch_size = params['BATCH_SIZE']
     epochs = params['EPOCHS']
     patience = params['PATIENCE']
