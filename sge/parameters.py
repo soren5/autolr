@@ -81,7 +81,7 @@ def set_parameters(arguments):
     parser.add_argument('--model',
                         dest='MODEL',
                         type=str,
-                        help='Specifies the path to the grammar file.')
+                        help='Specifies the path to the model file.')
     parser.add_argument('--grammar',
                         dest='GRAMMAR',
                         type=str,
@@ -130,7 +130,11 @@ def set_parameters(arguments):
                 dest="VALIDATION_SIZE",
                 type=int,
                 help="")
+<<<<<<< HEAD
     parser.add_argument('--test_size',
+=======
+    parser.add_argument('--fitness_size',
+>>>>>>> origin/master
                 dest="FITNESS_SIZE",
                 type=int,
                 help="")
