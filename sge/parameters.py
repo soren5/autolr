@@ -130,11 +130,7 @@ def set_parameters(arguments):
                 dest="VALIDATION_SIZE",
                 type=int,
                 help="")
-<<<<<<< HEAD
-    parser.add_argument('--test_size',
-=======
     parser.add_argument('--fitness_size',
->>>>>>> origin/master
                 dest="FITNESS_SIZE",
                 type=int,
                 help="")
