@@ -1,4 +1,5 @@
 import argparse
+
 import yaml
 
 """"Algorithm Parameters"""
@@ -20,7 +21,7 @@ params = {
     'MAX_TREE_DEPTH': 17,
     'MODEL': 'models/mnist_model.h5',
     'VALIDATION_SIZE': 10,
-    'FITNESS_SIZE': 59590,
+    'FITNESS_SIZE': 5000,
     'BATCH_SIZE': 5,
     'EPOCHS': 5,
     'SEED': None,
@@ -30,9 +31,10 @@ params = {
     }
 
 
-def load_parameters(file_name=None):
-    with open("parameters/adaptive_autolr.yml", 'r') as ymlfile:
+def load_parameters(file_name="parameters/adaptive_autolr.yml"):
+    with open(file_name, 'r') as ymlfile:
         cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
+    print("using ",file_name, "for parameters")
     params.update(cfg)
 
 
@@ -79,7 +81,7 @@ def set_parameters(arguments):
     parser.add_argument('--model',
                         dest='MODEL',
                         type=str,
-                        help='Specifies the path to the model file.')
+                        help='Specifies the path to the grammar file.')
     parser.add_argument('--grammar',
                         dest='GRAMMAR',
                         type=str,
@@ -128,7 +130,7 @@ def set_parameters(arguments):
                 dest="VALIDATION_SIZE",
                 type=int,
                 help="")
-    parser.add_argument('--fitness_size',
+    parser.add_argument('--test_size',
                 dest="FITNESS_SIZE",
                 type=int,
                 help="")
@@ -171,5 +173,9 @@ def set_parameters(arguments):
 
     if 'PARAMETERS' in cmd_args:
         load_parameters(cmd_args['PARAMETERS'])
+    else:
+       print("No parameter file found, using default parameters")
+
+
     params.update(cmd_args)
 

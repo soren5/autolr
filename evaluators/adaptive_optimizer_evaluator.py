@@ -35,7 +35,7 @@ experiment_time = datetime.datetime.now()
 def train_model(phen):
     print(params['EPOCHS'])
     validation_size = params['VALIDATION_SIZE']
-    fitness_size = params['FITNESS_SIZE'] 
+    fitness_size =params['FITNESS_SIZE'] 
     batch_size = params['BATCH_SIZE']
     epochs = params['EPOCHS']
     patience = params['PATIENCE']

@@ -10,3 +10,18 @@ def tournament(population, tsize=3):
     indiv["parent"] = [indiv['id']]
     return indiv
 
+def universal_stochastic_sampling(population):
+    fits = [indiv['fitness'] for indiv in population]
+    max = sum(fits)
+    pick = random.uniform(0, max)
+    current = 0
+    for fitness, indiv in zip(fits, population):
+        current += fitness
+        if current > pick:
+            indiv = copy.deepcopy(indiv)
+            indiv["operation"] = "copy" 
+            indiv["parent"] = [indiv['id']]
+            return indiv
+
+
+
