@@ -7,7 +7,6 @@ from sge.parameters import (
 class Optimizer_Evaluator_Tensorflow:
     def __init__(self, train_model=None):  #should give a function 
         # Note: only works with fmnist
-        from evaluators.adaptive_optimizer_evaluator_f_race import train_model_tensorflow_fmnist as train_model
         self.train_model = train_model
     
     def evaluate(self, phen, params):

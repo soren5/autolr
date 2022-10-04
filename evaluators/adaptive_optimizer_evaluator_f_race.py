@@ -88,7 +88,7 @@ def train_model_tensorflow_fmnist_cached(phen_params):
     if globals()['cached_dataset'] == None:
         # load_fashion_mnist_training loads, unpack and selects the validation/test set
         # we assume that selection is deterministic.
-        globals['cached_dataset'] = load_fashion_mnist_training(validation_size=validation_size, test_size=fitness_size)
+        globals()['cached_dataset'] = load_fashion_mnist_training(validation_size=validation_size, test_size=fitness_size)
     if globals()['cached_model'] == None:
         globals()['cached_model'] = load_model(params['MODEL'], compile=False)
 
