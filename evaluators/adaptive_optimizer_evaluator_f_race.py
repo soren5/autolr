@@ -40,6 +40,7 @@ def train_model_tensorflow_cifar10(phen_params):
         globals()['cached_dataset'] = load_cifar10_training(validation_size=validation_size, test_size=fitness_size)
     if globals()['cached_model'] == None:
         globals()['cached_model'] = load_model(params['MODEL'], compile=False)
+        globals()['cached_weights'] = globals()['cached_model'].get_weights()
 
     # we assume validation and test sets are deterministic
     dataset = globals()['cached_dataset']
@@ -49,7 +50,7 @@ def train_model_tensorflow_cifar10(phen_params):
     # -> opportunity to cache opt and compiled model
     opt = CustomOptimizer(phen=phen, model=model)
     
-    weights = model.get_weights()
+    weights = globals()['cached_weights']
     model.set_weights(weights)  
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
     early_stop = keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=patience, restore_best_weights=True)
@@ -147,9 +148,13 @@ def train_model_tensorflow_fmnist(phen_params):
     if globals()['cached_model'] == None:
         globals()['cached_model'] = load_model(params['MODEL'], compile=False)
 
+
     # we assume validation and test sets are deterministic
     dataset = globals()['cached_dataset']
     model = globals()['cached_model']
+    # mod_l = load_model(params['MODEL'], compile=False)
+    # assert globals()['cached_model'].get_config() == mod_l.get_config(), f"cached model is not loaded model"
+
 
     # optimizer is constant aslong as phen doesn't changed?
     # -> opportunity to cache opt and compiled model
