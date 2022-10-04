@@ -44,14 +44,16 @@ def train_model_tensorflow_cifar10(phen_params):
 
     # we assume validation and test sets are deterministic
     dataset = globals()['cached_dataset']
+    
     model = globals()['cached_model']
+
+    weights = globals()['cached_weights']
+    model.set_weights(weights)  
 
     # optimizer is constant aslong as phen doesn't changed?
     # -> opportunity to cache opt and compiled model
     opt = CustomOptimizer(phen=phen, model=model)
     
-    weights = globals()['cached_weights']
-    model.set_weights(weights)  
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
     early_stop = keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=patience, restore_best_weights=True)
 
