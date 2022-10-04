@@ -140,7 +140,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
                 archive[key]['fitness'] = statistics.mean(archive[key]['evaluations'])
 
                 """
-                # if in doubt (you should;)), test:
+                # if in doubt (you should;), test:
                 for _ in range(5):                     
                     evaluate(indiv, evaluation_function)
                     archive[key]['evaluations'].append(indiv['fitness'])
@@ -148,7 +148,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
                 deterministic = archive[key]['evaluations'][0]
                 for x in archive[key]['evaluations']:
                     if not isclose(x, deterministic):
-                        raise "wrong assumtion!"
+                        raise "wrong assumption!"
                 """
         # `works` without:
         """

@@ -29,11 +29,7 @@ EXPERIMENT_NAME: 'dumps/mutation_level_1'
 RUN: 22
 INCLUDE_GENOTYPE: True
 SAVE_STEP: 1
-<<<<<<< HEAD
-VERBOSE: True
-=======
 VERBOSE: False
->>>>>>> origin/profile
 MIN_TREE_DEPTH: 6
 MAX_TREE_DEPTH: 17
 MODEL: 'models/mnist_model.h5'
