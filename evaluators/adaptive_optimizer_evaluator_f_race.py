@@ -31,18 +31,26 @@ def train_model_tensorflow_cifar10(phen_params):
     epochs = params['EPOCHS']
     patience = params['PATIENCE']
 
-    dataset = load_cifar10_training(validation_size=validation_size, test_size=fitness_size)
-    if 'MODEL' in params:
-        model = load_model(params['MODEL'], compile=False)
-    else:
-        model = load_model('models/cifar_model.h5')
-    weights = model.get_weights()
-    print(len(dataset['x_train']))
+   
+      # Note that globals are borderline -- consider an object or a closure 
+    # deliberately using globals() to make it ugly...
+    if globals()['cached_dataset'] == None:
+        # load_fashion_mnist_training loads, unpack and selects the validation/test set
+        # we assume that selection is deterministic.
+        globals()['cached_dataset'] = load_cifar10_training(validation_size=validation_size, test_size=fitness_size)
+    if globals()['cached_model'] == None:
+        globals()['cached_model'] = load_model(params['MODEL'], compile=False)
 
-    model.set_weights(weights)
+    # we assume validation and test sets are deterministic
+    dataset = globals()['cached_dataset']
+    model = globals()['cached_model']
+
+    # optimizer is constant aslong as phen doesn't changed?
+    # -> opportunity to cache opt and compiled model
     opt = CustomOptimizer(phen=phen, model=model)
     
-    
+    weights = model.get_weights()
+    model.set_weights(weights)  
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
     early_stop = keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=patience, restore_best_weights=True)
 
@@ -129,20 +137,26 @@ def train_model_tensorflow_fmnist(phen_params):
     epochs = params['EPOCHS']
     patience = params['PATIENCE']
 
-    dataset = load_fashion_mnist_training(validation_size=validation_size, test_size=fitness_size)
+   
+    # Note that globals are borderline -- consider an object or a closure 
+    # deliberately using globals() to make it ugly...
+    if globals()['cached_dataset'] == None:
+        # load_fashion_mnist_training loads, unpack and selects the validation/test set
+        # we assume that selection is deterministic.
+        globals()['cached_dataset'] = load_fashion_mnist_training(validation_size=validation_size, test_size=fitness_size)
+    if globals()['cached_model'] == None:
+        globals()['cached_model'] = load_model(params['MODEL'], compile=False)
 
-    if 'MODEL' in params:
-        model = load_model(params['MODEL'], compile=False)
-    else:
-        model = load_model('models/mnist_model.h5')
+    # we assume validation and test sets are deterministic
+    dataset = globals()['cached_dataset']
+    model = globals()['cached_model']
 
-    weights = model.get_weights()
-    print(len(dataset['x_train']))
-
-    model.set_weights(weights)
+    # optimizer is constant aslong as phen doesn't changed?
+    # -> opportunity to cache opt and compiled model
     opt = CustomOptimizer(phen=phen, model=model)
-  
     
+    weights = model.get_weights()
+    model.set_weights(weights)
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
     early_stop = keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=patience, restore_best_weights=True)
 
@@ -174,20 +188,26 @@ def train_model_tensorflow_mnist(phen_params):
     epochs = params['EPOCHS']
     patience = params['PATIENCE']
 
-    dataset = load_mnist_training(validation_size=validation_size, test_size=fitness_size)
+   
+    # Note that globals are borderline -- consider an object or a closure 
+    # deliberately using globals() to make it ugly...
+    if globals()['cached_dataset'] == None:
+        # load_fashion_mnist_training loads, unpack and selects the validation/test set
+        # we assume that selection is deterministic.
+        globals()['cached_dataset'] = load_fashion_mnist_training(validation_size=validation_size, test_size=fitness_size)
+    if globals()['cached_model'] == None:
+        globals()['cached_model'] = load_model(params['MODEL'], compile=False)
 
-    if 'MODEL' in params:
-        model = load_model(params['MODEL'], compile=False)
-    else:
-        model = load_model('models/mnist_model.h5')
+    # we assume validation and test sets are deterministic
+    dataset = globals()['cached_dataset']
+    model = globals()['cached_model']
 
-    weights = model.get_weights()
-    print(len(dataset['x_train']))
-
-    model.set_weights(weights)
+    # optimizer is constant aslong as phen doesn't changed?
+    # -> opportunity to cache opt and compiled model
     opt = CustomOptimizer(phen=phen, model=model)
     
-    
+    weights = model.get_weights()
+    model.set_weights(weights)    
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
     early_stop = keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=patience, restore_best_weights=True)
 
