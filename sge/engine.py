@@ -1,3 +1,4 @@
+from math import isclose
 from operator import inv
 import random
 import sys
@@ -57,16 +58,13 @@ def evaluate(ind, eval_func):
     ind['tree_depth'] = tree_depth
 
 
-
-
 def setup(parameters=None, logger=None):
     if parameters is None:
         set_parameters(sys.argv[1:])
     else:
         global params
         params = parameters
-    if 'VERBOSE' in params and params['VERBOSE']:
-        print(params)
+    #print(params)
     if 'SEED' not in params:
         params['SEED'] = int(datetime.now().microsecond)
     if logger is None:
@@ -80,12 +78,14 @@ def setup(parameters=None, logger=None):
     grammar.set_max_tree_depth(params['MAX_TREE_DEPTH'])
     grammar.set_min_init_tree_depth(params['MIN_TREE_DEPTH'])
 
+
 def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, parameters=None, logger_module=None):
     if logger_module != None:
         logger = logger_module
     else:
         import sge.logger as logger
     setup(parameters, logger_module)
+    
     if "COLAB" in params and params["COLAB"]:
         from google.colab import drive
         drive.mount('/content/drive')
@@ -132,10 +132,26 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
             if key not in archive or 'fitness' not in archive[key]:
                 archive[key] = {'evaluations': []}
                 archive[key]['id'] = indiv['id']
-                for _ in range(5):
+
+                # evaluate seems to be deterministic. 
+                # Btw., if not, the caching of key|fitness pairs wouldn't be 100% correct
+                evaluate(indiv, evaluation_function)
+                archive[key]['evaluations'].append(indiv['fitness'])
+                archive[key]['fitness'] = statistics.mean(archive[key]['evaluations'])
+
+                """
+                # if in doubt (you should;)), test:
+                for _ in range(5):                     
                     evaluate(indiv, evaluation_function)
                     archive[key]['evaluations'].append(indiv['fitness'])
                     archive[key]['fitness'] = statistics.mean(archive[key]['evaluations'])
+                deterministic = archive[key]['evaluations'][0]
+                for x in archive[key]['evaluations']:
+                    if not isclose(x, deterministic):
+                        raise "wrong assumtion!"
+                """
+        # `works` without:
+        """
         try:
             stat, p_value_kruskal = stats.kruskal(*[archive[population[x]['smart_phenotype']]['evaluations'] for x in evaluation_indices])
         except ValueError as e:
@@ -159,7 +175,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
                         stat, p_value = stats.mannwhitneyu(best['evaluations'], archive[indiv['smart_phenotype']]['evaluations'])
                     except ValueError as e:
                         p_value = 1
-                    if p_value < 0.05 or len(archive[key]['evaluations']) >=  10:
+                    if p_value < 0.05:
                         to_remove.append(eval_index)
                     else:
                         key = indiv['smart_phenotype']             
@@ -174,14 +190,18 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
                     stat, p_value_kruskal = stats.kruskal(*[archive[population[x]['smart_phenotype']]['evaluations'] for x in evaluation_indices])
                 except ValueError as e:
                     p_value_kruskal = 1
+        """
 
         for indiv in population:
             key = indiv['smart_phenotype']
             indiv['fitness'] = archive[key]['fitness']
         #print(f"{[x['id'] for x in population]}")
+
         population.sort(key=lambda x: x['fitness'])
         logger.evolution_progress(it, population)
         logger.elicit_progress(it, population)
+
+        print("\ngeneration: " + str(it) + "; best fit so far: " + str(population[0]['fitness']) + "\n")
         new_population = population[:params['ELITISM']]
         for indiv in new_population:
             indiv['operation'] = 'elitism'
@@ -197,8 +217,6 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
             elif type(params['PROB_MUTATION']) == dict:
                 assert len(params['PROB_MUTATION']) == len(new_indiv['genotype'])
                 new_indiv = mutate_level(new_indiv, params['PROB_MUTATION'])
-            else:
-                raise Exception("Invalid mutation type.")
             mapping_values = [0 for i in new_indiv['genotype']]
             phen, tree_depth = grammar.mapping(new_indiv['genotype'], mapping_values)
             new_indiv['phenotype'] = phen

@@ -1,5 +1,5 @@
 POPSIZE: 100
-GENERATIONS: 100
+GENERATIONS: 1000
 ELITISM: 1                   # number of individuals that survive
 PROB_CROSSOVER: 0.0
 PROB_MUTATION: {
@@ -29,7 +29,11 @@ EXPERIMENT_NAME: 'dumps/mutation_level_1'
 RUN: 22
 INCLUDE_GENOTYPE: True
 SAVE_STEP: 1
+<<<<<<< HEAD
 VERBOSE: True
+=======
+VERBOSE: False
+>>>>>>> origin/profile
 MIN_TREE_DEPTH: 6
 MAX_TREE_DEPTH: 17
 MODEL: 'models/mnist_model.h5'
@@ -41,4 +45,8 @@ PREPOPULATE: False
 PROTECT: False
 GENES: 'adam'
 PATIENCE: 5
+<<<<<<< HEAD
 FAKE_FITNESS: False
+=======
+FAKE_FITNESS: False
+>>>>>>> origin/profile

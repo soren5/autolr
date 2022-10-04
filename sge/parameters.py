@@ -1,4 +1,5 @@
 import argparse
+
 import yaml
 
 """"Algorithm Parameters"""
@@ -80,7 +81,7 @@ def set_parameters(arguments):
     parser.add_argument('--model',
                         dest='MODEL',
                         type=str,
-                        help='Specifies the path to the model file.')
+                        help='Specifies the path to the grammar file.')
     parser.add_argument('--grammar',
                         dest='GRAMMAR',
                         type=str,
@@ -129,7 +130,7 @@ def set_parameters(arguments):
                 dest="VALIDATION_SIZE",
                 type=int,
                 help="")
-    parser.add_argument('--fitness_size',
+    parser.add_argument('--test_size',
                 dest="FITNESS_SIZE",
                 type=int,
                 help="")

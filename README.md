@@ -57,5 +57,3 @@ At the moment on this branch the parameter files used are
 parameters/adaptive_autolr_mutate_level_1.yml
 ```
 Additional guidelines on how to create custom evaluators coming soon.
-
-

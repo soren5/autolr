@@ -33,6 +33,7 @@ class Optimizer_Evaluator_Torch:
         value, other_info = self.train_model([phen, params])
         return -value, other_info
 
+
 if __name__ == "__main__":
     import os
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
