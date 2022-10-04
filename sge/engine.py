@@ -132,7 +132,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
             if key not in archive or 'fitness' not in archive[key]:
                 archive[key] = {'evaluations': []}
                 archive[key]['id'] = indiv['id']
-
+                """
                 # evaluate seems to be deterministic. 
                 # Btw., if not, the caching of key|fitness pairs wouldn't be 100% correct
                 evaluate(indiv, evaluation_function)
@@ -149,7 +149,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
                 for x in archive[key]['evaluations']:
                     if not isclose(x, deterministic):
                         raise "wrong assumption!"
-                """
+             
         # `works` without:
         """
         try:
