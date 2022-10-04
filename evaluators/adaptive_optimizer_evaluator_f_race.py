@@ -1,4 +1,5 @@
 import csv
+from functools import cached_property
 from utils.data_functions import load_fashion_mnist_training, load_cifar10_training, load_mnist_training
 import tensorflow as tf
 gpus = tf.config.experimental.list_physical_devices('GPU')
@@ -17,12 +18,11 @@ from keras.models import load_model
 from tensorflow import keras
 from keras import backend as K
 from optimizers.custom_optimizer import CustomOptimizer
-
-import sys
-
-import numpy as np
 import datetime
 experiment_time = datetime.datetime.now()
+
+cached_dataset = None
+cached_model = None
 
 def train_model_tensorflow_cifar10(phen_params):
     phen, params = phen_params
@@ -32,11 +32,18 @@ def train_model_tensorflow_cifar10(phen_params):
     epochs = params['EPOCHS']
     patience = params['PATIENCE']
 
-    dataset = load_cifar10_training(validation_size=validation_size, test_size=fitness_size)
-    if 'MODEL' in params:
-        model = load_model(params['MODEL'], compile=False)
-    else:
-        model = load_model('models/cifar_model.h5')
+    global cached_dataset
+    if cached_dataset == None:
+        cached_dataset = load_cifar10_training(validation_size= validation_size, test_size=fitness_size)  
+    dataset = cached_dataset
+    
+    global cached_model
+    if cached_model == None:
+        if 'MODEL' in params:
+            cached_model = load_model(params['MODEL'], compile=False)
+        else:
+            cached_model = load_model('models/mnist_model.h5')
+    model = cached_model
     
     weights = model.get_weights()
     model.set_weights(weights)
@@ -70,19 +77,25 @@ def train_model_tensorflow_cifar10(phen_params):
 
 def train_model_tensorflow_fmnist(phen_params):
     phen, params = phen_params
-    print(params['EPOCHS'])
     validation_size = params['VALIDATION_SIZE']
-    fitness_size =params['FITNESS_SIZE'] 
+    fitness_size = params['FITNESS_SIZE']
     batch_size = params['BATCH_SIZE']
     epochs = params['EPOCHS']
     patience = params['PATIENCE']
-
-    dataset = load_fashion_mnist_training(validation_size=validation_size, test_size=fitness_size)
-
-    if 'MODEL' in params:
-        model = load_model(params['MODEL'], compile=False)
-    else:
-        model = load_model('models/mnist_model.h5')
+    # print(params['EPOCHS'])
+   
+    global cached_dataset
+    if cached_dataset == None:
+        cached_dataset = load_fashion_mnist_training(validation_size= validation_size, test_size=fitness_size)  
+    dataset = cached_dataset
+    
+    global cached_model
+    if cached_model == None:
+        if 'MODEL' in params:
+            cached_model = load_model(params['MODEL'], compile=False)
+        else:
+            cached_model = load_model('models/mnist_model.h5')
+    model = cached_model
 
     weights = model.get_weights()
     model.set_weights(weights)
@@ -126,12 +139,18 @@ def train_model_tensorflow_mnist(phen_params):
     epochs = params['EPOCHS']
     patience = params['PATIENCE']
 
-    dataset = load_mnist_training(validation_size=validation_size, test_size=fitness_size)
-
-    if 'MODEL' in params:
-        model = load_model(params['MODEL'], compile=False)
-    else:
-        model = load_model('models/mnist_model.h5')
+    global cached_dataset
+    if cached_dataset == None:
+        cached_dataset = load_fashion_mnist_training(validation_size= validation_size, test_size=fitness_size)  
+    dataset = cached_dataset
+    
+    global cached_model
+    if cached_model == None:
+        if 'MODEL' in params:
+            cached_model = load_model(params['MODEL'], compile=False)
+        else:
+            cached_model = load_model('models/mnist_model.h5')
+    model = cached_model
 
     weights = model.get_weights()
     print(len(dataset['x_train']))
