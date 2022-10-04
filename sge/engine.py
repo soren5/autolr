@@ -140,6 +140,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
             stat, p_value_kruskal = stats.kruskal(*[archive[population[x]['smart_phenotype']]['evaluations'] for x in evaluation_indices])
         except ValueError as e:
             p_value_kruskal = 1
+
         while p_value_kruskal < 0.05 and len(evaluation_indices) > 1:
             best_fit = params['FITNESS_FLOOR'] + 1
             for indiv in population:
@@ -147,15 +148,18 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
                 if archive[key]['fitness'] < best_fit:
                     best = archive[key]
                     best_fit = archive[key]['fitness']
+            
             to_remove = []
             for eval_index in evaluation_indices:
                 indiv = population[eval_index]
+                key = indiv['smart_phenotype']
+
                 if indiv['id'] != best['id']:
                     try:
                         stat, p_value = stats.mannwhitneyu(best['evaluations'], archive[indiv['smart_phenotype']]['evaluations'])
                     except ValueError as e:
                         p_value = 1
-                    if p_value < 0.05 or len(archive[key]['evaluations']) >= 30:
+                    if p_value < 0.05 or len(archive[key]['evaluations']) >= 10:
                         to_remove.append(eval_index)
                     else:
                         key = indiv['smart_phenotype']             
@@ -164,12 +168,13 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
                         archive[key]['fitness'] = statistics.mean(archive[key]['evaluations']) 
             for remove_index in to_remove:
                 evaluation_indices.remove(remove_index)
-            ids_left = [population[x]["id"] for x in evaluation_indices]
+            #ids_left = [population[x]["id"] for x in evaluation_indices]
             if len(evaluation_indices) > 1:
                 try:
                     stat, p_value_kruskal = stats.kruskal(*[archive[population[x]['smart_phenotype']]['evaluations'] for x in evaluation_indices])
                 except ValueError as e:
                     p_value_kruskal = 1
+
         for indiv in population:
             key = indiv['smart_phenotype']
             indiv['fitness'] = archive[key]['fitness']

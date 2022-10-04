@@ -37,10 +37,12 @@ def train_model_tensorflow_cifar10(phen_params):
         model = load_model(params['MODEL'], compile=False)
     else:
         model = load_model('models/cifar_model.h5')
+    
     weights = model.get_weights()
-    print(len(dataset['x_train']))
-
     model.set_weights(weights)
+
+    print(len(dataset['x_train']))
+    
     opt = CustomOptimizer(phen=phen, model=model)
     
     
@@ -83,9 +85,10 @@ def train_model_tensorflow_fmnist(phen_params):
         model = load_model('models/mnist_model.h5')
 
     weights = model.get_weights()
+    model.set_weights(weights)
+
     print(len(dataset['x_train']))
 
-    model.set_weights(weights)
     opt = CustomOptimizer(phen=phen, model=model)
     
     
@@ -103,11 +106,14 @@ def train_model_tensorflow_fmnist(phen_params):
         ])
 
     K.clear_session()
+
     results = {}
+
     for metric in score.history:
         results[metric] = []
         for n in score.history[metric]:
             results[metric].append(n)
+
     test_score = model.evaluate(x=dataset['x_test'],y=dataset["y_test"], verbose=0, callbacks=[keras.callbacks.History()])
     return test_score[-1], results
 

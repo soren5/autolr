@@ -10,16 +10,17 @@ class Optimizer_Evaluator_Tensorflow:
     
     def evaluate(self, phen, params):
         import contextlib
-        import multiprocessing
-        from multiprocessing import Pool    
-        multiprocessing.set_start_method('spawn', True)
-        num_pool_workers=1 
+        # import multiprocessing
+        # from multiprocessing import Pool    
+        # multiprocessing.set_start_method('spawn', True)
+        # num_pool_workers=1 
         value, other_info = None, None
-        with contextlib.closing(Pool(num_pool_workers)) as po: 
-            phen_params = (phen, params)
-            foo = po.map(self.train_model, [phen_params])
-            value = foo[0][0]
-            other_info = foo[0][1]
+        #with contextlib.closing(Pool(num_pool_workers)) as po: 
+        phen_params = (phen, params)
+        # foo = po.map(self.train_model, [phen_params])
+        value,  other_info = self.train_model(phen_params)
+        # value = foo[0][0]
+        # other_info = foo[0][1]
         return -value, other_info
 
 class Optimizer_Evaluator_Torch:
