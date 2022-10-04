@@ -159,7 +159,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
                         stat, p_value = stats.mannwhitneyu(best['evaluations'], archive[indiv['smart_phenotype']]['evaluations'])
                     except ValueError as e:
                         p_value = 1
-                    if p_value < 0.05 or len(archive[key]['evaluations']) >= 10:
+                    if p_value < 0.05 or len(archive[key]['evaluations']) >=  10:
                         to_remove.append(eval_index)
                     else:
                         key = indiv['smart_phenotype']             
