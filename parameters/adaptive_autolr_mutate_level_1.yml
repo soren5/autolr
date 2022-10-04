@@ -41,8 +41,4 @@ PREPOPULATE: False
 PROTECT: False
 GENES: 'adam'
 PATIENCE: 5
-<<<<<<< HEAD
 FAKE_FITNESS: False
-=======
-FAKE_FITNESS: False
->>>>>>> origin/profile
