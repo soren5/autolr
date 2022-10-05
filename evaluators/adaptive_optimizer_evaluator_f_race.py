@@ -152,8 +152,8 @@ def train_model_tensorflow_fmnist(phen_params):
     # we assume validation and test sets are deterministic
     dataset = globals()['cached_dataset']
     # dataset =  load_fashion_mnist_training(validation_size=validation_size, test_size=fitness_size)
-    model = globals()['cached_model']
-    # model = load_model(params['MODEL'], compile=False)
+    # model = globals()['cached_model']
+    model = load_model(params['MODEL'], compile=False)
     
     # optimizer is constant aslong as phen doesn't changed?
     # -> opportunity to cache opt and compiled model

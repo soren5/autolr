@@ -4,6 +4,8 @@ import copy
 
 def tournament(population, tsize=3):
     pool = random.sample(population, tsize)
+    if any(ind['fitness'] == None for ind in pool):
+        raise "Some individuals have no fitness at the moment of selection"
     pool.sort(key=lambda i: i['fitness'])
     indiv = copy.deepcopy(pool[0])
     indiv["operation"] = "copy" 

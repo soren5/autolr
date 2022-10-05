@@ -129,7 +129,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
         for indiv in population:
             indiv['smart_phenotype'] = smart_phenotype(indiv['phenotype'])
             key = indiv['smart_phenotype']
-            if key not in archive or 'fitness' not in archive[key]:
+            if key not in archive or 'fitness' not in archive[key] or 'fitness' in archive[key] == None:
                 archive[key] = {'evaluations': []}
                 archive[key]['id'] = indiv['id']
                 # evaluate seems to be deterministic. 
