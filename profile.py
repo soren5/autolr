@@ -22,7 +22,7 @@ if __name__ == "__main__":
     import sge.logger as logger
     import sys
 
-    if len(sys.argv) != 1:
+    if len(sys.argv) != 3:
         raise Exception("profile.py doesn't support command line arguments")
     sys.argv = ["", "--parameters", "parameters/adaptive_autolr_mutate_level_1.yml"]
     set_parameters(sys.argv[1:])
