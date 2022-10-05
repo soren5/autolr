@@ -151,20 +151,19 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
                 """
 
         # `works` without:
-        """
         try:
             stat, p_value_kruskal = stats.kruskal(*[archive[population[x]['smart_phenotype']]['evaluations'] for x in evaluation_indices])
         except ValueError as e:
             p_value_kruskal = 1
-
+            
         while p_value_kruskal < 0.05 and len(evaluation_indices) > 1:
             best_fit = params['FITNESS_FLOOR'] + 1
             for indiv in population:
                 key = indiv['smart_phenotype']
                 if archive[key]['fitness'] < best_fit:
-                    best = archive[key]
+                    # best = archive[key]
                     best_fit = archive[key]['fitness']
-            
+        """    
             to_remove = []
             for eval_index in evaluation_indices:
                 indiv = population[eval_index]
