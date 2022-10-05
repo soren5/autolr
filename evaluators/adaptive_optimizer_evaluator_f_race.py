@@ -140,7 +140,6 @@ def train_model_tensorflow_fmnist(phen_params):
     epochs = params['EPOCHS']
     patience = params['PATIENCE']
 
-   
     # Note that globals are borderline -- consider an object or a closure 
     # deliberately using globals() to make it ugly...
     if globals()['cached_dataset'] == None:
@@ -150,14 +149,12 @@ def train_model_tensorflow_fmnist(phen_params):
     if globals()['cached_model'] == None:
         globals()['cached_model'] = load_model(params['MODEL'], compile=False)
 
-
     # we assume validation and test sets are deterministic
     dataset = globals()['cached_dataset']
+    # dataset =  load_fashion_mnist_training(validation_size=validation_size, test_size=fitness_size)
     model = globals()['cached_model']
-    # mod_l = load_model(params['MODEL'], compile=False)
-    # assert globals()['cached_model'].get_config() == mod_l.get_config(), f"cached model is not loaded model"
-
-
+    # model = load_model(params['MODEL'], compile=False)
+    
     # optimizer is constant aslong as phen doesn't changed?
     # -> opportunity to cache opt and compiled model
     opt = CustomOptimizer(phen=phen, model=model)
