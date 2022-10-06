@@ -1,0 +1,45 @@
+POPSIZE: 100
+GENERATIONS: 100
+ELITISM: 1                   # number of individuals that survive
+PROB_CROSSOVER: 0.0
+PROB_MUTATION: {
+  0: 0.0, 
+  1: 0.01, 
+  2: 0.01, 
+  3: 0.01, 
+  4: 0.05, 
+  5: 0.15, 
+  6: 0.01, 
+  7: 0.01, 
+  8: 0.01, 
+  9: 0.05, 
+  10: 0.15, 
+  11: 0.01, 
+  12: 0.01, 
+  13: 0.01, 
+  14: 0.05, 
+  15: 0.15, 
+  16: 0.01, 
+  17: 0.01, 
+  18: 0.05, 
+  19: 0.15}
+TSIZE: 2
+GRAMMAR: 'grammars/adaptive_autolr_grammar_mutate_level.txt'
+EXPERIMENT_NAME: 'dumps/cifar'
+RUN: 1
+INCLUDE_GENOTYPE: True
+SAVE_STEP: 1
+VERBOSE: True
+MIN_TREE_DEPTH: 6
+MAX_TREE_DEPTH: 17
+MODEL: 'models/cifar_model.h5'
+VALIDATION_SIZE: 3500 #3500
+FITNESS_SIZE: 44000 #3500   50000 - (3500 + 44000) -> 2500 training size
+BATCH_SIZE: 1000
+EPOCHS: 100
+PREPOPULATE: False
+PROTECT: False
+GENES: 'adam'
+PATIENCE: 5
+FAKE_FITNESS: False
+LOAD_ARCHIVE: False
