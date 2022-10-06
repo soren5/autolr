@@ -23,6 +23,9 @@ from optimizers.custom_optimizer import CustomOptimizer
 import datetime
 experiment_time = datetime.datetime.now()
 
+cached_dataset = None
+cached_model = None
+
 def train_model_tensorflow_cifar10(phen_params):
     phen, params = phen_params
     validation_size = params['VALIDATION_SIZE']
