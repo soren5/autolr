@@ -31,19 +31,16 @@ def train_model_tensorflow_cifar10(phen_params):
     epochs = params['EPOCHS']
     patience = params['PATIENCE']
 
-   
-      # Note that globals are borderline -- consider an object or a closure 
+    # Note that globals are borderline -- consider an object or a closure 
     # deliberately using globals() to make it ugly...
     if globals()['cached_dataset'] == None:
-        # load_fashion_mnist_training loads, unpack and selects the validation/test set
-        # we assume that selection is deterministic.
         globals()['cached_dataset'] = load_cifar10_training(validation_size=validation_size, test_size=fitness_size)
+    
     if globals()['cached_model'] == None:
         globals()['cached_model'] = load_model(params['MODEL'], compile=False)
         
     # we assume validation and test sets are deterministic
-    dataset = globals()['cached_dataset']
-    
+    dataset = globals()['cached_dataset'] 
     model = tf.keras.models.clone_model(globals()['cached_model'])
 
     weights = model.get_weights()
@@ -74,11 +71,6 @@ def train_model_tensorflow_cifar10(phen_params):
             results[metric].append(n)
     test_score = model.evaluate(x=dataset['x_test'],y=dataset["y_test"], verbose=0, callbacks=[keras.callbacks.History()])
     return test_score[-1], results
-
-import copy
-from keras.datasets import fashion_mnist
-cached_dataset = None
-cached_model = None
 
 def train_model_tensorflow_fmnist_cached(phen_params):
     phen, params = phen_params
@@ -143,13 +135,10 @@ def train_model_tensorflow_fmnist(phen_params):
     # Note that globals are borderline -- consider an object or a closure 
     # deliberately using globals() to make it ugly...
     if globals()['cached_dataset'] == None:
-        # load_fashion_mnist_training loads, unpack and selects the validation/test set
-        # we assume that selection is deterministic.
         globals()['cached_dataset'] = load_fashion_mnist_training(validation_size=validation_size, test_size=fitness_size)
     if globals()['cached_model'] == None:
         globals()['cached_model'] = load_model(params['MODEL'], compile=False)
 
-    # we assume validation and test sets are deterministic
     dataset = globals()['cached_dataset']
     # dataset =  load_fashion_mnist_training(validation_size=validation_size, test_size=fitness_size)
     model = tf.keras.models.clone_model(globals()['cached_model'])
