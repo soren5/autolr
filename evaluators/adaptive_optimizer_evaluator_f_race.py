@@ -40,14 +40,13 @@ def train_model_tensorflow_cifar10(phen_params):
         globals()['cached_dataset'] = load_cifar10_training(validation_size=validation_size, test_size=fitness_size)
     if globals()['cached_model'] == None:
         globals()['cached_model'] = load_model(params['MODEL'], compile=False)
-        globals()['cached_weights'] = globals()['cached_model'].get_weights()
-
+        
     # we assume validation and test sets are deterministic
     dataset = globals()['cached_dataset']
     
     model = tf.keras.models.clone_model(globals()['cached_model'])
 
-    weights = globals()['cached_weights']
+    weights = model.get_weights()
     model.set_weights(weights)  
 
     # optimizer is constant aslong as phen doesn't changed?
