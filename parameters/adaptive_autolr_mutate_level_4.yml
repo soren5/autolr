@@ -1,4 +1,4 @@
-POPSIZE: 100
+OPSIZE: 100
 GENERATIONS: 200
 ELITISM: 1                   # number of individuals that survive
 PROB_CROSSOVER: 0.0
@@ -25,16 +25,16 @@ PROB_MUTATION: {
   19: 0.15}
 TSIZE: 2
 GRAMMAR: 'grammars/adaptive_autolr_grammar_mutate_level.txt'
-EXPERIMENT_NAME: 'dumps/mutation_level_1'
-RUN: 22
+EXPERIMENT_NAME: 'dumps/cifar_to_fmnist'
+RUN: 1
 INCLUDE_GENOTYPE: True
 SAVE_STEP: 1
-VERBOSE: True
+VERBOSE: False
 MIN_TREE_DEPTH: 6
 MAX_TREE_DEPTH: 17
-MODEL: 'models/cifar_model.h5'
-VALIDATION_SIZE: 3500 #3500
-FITNESS_SIZE: 44000 #3500   50000 - (3500 + 44000) -> 2500 training size
+MODEL: 'models/mnist_model.h5'
+VALIDATION_SIZE: 3500
+FITNESS_SIZE: 50000 #60000 - (50000 + 3500) = 6500 = training set 
 BATCH_SIZE: 1000
 EPOCHS: 100
 PREPOPULATE: False
@@ -42,5 +42,5 @@ PROTECT: False
 GENES: 'adam'
 PATIENCE: 5
 FAKE_FITNESS: False
-RESUME: 100
+RESUME: 99
 LOAD_ARCHIVE: False
