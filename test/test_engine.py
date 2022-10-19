@@ -71,14 +71,14 @@ def test_mutation_errors():
     except AssertionError:
         print("Caught Invalid Size Error successfully")
     else:
-        raise AssertionError
+        raise AssertionError("Failed to catch Invalid Size Error successfully")
     parameters['PROB_MUTATION'] = [0.2, 0.2]
     try:
         sge.evolutionary_algorithm(parameters=parameters, evaluation_function=evaluation_function)
     except Exception:
         print("Invalid Mutation Type Error successfully")
     else:
-        raise AssertionError
+        raise AssertionError("Failed to catch invalid Mutation Type Error successfully")
         
 def test_short_run():
     import sge.grammar as grammar
