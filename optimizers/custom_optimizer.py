@@ -1,6 +1,7 @@
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.python.training import training_ops
+import torch
 
 class CustomOptimizer(keras.optimizers.Optimizer):
     def __init__(self,
@@ -93,3 +94,73 @@ class CustomOptimizer(keras.optimizers.Optimizer):
         foo = training_ops.resource_apply_gradient_descent(
                 var.handle, tf.constant(1.0), self._grad_func(var.shape, self._alpha_dict[variable_name], self._beta_dict[variable_name], self._sigma_dict[variable_name], grad), use_locking=self._use_locking)
         return foo
+
+
+class CustomOptimizerTorch(torch.optim.Optimizer):
+    def __init__(self,
+                            params, 
+                            lr=0.01,
+                            name="CustomOptimizer",
+                            phen=None,
+                            grad_func=None,
+                            alpha_func=None,
+                            beta_func=None,
+                            sigma_func=None,
+                            **kwargs):
+
+
+        defaults = dict(lr=lr)
+        super(CustomOptimizerTorch, self).__init__(params, defaults)
+        for group in self.param_groups:
+            group['alpha'] = []
+            group['beta'] = []
+            group['sigma'] = []
+            for p in group['params']:
+                group['alpha'].append(torch.zeros_like(p.data))
+                group['beta'].append(torch.zeros_like(p.data))
+                group['sigma'].append(torch.zeros_like(p.data))
+        if phen == None:
+            self.alpha_func = alpha_func
+            self.beta_func = beta_func
+            self.sigma_func = sigma_func
+            self.grad_func = grad_func
+        else:
+            exec_env = {"torch": torch}
+            print(phen)
+            exec(phen, exec_env)
+            self.alpha_func = exec_env["alpha_func"]
+            self.beta_func = exec_env["beta_func"]
+            self.sigma_func = exec_env["sigma_func"]
+            self.grad_func = exec_env["grad_func"]
+
+    @torch.no_grad()
+    def step(self, closure=None):
+            """Performs a single optimization step.
+
+            Args:
+                closure (callable, optional): A closure that reevaluates the model
+                    and returns the loss.
+            """
+            loss = None
+            if closure is not None:
+                with torch.enable_grad():
+                    loss = closure()
+
+            for group in self.param_groups:
+                params_with_grad = [] #weights
+                d_p_list = [] #gradients
+                momentum_buffer_list = []
+                lr = group['lr']
+
+                for p, alpha, beta, sigma in zip(group['params'], group['alpha'], group['beta'], group['sigma']):
+                    if p.grad is not None:
+                        params_with_grad.append(p)
+                        d_p_list.append(p.grad)
+
+                        state = self.state[p]
+                        alpha = torch.add(alpha, self.alpha_func(p.size(), p.grad, alpha))
+                        beta = torch.add(beta, self.beta_func(p.size(), p.grad, alpha, beta))
+                        sigma = torch.add(sigma, self.sigma_func(p.size(), p.grad, alpha, beta, sigma))
+                        p.add_(self.grad_func(p.size(), p.grad, alpha, beta, sigma), alpha=1.0)
+            return loss
+            

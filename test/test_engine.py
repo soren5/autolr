@@ -1,7 +1,7 @@
 def test_engine():
     import sge.grammar as grammar
     import sge
-    params = {
+    parameters = {
        "POPSIZE": 50,
         "GENERATIONS": 50,
         "ELITISM": 0,   
@@ -40,15 +40,53 @@ def test_engine():
         "FAKE_FITNESS": True,
         "FITNESS_FLOOR": 0,
     }
-    sge.evolutionary_algorithm(parameters=params)
+    sge.evolutionary_algorithm(parameters=parameters)
 
+def test_default_parameters():
+    import sge.grammar as grammar
+    import sge    
+    from main import Optimizer_Evaluator
+    from utils import create_models
+    create_models.create_models()
+    evaluation_function = Optimizer_Evaluator()
+
+    sge.evolutionary_algorithm(evaluation_function=evaluation_function)
+
+def test_mutation_errors():
+    import sge.grammar as grammar
+    import sge
+    import yaml
+    from main import Optimizer_Evaluator
+    from utils import create_models
+
+    create_models.create_models()
+    evaluation_function = Optimizer_Evaluator()
+
+    with open("parameters/adaptive_autolr.yml", 'r') as ymlfile:
+        parameters = yaml.load(ymlfile, Loader=yaml.FullLoader)
+    parameters['PROB_MUTATION'] = {0.2, 0.2}
+    parameters['FAKE_FITNESS'] = True
+    try:
+        sge.evolutionary_algorithm(parameters=parameters, evaluation_function=evaluation_function)
+    except AssertionError:
+        print("Caught Invalid Size Error successfully")
+    else:
+        raise AssertionError
+    parameters['PROB_MUTATION'] = [0.2, 0.2]
+    try:
+        sge.evolutionary_algorithm(parameters=parameters, evaluation_function=evaluation_function)
+    except Exception:
+        print("Invalid Mutation Type Error successfully")
+    else:
+        raise AssertionError
+        
 def test_short_run():
     import sge.grammar as grammar
     import sge
-    from main import LROptimizer
+    from main import Optimizer_Evaluator
     from utils import create_models
     create_models.create_models()
-    params = {
+    parameters = {
         "POPSIZE": 2,
         "GENERATIONS": 2,
         "ELITISM": 0,   
@@ -85,7 +123,7 @@ def test_short_run():
         "EPOCHS": 2,
         "MODEL": 'models/mnist_model.h5',
         "VALIDATION_SIZE": 10,
-        "TEST_SIZE": 59980,
+        "FITNESS_SIZE": 59980,
         "BATCH_SIZE": 5,
         "MIN_TREE_DEPTH": 6,
         "MAX_TREE_DEPTH": 17,
@@ -93,5 +131,6 @@ def test_short_run():
         "PREPOPULATE": False,
         "PATIENCE": 0,
     }
-    evaluation_function = LROptimizer()
-    sge.evolutionary_algorithm(parameters=params, evaluation_function=evaluation_function)
+    evaluation_function = Optimizer_Evaluator()
+    sge.evolutionary_algorithm(parameters=parameters, evaluation_function=evaluation_function)
+

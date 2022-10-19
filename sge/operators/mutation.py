@@ -48,4 +48,5 @@ def mutate_level(p, pmutation):
                 if len(choices) == 0:
                     choices = range(0, size_of_genes[nt])
                 p['genotype'][at_gene][position_to_mutate] = random.choice(choices)
+                
     return p

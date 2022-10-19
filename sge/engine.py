@@ -6,7 +6,7 @@ import sge.grammar as grammar
 import copy
 from datetime import datetime
 from sge.operators.recombination import crossover
-from sge.operators.mutation import mutate_level as mutate
+from sge.operators.mutation import mutate_level, mutate
 from sge.operators.selection import tournament
 import time
 import statistics
@@ -57,13 +57,16 @@ def evaluate(ind, eval_func):
     ind['tree_depth'] = tree_depth
 
 
+
+
 def setup(parameters=None, logger=None):
     if parameters is None:
         set_parameters(sys.argv[1:])
     else:
         global params
         params = parameters
-    #print(params)
+    if 'VERBOSE' in params and params['VERBOSE']:
+        print(params)
     if 'SEED' not in params:
         params['SEED'] = int(datetime.now().microsecond)
     if logger is None:
@@ -77,7 +80,6 @@ def setup(parameters=None, logger=None):
     grammar.set_max_tree_depth(params['MAX_TREE_DEPTH'])
     grammar.set_min_init_tree_depth(params['MIN_TREE_DEPTH'])
 
-
 def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, parameters=None, logger_module=None):
     import os
     if logger_module != None:
@@ -85,7 +87,6 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
     else:
         import sge.logger as logger
     setup(parameters, logger_module)
-    
     if "COLAB" in params and params["COLAB"]:
         from google.colab import drive
         drive.mount('/content/drive')
@@ -160,9 +161,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
                         stat, p_value = stats.mannwhitneyu(best['evaluations'], archive[indiv['smart_phenotype']]['evaluations'])
                     except ValueError as e:
                         p_value = 1
-                    if p_value < 0.05:
-                        # There is statiscally significant difference between this individual and the best.
-                        # Individual requires no further re-evaluations
+                    if p_value < 0.05 or len(archive[key]['evaluations']) >= 30:
                         to_remove.append(eval_index)
                     else:
                         # There is no statistical difference, re-evaluate
@@ -196,7 +195,13 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
                 new_indiv = crossover(p1, p2)
             else:
                 new_indiv = tournament(population, params['TSIZE'])
-            new_indiv = mutate(new_indiv, params['PROB_MUTATION'])
+            if type(params['PROB_MUTATION']) == float:
+                new_indiv = mutate(new_indiv, params['PROB_MUTATION'])
+            elif type(params['PROB_MUTATION']) == dict:
+                assert len(params['PROB_MUTATION']) == len(new_indiv['genotype'])
+                new_indiv = mutate_level(new_indiv, params['PROB_MUTATION'])
+            else:
+                raise Exception("Invalid mutation type.")
             mapping_values = [0 for i in new_indiv['genotype']]
             phen, tree_depth = grammar.mapping(new_indiv['genotype'], mapping_values)
             new_indiv['phenotype'] = phen

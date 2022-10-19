@@ -9,3 +9,4 @@ def tournament(population, tsize=3):
     indiv["operation"] = "copy" 
     indiv["parent"] = [indiv['id']]
     return indiv
+

@@ -4,13 +4,13 @@ import yaml
 """"Algorithm Parameters"""
 params = {
     'PARAMETERS': None,
-    'POPSIZE': 5,
-    'GENERATIONS': 50,
+    'POPSIZE': 3,
+    'GENERATIONS': 3,
     'ELITISM': 1,
     'PROB_CROSSOVER': 0.9,
     'PROB_MUTATION': 0.15,
-    'TSIZE': 5,
-    'GRAMMAR': 'grammars/dynamic_autolr_grammar.txt',
+    'TSIZE': 2,
+    'GRAMMAR': 'grammars/adaptive_autolr_grammar.txt',
     'EXPERIMENT_NAME': "results/example",
     'RUN': 1,
     'INCLUDE_GENOTYPE': True,
@@ -19,10 +19,10 @@ params = {
     'MIN_TREE_DEPTH': 6,
     'MAX_TREE_DEPTH': 17,
     'MODEL': 'models/mnist_model.h5',
-    'VALIDATION_SIZE': 3500,
-    'TEST_SIZE': 3500,
-    'BATCH_SIZE': 1000,
-    'EPOCHS': 100,
+    'VALIDATION_SIZE': 10,
+    'FITNESS_SIZE': 59590,
+    'BATCH_SIZE': 5,
+    'EPOCHS': 5,
     'SEED': None,
     'PREPOPULATE': False,
     'PATIENCE': False,
@@ -31,7 +31,7 @@ params = {
 
 
 def load_parameters(file_name=None):
-    with open(file_name, 'r') as ymlfile:
+    with open("parameters/adaptive_autolr.yml", 'r') as ymlfile:
         cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
     params.update(cfg)
 
@@ -40,7 +40,7 @@ def set_parameters(arguments):
     # Initialise parser
     parser = argparse.ArgumentParser(
         usage=argparse.SUPPRESS,
-        description="Welcome to SGE3",
+        description="Welcome to AutoLR",
     )
     parser.add_argument('--parameters',
                         dest='PARAMETERS',
@@ -79,7 +79,7 @@ def set_parameters(arguments):
     parser.add_argument('--model',
                         dest='MODEL',
                         type=str,
-                        help='Specifies the path to the grammar file.')
+                        help='Specifies the path to the model file.')
     parser.add_argument('--grammar',
                         dest='GRAMMAR',
                         type=str,
@@ -128,8 +128,8 @@ def set_parameters(arguments):
                 dest="VALIDATION_SIZE",
                 type=int,
                 help="")
-    parser.add_argument('--test_size',
-                dest="TEST_SIZE",
+    parser.add_argument('--fitness_size',
+                dest="FITNESS_SIZE",
                 type=int,
                 help="")
     parser.add_argument('--batch_size',
