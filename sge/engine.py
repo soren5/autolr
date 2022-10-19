@@ -1,6 +1,7 @@
 from operator import inv
 import random
 import sys
+
 import sge.grammar as grammar
 import copy
 from datetime import datetime
@@ -78,6 +79,7 @@ def setup(parameters=None, logger=None):
 
 
 def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, parameters=None, logger_module=None):
+    import os
     if logger_module != None:
         logger = logger_module
     else:
@@ -115,46 +117,58 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
         id = len(population)
         counter = id - 1
         it = 0 
-    
-    while it <= params['GENERATIONS']:
+    start_time = time.time()
+    while it <= params['GENERATIONS'] and (False if 'TIME_STOP' not in params else (True if time.time() - start_time < params['TIME_STOP'] else False)):
         evaluation_indices = list(range(len(population)))
+        indiv_count = 0
         for indiv in population:
+            indiv_count += 1
             indiv['smart_phenotype'] = smart_phenotype(indiv['phenotype'])
             key = indiv['smart_phenotype']
             if key not in archive or 'fitness' not in archive[key]:
                 archive[key] = {'evaluations': []}
                 archive[key]['id'] = indiv['id']
                 for _ in range(5):
+                    os.system("clear")
+                    print(f"[{it}]-Initial: indiv {indiv_count}/{len(population)} eval #{_} {key}")
                     evaluate(indiv, evaluation_function)
                     archive[key]['evaluations'].append(indiv['fitness'])
                     archive[key]['fitness'] = statistics.mean(archive[key]['evaluations'])
+            os.system("clear")    
+            print(f"[{it}]-Initial: indiv {indiv_count}/{len(population)} done {key}")
         try:
             stat, p_value_kruskal = stats.kruskal(*[archive[population[x]['smart_phenotype']]['evaluations'] for x in evaluation_indices])
         except ValueError as e:
             p_value_kruskal = 1
         while p_value_kruskal < 0.05 and len(evaluation_indices) > 1:
-            #population.sort(key=lambda x: x['fitness'])
-            #best = population[0]
+            # Loop until all individuals are statiscally different from the best one
             best_fit = params['FITNESS_FLOOR'] + 1
             for indiv in population:
+                # Find the best individual
                 key = indiv['smart_phenotype']
                 if archive[key]['fitness'] < best_fit:
                     best = archive[key]
                     best_fit = archive[key]['fitness']
             to_remove = []
             for eval_index in evaluation_indices:
+                eval_count = 0
+                # Iterate all the individuals, if they are statiscally different from the best, remove them from the next iteration of the cycle.
+                # If they are similar to best, re-evaluate
                 indiv = population[eval_index]
-                with open("log.txt", 'a') as f:
-                    print(f"[{it}] Testing {indiv['id']}",  file=f)
                 if indiv['id'] != best['id']:
                     try:
                         stat, p_value = stats.mannwhitneyu(best['evaluations'], archive[indiv['smart_phenotype']]['evaluations'])
                     except ValueError as e:
                         p_value = 1
                     if p_value < 0.05:
+                        # There is statiscally significant difference between this individual and the best.
+                        # Individual requires no further re-evaluations
                         to_remove.append(eval_index)
                     else:
-                        key = indiv['smart_phenotype']             
+                        # There is no statistical difference, re-evaluate
+                        key = indiv['smart_phenotype']  
+                        os.system("clear")    
+                        print(f"[{it}]-Reval: indiv {eval_count}/{len(evaluation_indices)} eval #{len(archive[key]['evaluations']) + 1}  {key}")
                         evaluate(indiv, evaluation_function)
                         archive[key]['evaluations'].append(indiv['fitness'])
                         archive[key]['fitness'] = statistics.mean(archive[key]['evaluations']) 
@@ -169,7 +183,6 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
         for indiv in population:
             key = indiv['smart_phenotype']
             indiv['fitness'] = archive[key]['fitness']
-        #print(f"{[x['id'] for x in population]}")
         population.sort(key=lambda x: x['fitness'])
         logger.evolution_progress(it, population)
         logger.elicit_progress(it, population)
