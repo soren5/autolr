@@ -135,4 +135,4 @@ def test_short_run():
     sge.evolutionary_algorithm(parameters=parameters, evaluation_function=evaluation_function)
 
 if __name__ == "__main__":
-    test_mutation_errors()
+    test_short_run()

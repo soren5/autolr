@@ -28,7 +28,7 @@ def train_model(phen_params):
     phen, params = phen_params
     print(params['EPOCHS'])
     validation_size = params['VALIDATION_SIZE']
-    test_size = params['TEST_SIZE'] 
+    test_size = params['FITNESS_SIZE'] 
     batch_size = params['BATCH_SIZE']
     epochs = params['EPOCHS']
     patience = params['PATIENCE']
