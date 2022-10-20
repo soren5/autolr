@@ -119,7 +119,8 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
         counter = id - 1
         it = 0 
     start_time = time.time()
-    while it <= params['GENERATIONS'] and (False if 'TIME_STOP' not in params else (True if time.time() - start_time < params['TIME_STOP'] else False)):
+    while it <= params['GENERATIONS'] and (True if 'TIME_STOP' not in params else (True if time.time() - start_time < params['TIME_STOP'] else False)):
+        print(f"{it}")
         evaluation_indices = list(range(len(population)))
         indiv_count = 0
         for indiv in population:
@@ -195,6 +196,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
                 new_indiv = crossover(p1, p2)
             else:
                 new_indiv = tournament(population, params['TSIZE'])
+            print(type(params['PROB_MUTATION']))
             if type(params['PROB_MUTATION']) == float:
                 new_indiv = mutate(new_indiv, params['PROB_MUTATION'])
             elif type(params['PROB_MUTATION']) == dict:
