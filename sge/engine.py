@@ -90,7 +90,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
         from google.colab import drive
         drive.mount('/content/drive')
     
-    if 'RESUME' in params:
+    if 'RESUME' in params and params["RESUME"] != False:
         population = logger.load_population(params['RESUME'])
         logger.load_random_state(params['RESUME'])
         if 'LOAD_ARCHIVE' in params and params['LOAD_ARCHIVE'] == True:     
@@ -138,7 +138,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
                 archive[key]['evaluations'].append(indiv['fitness'])
                 archive[key]['fitness'] = statistics.mean(archive[key]['evaluations'])
 
-                """
+        """
                 # if in doubt (you should;), test:
                 for _ in range(5):                     
                     evaluate(indiv, evaluation_function)
@@ -148,7 +148,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
                 for x in archive[key]['evaluations']:
                     if not isclose(x, deterministic):
                         raise "wrong assumption!"
-                """
+                
 
         # `works` without:
         try:
@@ -157,12 +157,13 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
             p_value_kruskal = 1
             
         while p_value_kruskal < 0.05 and len(evaluation_indices) > 1:
-            best_fit = params['FITNESS_FLOOR'] + 1
-            for indiv in population:
-                key = indiv['smart_phenotype']
-                if archive[key]['fitness'] < best_fit:
-                    # best = archive[key]
-                    best_fit = archive[key]['fitness']
+        """ 
+        best_fit = params['FITNESS_FLOOR'] + 1
+        for indiv in population:
+            key = indiv['smart_phenotype']
+            if archive[key]['fitness'] < best_fit:
+                # best = archive[key]
+                best_fit = archive[key]['fitness']
         """    
             to_remove = []
             for eval_index in evaluation_indices:
