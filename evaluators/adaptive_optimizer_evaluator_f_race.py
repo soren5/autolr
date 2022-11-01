@@ -15,7 +15,7 @@ if gpus:
 
 from keras.models import load_model
 from tensorflow import keras
-from keras import backend as K
+from tensorflow.keras import backend as K
 from optimizers.custom_optimizer import CustomOptimizer
 
 import sys
@@ -140,7 +140,7 @@ def train_model_tensorflow_mnist(phen_params):
     score = model.fit(dataset['x_train'], dataset['y_train'],
         batch_size=batch_size,
         epochs=epochs,
-        verbose=2,
+        verbose=0,
         validation_data=(dataset['x_val'], dataset['y_val']),
         validation_steps= validation_size // batch_size,
         callbacks=[

@@ -30,7 +30,16 @@ class Optimizer_Evaluator_Torch:
 
 if __name__ == "__main__":
     import sge
+    
     evaluation_function = Optimizer_Evaluator_Tensorflow()
+    DEBUG = False
+    if not DEBUG:
+        import os
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+        import tensorflow as tf
+        tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+    evaluation_function = Optimizer_Evaluator()
+
     
     sge.evolutionary_algorithm(evaluation_function=evaluation_function)
         

@@ -79,7 +79,7 @@ def set_parameters(arguments):
     parser.add_argument('--model',
                         dest='MODEL',
                         type=str,
-                        help='Specifies the path to the grammar file.')
+                        help='Specifies the path to the model file.')
     parser.add_argument('--grammar',
                         dest='GRAMMAR',
                         type=str,
