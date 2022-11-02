@@ -58,7 +58,7 @@ def train_model_tensorflow_cifar10(phen_params):
     score = cached_model.fit(dataset['x_train'], dataset['y_train'],
         batch_size=batch_size,
         epochs=epochs,
-        verbose=0,
+        verbose=2,
         validation_data=(dataset['x_val'], dataset['y_val']),
         validation_steps= validation_size // batch_size,
         callbacks=[
@@ -151,10 +151,11 @@ def train_model_tensorflow_fmnist(phen_params):
     opt = CustomOptimizer(phen=phen, model=cached_model)
     cached_model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
     early_stop = keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=patience, restore_best_weights=True)
+    
     score = cached_model.fit(dataset['x_train'], dataset['y_train'],
         batch_size=batch_size,
         epochs=epochs,
-        verbose=0,
+        verbose=2,
         validation_data=(dataset['x_val'], dataset['y_val']),
         validation_steps= validation_size // batch_size,
         callbacks=[
@@ -206,7 +207,7 @@ def train_model_tensorflow_mnist(phen_params):
     score = model.fit(dataset['x_train'], dataset['y_train'],
         batch_size=batch_size,
         epochs=epochs,
-        verbose=0,
+        verbose=2,
         validation_data=(dataset['x_val'], dataset['y_val']),
         validation_steps= validation_size // batch_size,
         callbacks=[
