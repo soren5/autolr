@@ -46,16 +46,16 @@ def train_model_tensorflow_cifar10(phen_params):
         
     # we assume validation and test sets are deterministic
     dataset = globals()['cached_dataset'] 
-    cached_model.set_weights(globals()['cached_weights'])  
+    model = tf.keras.models.clone_model(globals()['cached_model'])
 
     # optimizer is constant aslong as phen doesn't changed?
     # -> opportunity to cache opt and compiled model
-    opt = CustomOptimizer(phen=phen, model=cached_model)
+    opt = CustomOptimizer(phen=phen, model=model)
     
-    cached_model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
+    model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
     early_stop = keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=patience, restore_best_weights=True)
 
-    score = cached_model.fit(dataset['x_train'], dataset['y_train'],
+    score = model.fit(dataset['x_train'], dataset['y_train'],
         batch_size=batch_size,
         epochs=epochs,
         verbose=2,
@@ -71,7 +71,7 @@ def train_model_tensorflow_cifar10(phen_params):
         results[metric] = []
         for n in score.history[metric]:
             results[metric].append(n)
-    test_score = cached_model.evaluate(x=dataset['x_test'],y=dataset["y_test"], verbose=0, callbacks=[keras.callbacks.History()])
+    test_score = model.evaluate(x=dataset['x_test'],y=dataset["y_test"], verbose=0, callbacks=[keras.callbacks.History()])
     return test_score[-1], results
 
 def train_model_tensorflow_fmnist_cached(phen_params):
@@ -144,15 +144,15 @@ def train_model_tensorflow_fmnist(phen_params):
         
     # we assume validation and test sets are deterministic
     dataset = globals()['cached_dataset'] 
-    cached_model.set_weights(globals()['cached_weights'])  
+    model = tf.keras.models.clone_model(globals()['cached_model'])
     
     # optimizer is constant aslong as phen doesn't changed?
     # -> opportunity to cache opt and compiled model
-    opt = CustomOptimizer(phen=phen, model=cached_model)
-    cached_model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
+    opt = CustomOptimizer(phen=phen, model=model)
+    model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
     early_stop = keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=patience, restore_best_weights=True)
     
-    score = cached_model.fit(dataset['x_train'], dataset['y_train'],
+    score = model.fit(dataset['x_train'], dataset['y_train'],
         batch_size=batch_size,
         epochs=epochs,
         verbose=2,
@@ -168,7 +168,7 @@ def train_model_tensorflow_fmnist(phen_params):
         results[metric] = []
         for n in score.history[metric]:
             results[metric].append(n)
-    test_score = cached_model.evaluate(x=dataset['x_test'],y=dataset["y_test"], verbose=0, callbacks=[keras.callbacks.History()])
+    test_score = model.evaluate(x=dataset['x_test'],y=dataset["y_test"], verbose=0, callbacks=[keras.callbacks.History()])
     return test_score[-1], results
 
 def train_model_tensorflow_mnist(phen_params):
