@@ -43,8 +43,8 @@ class Optimizer_Evaluator_Torch:
 if __name__ == "__main__":
     import os
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+    
     import sge
-    import sge.logger as logger
     import sys
 
     set_parameters(sys.argv[1:])   
