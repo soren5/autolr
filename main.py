@@ -8,6 +8,10 @@ class Optimizer_Evaluator_Tensorflow:
             from evaluators.adaptive_optimizer_evaluator_f_race import train_model_tensorflow_fmnist as train_model
         self.train_model = train_model
     
+    # cached_model = None
+    # cached_dataset = None
+    # cached_weights = None
+    
     def evaluate(self, phen, params):
         foo = self.train_model([phen, params])
         return -foo[0], foo[1]
