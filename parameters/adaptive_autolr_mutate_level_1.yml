@@ -42,3 +42,4 @@ PROTECT: False
 GENES: 'adam'
 PATIENCE: 5
 FAKE_FITNESS: False
+RESUME: Last

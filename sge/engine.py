@@ -6,6 +6,7 @@ from xml.etree.ElementTree import tostring
 import sge.grammar as grammar
 import copy
 from datetime import datetime
+from sge.logger import find_last_gen_recorded_in_files
 from sge.operators.recombination import crossover
 from sge.operators.mutation import mutate_level, mutate
 from sge.operators.selection import tournament
@@ -91,16 +92,22 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
         drive.mount('/content/drive')
     
     if 'RESUME' in params and params["RESUME"] != False:
-        population = logger.load_population(params['RESUME'])
-        logger.load_random_state(params['RESUME'])
-        if 'LOAD_ARCHIVE' in params and params['LOAD_ARCHIVE'] == True:     
-            archive = logger.load_archive(params['RESUME'])
-            counter = int(np.max([archive[x]['id'] for x in archive]))
-        else:
-            archive = {}
-            id = len(population)
-            counter = id - 1
-        it = params['RESUME']
+        if type(params["RESUME"]) == float: 
+            last_gen = params['RESUME']
+        elif params["RESUME"] == "Last":
+            last_gen = find_last_gen_recorded_in_files()
+
+        if last_gen != None:           
+            population = logger.load_population(last_gen)
+            logger.load_random_state(last_gen)
+            if 'LOAD_ARCHIVE' in params and params['LOAD_ARCHIVE'] == True:     
+                archive = logger.load_archive(last_gen)
+                counter = int(np.max([archive[x]['id'] for x in archive]))
+            else:
+                archive = {}
+                id = len(population)
+                counter = id - 1
+            it = last_gen
     else:
         if 'PREPOPULATE' in params and params['PREPOPULATE']:
             genes_dict={
