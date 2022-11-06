@@ -112,12 +112,15 @@ def prepare_dumps():
         pass
     save_parameters()
 
+#extract number from file
+def extract_number(f):
+    s = re.findall("\d+$",f)
+    return (int(s[0]) if s else -1,f)
+
 #finds the latest generation recorded in previous running on the simualtion based on the last population recorded
 def find_last_gen_recorded_in_files():
-    pop_pattern = re.compile('population_\d{1,3}')
-    filename = max(glob.glob(('%s/run_%d/population_?*') % (params['EXPERIMENT_NAME'], params['RUN'])))
-    last_gen_filename = pop_pattern.findall(filename)
-    gen_pattern = re.compile('\d{1,3}')
-    last_gen = gen_pattern.findall(last_gen_filename[0])[0]
-    return int(last_gen)
+
+    last_gen_name = max(glob.glob(('%s/run_%d/builtinstate_?*') % (params['EXPERIMENT_NAME'], params['RUN'])), key=extract_number)
+    last_gen = extract_number(last_gen_name)
+    return int(last_gen[0])
 
