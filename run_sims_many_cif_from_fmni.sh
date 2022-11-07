@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --partition=short
-#SBATCH --time=00:10:00
+#SBATCH --time=00:30:00
 #SBATCH --job-name=sending_cif
-#SBATCH --output=sending_cif%j.log
+#SBATCH --output=sending_cff%j.log
 export PATH=$HOME/.local/bin:$PATH
 module load Python
 module load CUDA
