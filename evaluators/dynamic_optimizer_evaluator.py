@@ -20,12 +20,12 @@ from sge.parameters import (
 experiment_time = datetime.datetime.now()
 
 validation_size = params['VALIDATION_SIZE']
-test_size = params['TEST_SIZE'] 
+fitness_size = params['FITNESS_SIZE'] 
 batch_size = params['BATCH_SIZE']
 epochs = params['EPOCHS']
 img_rows, img_cols = 28, 28
 
-dataset = load_dataset(validation_size=validation_size, test_size=test_size, split=False, img_size = [img_rows, img_cols])
+dataset = load_dataset(validation_size=validation_size, test_size=fitness_size, split=False, img_size = [img_rows, img_cols])
 
 datagen_train = ImageDataGenerator(
     featurewise_center=True,

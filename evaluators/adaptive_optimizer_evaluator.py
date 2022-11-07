@@ -15,7 +15,8 @@ if gpus:
 
 from tensorflow.keras.models import load_model
 from tensorflow import keras
-from keras import backend as K
+from tensorflow.keras import backend as K
+
 from optimizers.custom_optimizer import CustomOptimizer
 
 import sys
@@ -35,12 +36,12 @@ experiment_time = datetime.datetime.now()
 def train_model(phen):
     print(params['EPOCHS'])
     validation_size = params['VALIDATION_SIZE']
-    test_size = params['TEST_SIZE'] 
+    fitness_size = params['FITNESS_SIZE'] 
     batch_size = params['BATCH_SIZE']
     epochs = params['EPOCHS']
     patience = params['PATIENCE']
 
-    dataset = load_data_evolution(validation_size=validation_size, test_size=test_size, split=True, img_size=(28,28))
+    dataset = load_data_evolution(validation_size=validation_size, test_size=fitness_size, split=True, img_size=(28,28))
     model = load_model(params['MODEL'], compile=False)
     weights = model.get_weights()
     
