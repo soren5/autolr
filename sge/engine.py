@@ -95,6 +95,7 @@ def setup(parameters=None, logger=None):
 
 
 def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, parameters=None, logger_module=None):
+    import os
     if logger_module != None:
         logger = logger_module
     else:
@@ -141,6 +142,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
         print("GENERATION: " + str(it))
         # evaluation_indices = list(range(len(population)))
         for indiv in population:
+            indiv_count += 1
             indiv['smart_phenotype'] = smart_phenotype(indiv['phenotype'])
             key = indiv['smart_phenotype']
             if key not in archive or 'fitness' not in archive[key] or 'fitness' in archive[key] == None:
@@ -181,6 +183,9 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
         """    
             to_remove = []
             for eval_index in evaluation_indices:
+                eval_count = 0
+                # Iterate all the individuals, if they are statiscally different from the best, remove them from the next iteration of the cycle.
+                # If they are similar to best, re-evaluate
                 indiv = population[eval_index]
                 key = indiv['smart_phenotype']
 
@@ -192,7 +197,10 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
                     if p_value < 0.05:
                         to_remove.append(eval_index)
                     else:
-                        key = indiv['smart_phenotype']             
+                        # There is no statistical difference, re-evaluate
+                        key = indiv['smart_phenotype']  
+                        os.system("clear")    
+                        print(f"[{it}]-Reval: indiv {eval_count}/{len(evaluation_indices)} eval #{len(archive[key]['evaluations']) + 1}  {key}")
                         evaluate(indiv, evaluation_function)
                         archive[key]['evaluations'].append(indiv['fitness'])
                         archive[key]['fitness'] = statistics.mean(archive[key]['evaluations']) 
@@ -226,6 +234,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
                 new_indiv = crossover(p1, p2)
             else:
                 new_indiv = tournament(population, params['TSIZE'])
+            print(type(params['PROB_MUTATION']))
             if type(params['PROB_MUTATION']) == float:
                 new_indiv = mutate(new_indiv, params['PROB_MUTATION'])
             elif type(params['PROB_MUTATION']) == dict:

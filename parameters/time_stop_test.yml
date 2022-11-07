@@ -1,6 +1,6 @@
-POPSIZE: 100
-GENERATIONS: 200
-ELITISM: 1                   # number of individuals that survive
+POPSIZE: 5
+GENERATIONS: 1
+ELITISM: 0                   # number of individuals that survive
 PROB_CROSSOVER: 0.0
 PROB_MUTATION: {
   0: 0.0, 
@@ -25,22 +25,19 @@ PROB_MUTATION: {
   19: 0.15}
 TSIZE: 2
 GRAMMAR: 'grammars/adaptive_autolr_grammar_mutate_level.txt'
-EXPERIMENT_NAME: 'dumps/fmnist_to_cifar'
-RUN: 1
+EXPERIMENT_NAME: 'dumps/time_stop_test'
+RUN: 3
 INCLUDE_GENOTYPE: True
 SAVE_STEP: 1
 VERBOSE: True
 MIN_TREE_DEPTH: 6
 MAX_TREE_DEPTH: 17
-MODEL: 'models/cifar_model.h5'
-VALIDATION_SIZE: 3500 #3500
-FITNESS_SIZE: 44000 #3500   50000 - (3500 + 44000) -> 2500 training size
+MODEL: 'models/mnist_model.h5'
+VALIDATION_SIZE: 3500
+FITNESS_SIZE: 55000
 BATCH_SIZE: 1000
-EPOCHS: 100
+EPOCHS: 10000
 PREPOPULATE: False
-PROTECT: False
-GENES: 'adam'
 PATIENCE: 5
 FAKE_FITNESS: False
-RESUME: 100
-LOAD_ARCHIVE: False
+TIME_STOP: 600
