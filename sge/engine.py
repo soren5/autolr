@@ -113,6 +113,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
             experiment_name = params["EXPERIMENT_NAME"]
         elif params["RESUME"] == "Last":
             last_gen, experiment_name = find_generation_to_load()
+        
         if last_gen != None:           
             population = logger.load_population(last_gen, experiment_name)
             logger.load_random_state(last_gen, experiment_name)
@@ -126,6 +127,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
             it = last_gen
         else:
             population, archive, counter, it = start_population_from_scratch()
+
     else:
         if 'PREPOPULATE' in params and params['PREPOPULATE']:
             genes_dict={
@@ -142,7 +144,6 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
         print("GENERATION: " + str(it))
         # evaluation_indices = list(range(len(population)))
         for indiv in population:
-            indiv_count += 1
             indiv['smart_phenotype'] = smart_phenotype(indiv['phenotype'])
             key = indiv['smart_phenotype']
             if key not in archive or 'fitness' not in archive[key] or 'fitness' in archive[key] == None:
