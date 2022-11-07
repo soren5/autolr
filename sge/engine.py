@@ -6,7 +6,7 @@ from xml.etree.ElementTree import tostring
 import sge.grammar as grammar
 import copy
 from datetime import datetime
-from sge.logger import find_last_gen_recorded_in_files
+from sge.logger import find_generation_to_load
 from sge.operators.recombination import crossover
 from sge.operators.mutation import mutate_level, mutate
 from sge.operators.selection import tournament
@@ -38,6 +38,20 @@ def initialize_population(solutions=[]):
     for i in range(len(population)):
         population[i]['id'] = i
     return population
+
+def start_population_from_scratch():
+    population = initialize_population()
+    archive = {}
+    for indiv in population:
+        indiv["evaluations"] = [] 
+        mapping_values = [0 for i in indiv['genotype']]
+        phen, tree_depth = grammar.mapping(indiv['genotype'], mapping_values)
+        indiv['phenotype'] = phen
+        indiv['mapping_values'] = mapping_values
+    id = len(population)
+    counter = id - 1
+    it = 0
+    return population, archive, counter, it 
 
 def evaluate(ind, eval_func):
     mapping_values = [0 for i in ind['genotype']]
@@ -92,22 +106,25 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
         drive.mount('/content/drive')
     
     if 'RESUME' in params and params["RESUME"] != False:
+        
         if type(params["RESUME"]) == float: 
             last_gen = params['RESUME']
+            experiment_name = params["EXPERIMENT_NAME"]
         elif params["RESUME"] == "Last":
-            last_gen = find_last_gen_recorded_in_files()
-
+            last_gen, experiment_name = find_generation_to_load()
         if last_gen != None:           
-            population = logger.load_population(last_gen)
-            logger.load_random_state(last_gen)
+            population = logger.load_population(last_gen, experiment_name)
+            logger.load_random_state(last_gen, experiment_name)
             if 'LOAD_ARCHIVE' in params and params['LOAD_ARCHIVE'] == True:     
-                archive = logger.load_archive(last_gen)
+                archive = logger.load_archive(last_gen, experiment_name)
                 counter = int(np.max([archive[x]['id'] for x in archive]))
             else:
                 archive = {}
                 id = len(population)
                 counter = id - 1
             it = last_gen
+        else:
+            population, archive, counter, it = start_population_from_scratch()
     else:
         if 'PREPOPULATE' in params and params['PREPOPULATE']:
             genes_dict={
@@ -118,21 +135,11 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
             }
             population = initialize_population(genes_dict[params["GENES"]])
         else:
-            population = initialize_population()
-        archive = {}
-        for indiv in population:
-            indiv["evaluations"] = [] 
-            mapping_values = [0 for i in indiv['genotype']]
-            phen, tree_depth = grammar.mapping(indiv['genotype'], mapping_values)
-            indiv['phenotype'] = phen
-            indiv['mapping_values'] = mapping_values
-        id = len(population)
-        counter = id - 1
-        it = 0 
-    
+            population, archive, counter, it = start_population_from_scratch()  
+
     while it <= params['GENERATIONS']:
         print("GENERATION: " + str(it))
-        evaluation_indices = list(range(len(population)))
+        # evaluation_indices = list(range(len(population)))
         for indiv in population:
             indiv['smart_phenotype'] = smart_phenotype(indiv['phenotype'])
             key = indiv['smart_phenotype']

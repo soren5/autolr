@@ -150,6 +150,10 @@ def set_parameters(arguments):
             dest="FITNESS_FLOOR",
             type=bool,
             help="")
+    parser.add_argument('--parent_experiment',
+            dest="PARENT_EXPERIMENT",
+            type=str,
+            help="specifies in whihc folder to look for the parent run population and state (same run number), to use seed the current run (which must not have started already)")
 
     
     
