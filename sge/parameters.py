@@ -128,7 +128,7 @@ def set_parameters(arguments):
                 dest="VALIDATION_SIZE",
                 type=int,
                 help="")
-    parser.add_argument('--fitness_size',
+    parser.add_argument('--test_size',
                 dest="FITNESS_SIZE",
                 type=int,
                 help="")

@@ -20,7 +20,7 @@ from sge.parameters import (
 experiment_time = datetime.datetime.now()
 
 validation_size = params['VALIDATION_SIZE']
-fitness_size = params['FITNESS_SIZE'] 
+fitness_size =params['FITNESS_SIZE'] 
 batch_size = params['BATCH_SIZE']
 epochs = params['EPOCHS']
 img_rows, img_cols = 28, 28
