@@ -124,7 +124,6 @@ def train_model_tensorflow_fmnist_cached(phen_params):
     test_score = model.evaluate(x=dataset['x_test'],y=dataset["y_test"], verbose=0, callbacks=[keras.callbacks.History()])
     return test_score[-1], results
 
-
 def train_model_tensorflow_fmnist(phen_params):
     phen, params = phen_params
     print(params['EPOCHS'])
