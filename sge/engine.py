@@ -235,7 +235,6 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
                 new_indiv = crossover(p1, p2)
             else:
                 new_indiv = tournament(population, params['TSIZE'])
-            print(type(params['PROB_MUTATION']))
             if type(params['PROB_MUTATION']) == float:
                 new_indiv = mutate(new_indiv, params['PROB_MUTATION'])
             elif type(params['PROB_MUTATION']) == dict:
