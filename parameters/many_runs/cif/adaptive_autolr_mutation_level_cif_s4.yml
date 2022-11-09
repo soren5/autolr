@@ -25,7 +25,7 @@ PROB_MUTATION: {
   19: 0.15}
 TSIZE: 2
 GRAMMAR: 'grammars/adaptive_autolr_grammar_mutate_level.txt'
-EXPERIMENT_NAME: 'many_runs/cif'
+EXPERIMENT_NAME: '/data/many_runs/cif'
 SEED: 4
 RUN:  4
 INCLUDE_GENOTYPE: True

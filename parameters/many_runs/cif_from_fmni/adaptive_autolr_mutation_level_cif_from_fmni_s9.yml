@@ -25,8 +25,8 @@ PROB_MUTATION: {
   19: 0.15}
 TSIZE: 2
 GRAMMAR: 'grammars/adaptive_autolr_grammar_mutate_level.txt'
-EXPERIMENT_NAME: 'many_runs/cif_from_fmni'
-PARENT_EXPERIMENT: 'many_runs/fmni'
+EXPERIMENT_NAME: '/data/many_runs/cif_from_fmni'
+PARENT_EXPERIMENT: '/data/many_runs/fmni'
 MODEL: 'models/cifar_model.h5'
 SEED: 9
 RUN:  9
