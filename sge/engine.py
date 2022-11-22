@@ -110,7 +110,10 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
         
         if type(params["RESUME"]) == int: 
             last_gen = params['RESUME']
-            experiment_name = params["EXPERIMENT_NAME"]
+            if 'PARENT_EXPERIMENT' in params: 
+                experiment_name = params["PARENT_EXPERIMENT"]
+            else:
+                experiment_name = params["EXPERIMENT_NAME"]
         elif params["RESUME"] == "Last":
             last_gen, experiment_name = find_generation_to_load()
         
