@@ -108,7 +108,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
     
     if 'RESUME' in params and params["RESUME"] != False:
         
-        if type(params["RESUME"]) == float: 
+        if type(params["RESUME"]) == int: 
             last_gen = params['RESUME']
             experiment_name = params["EXPERIMENT_NAME"]
         elif params["RESUME"] == "Last":
