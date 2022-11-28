@@ -15,7 +15,8 @@ if gpus:
 
 from tensorflow.keras.models import load_model
 from tensorflow import keras
-from keras import backend as K
+from tensorflow.keras import backend as K
+
 from optimizers.custom_optimizer import CustomOptimizer
 
 import sys
