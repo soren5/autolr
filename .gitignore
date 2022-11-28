@@ -155,3 +155,4 @@ deprecated_custom_optimizer.tst
 *.pdf
 *.png
 log.txt
+data/
