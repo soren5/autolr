@@ -107,21 +107,20 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
         drive.mount('/content/drive')
     
     if 'RESUME' in params and params["RESUME"] != False:
-        
         if type(params["RESUME"]) == int: 
             last_gen = params['RESUME']
             if 'PARENT_EXPERIMENT' in params: 
-                experiment_name = params["PARENT_EXPERIMENT"]
-            else:
-                experiment_name = params["EXPERIMENT_NAME"]
+                params["EXPERIMENT_NAME"] = params["PARENT_EXPERIMENT"]
+                print(f"Overiding Experiment Name with parent experiment name: {params['EXPERIMENT_NAME']}")
         elif params["RESUME"] == "Last":
-            last_gen, experiment_name = find_generation_to_load()
-        
+            last_gen = find_generation_to_load()
+        else:
+            raise Exception("Invalid RESUME")
         if last_gen != None:           
-            population = logger.load_population(last_gen, experiment_name)
-            logger.load_random_state(last_gen, experiment_name)
+            population = logger.load_population(last_gen)
+            logger.load_random_state(last_gen)
             if 'LOAD_ARCHIVE' in params and params['LOAD_ARCHIVE'] == True:     
-                archive = logger.load_archive(last_gen, experiment_name)
+                archive = logger.load_archive(last_gen)
                 counter = int(np.max([archive[x]['id'] for x in archive]))
             else:
                 archive = {}
