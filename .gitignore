@@ -156,3 +156,5 @@ deprecated_custom_optimizer.tst
 *.png
 log.txt
 data/
+*.pth
+past_experiments/
