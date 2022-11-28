@@ -155,3 +155,14 @@ deprecated_custom_optimizer.tst
 *.pdf
 *.png
 log.txt
+data/
+*.pth
+past_experiments/
+past_experiments/evostar_2022/adaptive_autolr_config.yml
+past_experiments/evostar_2022/dynamic_autolr_config.yml
+past_experiments/gecco_2022/adaptive_autolr_config_prepopulate_adam_loose.yml
+past_experiments/gecco_2022/adaptive_autolr_config_prepopulate_adam.yml
+past_experiments/gecco_2022/adaptive_autolr_config_prepopulate_momentum.yml
+past_experiments/gecco_2022/adaptive_autolr_config_prepopulate_rmsprop_2.yml
+past_experiments/gecco_2022/adaptive_autolr_config_prepopulate_rmsprop.yml
+past_experiments/gecco_2022/adaptive_autolr_config_prepopulate.yml
