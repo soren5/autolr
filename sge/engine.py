@@ -259,7 +259,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
         logger.save_population(it, population)
         logger.save_random_state(it)
         #why are we reloading what we just saved? does it change in the meantime?
-        logger.load_random_state(it, params["EXPERIMENT_NAME"])
+        logger.load_random_state(it)
         #print(population)
         if "COLAB" in params and params["COLAB"]:
             drive.flush_and_unmount()
