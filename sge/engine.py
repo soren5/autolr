@@ -74,10 +74,10 @@ def evaluate(ind, eval_func):
 
 
 def setup(parameters=None, logger=None):
+    global params
     if parameters is None:
         set_parameters(sys.argv[1:])
     else:
-        global params
         params = parameters
     #print(params)
     if 'SEED' not in params:
@@ -85,7 +85,7 @@ def setup(parameters=None, logger=None):
     if logger is None:
         import sge.logger as logger
         print("Using Native Logger")
-    logger.params = parameters 
+    logger.params = params 
     logger.prepare_dumps()
     random.seed(params['SEED'])
     np.random.seed(params['SEED'])

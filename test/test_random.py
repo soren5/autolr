@@ -92,6 +92,6 @@ def test_engine_resume():
     pop2 = sge.evolutionary_algorithm(parameters=params, evaluation_function=None)
     assert pop1 == pop2    
 
-if __name__ == "__main__":
-    test_engine_resume()
+#if __name__ == "__main__":
+#    test_engine_resume()
 

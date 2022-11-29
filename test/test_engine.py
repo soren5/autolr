@@ -242,5 +242,5 @@ def test_short_run_mnist():
     evaluation_function = Optimizer_Evaluator_Tensorflow(train_model=train_model_tensorflow_mnist)
     sge.evolutionary_algorithm(parameters=parameters, evaluation_function=evaluation_function)
 
-if __name__ == "__main__":
-    test_short_run()
+#if __name__ == "__main__":
+#    test_default_parameters()
