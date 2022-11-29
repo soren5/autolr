@@ -85,6 +85,7 @@ def setup(parameters=None, logger=None):
     if logger is None:
         import sge.logger as logger
         print("Using Native Logger")
+    logger.params = parameters 
     logger.prepare_dumps()
     random.seed(params['SEED'])
     np.random.seed(params['SEED'])
@@ -92,6 +93,7 @@ def setup(parameters=None, logger=None):
     grammar.read_grammar()
     grammar.set_max_tree_depth(params['MAX_TREE_DEPTH'])
     grammar.set_min_init_tree_depth(params['MIN_TREE_DEPTH'])
+
 
 
 def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, parameters=None, logger_module=None):
@@ -129,7 +131,6 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
             it = last_gen
         else:
             population, archive, counter, it = start_population_from_scratch()
-
     else:
         if 'PREPOPULATE' in params and params['PREPOPULATE']:
             genes_dict={
@@ -156,7 +157,6 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
                 evaluate(indiv, evaluation_function)
                 archive[key]['evaluations'].append(indiv['fitness'])
                 archive[key]['fitness'] = statistics.mean(archive[key]['evaluations'])
-
         """
                 # if in doubt (you should;), test:
                 for _ in range(5):                     
@@ -227,6 +227,8 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
         logger.elicit_progress(it, population)
 
         print("\ngeneration: " + str(it) + "; best fit so far: " + str(population[0]['fitness']) + "\n")
+        if it == params['GENERATIONS']:
+            return population
         new_population = population[:params['ELITISM']]
         for indiv in new_population:
             indiv['operation'] = 'elitism'
@@ -261,11 +263,9 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
         logger.save_population(it, population)
         logger.save_random_state(it)
         #why are we reloading what we just saved? does it change in the meantime?
-        logger.load_random_state(it)
-        #print(population)
         if "COLAB" in params and params["COLAB"]:
             drive.flush_and_unmount()
             drive.mount('/content/drive')
             import os
             print(os.listdir(f"{params['EXPERIMENT_NAME']}/run_{params['RUN']}"))
-    return population
+
