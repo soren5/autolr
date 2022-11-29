@@ -134,5 +134,45 @@ def test_short_run():
     evaluation_function = Optimizer_Evaluator()
     sge.evolutionary_algorithm(parameters=parameters, evaluation_function=evaluation_function)
 
+def test_parameters():
+    import sge, os
+    params = {
+        "POPSIZE": 10,
+        "GENERATIONS": 1,
+        "ELITISM": 0,   
+        "PROB_CROSSOVER": 0.0,
+        "PROB_MUTATION": 0.1,
+        "TSIZE": 3,
+        "GRAMMAR": 'grammars/adaptive_autolr_grammar_mutate_level.txt',
+        "EXPERIMENT_NAME": 'test_parameter',
+        "RUN": 1,
+        "INCLUDE_GENOTYPE": True,
+        "SAVE_STEP": 1,
+        "VERBOSE": True,
+        "EPOCHS": 2,
+        "MODEL": 'models/mnist_model.h5',
+        "VALIDATION_SIZE": 10,
+        "FITNESS_SIZE": 59590,
+        "BATCH_SIZE": 5,
+        "MIN_TREE_DEPTH": 6,
+        "MAX_TREE_DEPTH": 17,
+        "FITNESS_FLOOR": 0,
+        "PREPOPULATE": False,
+        "FAKE_FITNESS": True,
+    }
+    sge.evolutionary_algorithm(parameters=params, evaluation_function=None)
+    file_path = os.path.join(params['EXPERIMENT_NAME'], "run_1", "iteration_1.json")
+    assert os.path.exists(file_path)
+    path = os.path.join(params['EXPERIMENT_NAME'], "run_1")
+    for file_name in os.listdir(path):
+        # construct full file path
+        file = os.path.join(path, file_name)
+        if os.path.isfile(file):
+            print('Deleting file:', file)
+            os.remove(file)
+    os.rmdir(path)
+    os.rmdir(params['EXPERIMENT_NAME'])
+
+
 if __name__ == "__main__":
-    test_short_run()
+    test_parameters()
