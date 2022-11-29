@@ -11,7 +11,7 @@ params = {
     'PROB_MUTATION': 0.15,
     'TSIZE': 2,
     'GRAMMAR': 'grammars/adaptive_autolr_grammar.txt',
-    'EXPERIMENT_NAME': "results/example",
+    'EXPERIMENT_NAME': "dumps/example",
     'RUN': 1,
     'INCLUDE_GENOTYPE': True,
     'SAVE_STEP': 1,

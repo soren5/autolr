@@ -114,7 +114,8 @@ def test_engine_resume():
     }
     pop1 = sge.evolutionary_algorithm(parameters=params, evaluation_function=None)
     params['RESUME'] = 1
-    params['RUN'] = 2
     pop2 = sge.evolutionary_algorithm(parameters=params, evaluation_function=None)
     assert pop1 == pop2    
 
+if __name__ == "__main__":
+    test_engine_resume()
