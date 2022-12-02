@@ -225,6 +225,18 @@ def test_archive():
     ut.delete_directory(params['EXPERIMENT_NAME'], "run_1")
     assert pop3 == pop2    
 
-     
+def test_reevaluation():
+    from sge.engine import evaluate 
+    
+    import copy 
+    class FitnessEvaluator:
+        def __init__(self) -> None:
+            pass
+        def evaluate(self, phen, params):
+            return 1, {}
+    indiv = {'genotype': [[0], [1], [], [0], [1], [], [1], [], [0], [0], [8], [0, 1, 1], [6], [0, 1], [1], [], [0, 1, 0, 1, 0, 1, 0], [1, 4, 4, 9], [1, 1, 2], [43]], 'fitness': 1, 'tree_depth': 9, 'operation': 'initialization', 'id': 0, 'phenotype': 'alpha_func, beta_func, sigma_func, grad_func = lambda shape,  alpha, grad: alpha, lambda shape,  alpha, beta, grad: tf.constant(2.28478855e-04, shape=shape, dtype=tf.float32), lambda shape,  alpha, beta, sigma, grad: tf.math.divide_no_nan(alpha, grad), lambda shape,  alpha, beta, sigma, grad: grad', 'mapping_values': [1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 3, 1, 2, 1, 0, 7, 4, 3, 1], 'smart_phenotype': 'subtract(alpha, pow(alpha, pow(constant(2.28478855e-04), constant(2.11963334e-01))))', 'other_info': {}}
+    indiv_2 = copy.deepcopy(indiv)
+    evaluate(indiv_2, FitnessEvaluator())
+    assert indiv == indiv_2
 if __name__ == "__main__":
-    test_default_parameters()
+    test_reevaluation()
