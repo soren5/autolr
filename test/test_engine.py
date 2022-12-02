@@ -1,3 +1,4 @@
+import utils.utilities as ut
 def test_engine():
     import sge.grammar as grammar
     import sge
@@ -161,18 +162,63 @@ def test_parameters():
         "FAKE_FITNESS": True,
     }
     sge.evolutionary_algorithm(parameters=params, evaluation_function=None)
-    file_path = os.path.join(params['EXPERIMENT_NAME'], "run_1", "iteration_1.json")
-    assert os.path.exists(file_path)
-    path = os.path.join(params['EXPERIMENT_NAME'], "run_1")
-    for file_name in os.listdir(path):
-        # construct full file path
-        file = os.path.join(path, file_name)
-        if os.path.isfile(file):
-            print('Deleting file:', file)
-            os.remove(file)
-    os.rmdir(path)
-    os.rmdir(params['EXPERIMENT_NAME'])
+    ut.delete_directory(params['EXPERIMENT_NAME'], "run_1", "iteration_1.json")
+    
 
+def test_archive():
+    """I devised this test to discover if there are reproducility problems with the archive.
+    The only problem is if we take an archive from the future and use it in an earlier generation.
+    This will not yield the same result as fitness evaluation burns random seed numbers (to map the genotype)."""
+    import sge
+    import tensorflow as tf
+    params = {
+        "POPSIZE": 10,
+        "GENERATIONS": 2,
+        "ELITISM": 0,   
+        "PROB_CROSSOVER": 0.0,
+        "PROB_MUTATION": 0.9,
+        "TSIZE": 3,
+        "GRAMMAR": 'grammars/adaptive_autolr_grammar_mutate_level.txt',
+        "EXPERIMENT_NAME": 'dumps/test_archive',
+        "RUN": 1,
+        "INCLUDE_GENOTYPE": True,
+        "SAVE_STEP": 1,
+        "VERBOSE": True,
+        "MIN_TREE_DEPTH": 2,
+        "MAX_TREE_DEPTH": 4,
+        "FITNESS_FLOOR": 0,
+        "SEED": 4,
+    }
+    from utils.smart_phenotype import smart_phenotype
+    class TensorflowFitnessGenerator:
+        def __init__(self) -> None:
+            self.fitness ={}
+            self.populations = {}
+            self.initial_populations = {}
+            self.random_states = {}
+            self.smart_phenotype = smart_phenotype
+            pass
+        def evaluate(self, phen, params):
+            if self.smart_phenotype(phen) in self.fitness:
+                fit = self.fitness[self.smart_phenotype(phen)]
+            else:
+                import tensorflow 
+                fit = -tensorflow.random.uniform(shape=[1])[0]
+                self.fitness[self.smart_phenotype(phen)] = fit
+            return float(fit), {}
+    fitness = TensorflowFitnessGenerator()
+    pop1 = sge.evolutionary_algorithm(parameters=params, evaluation_function=fitness)
+    params['RESUME'] = 1
+    import os
+    old_path = os.path.join(params['EXPERIMENT_NAME'], "run_1", "z-archive_3.json")
+    new_path = os.path.join(params['EXPERIMENT_NAME'], "run_1", "z-archive_1.json")
+    os.remove(new_path)
+    os.rename(old_path, new_path)
+    pop2 = sge.evolutionary_algorithm(parameters=params, evaluation_function=fitness)
+    pop3 = sge.evolutionary_algorithm(parameters=params, evaluation_function=fitness)
+    ut.delete_directory(params['EXPERIMENT_NAME'], "run_1")
+    assert pop3 == pop2    
 
+     
 if __name__ == "__main__":
-    test_parameters()
+    test_archive()
