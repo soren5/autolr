@@ -54,7 +54,8 @@ def test_default_parameters():
     evaluation_function = Optimizer_Evaluator()
 
     sge.evolutionary_algorithm(evaluation_function=evaluation_function)
-    ut.delete_directory("dumps/example", "run_1")
+    from parameters import params
+    ut.delete_directory(params['EXPERIMENT_NAME'], "run_1")
 
 
 def test_mutation_errors():
@@ -169,7 +170,7 @@ def test_parameters():
         "FAKE_FITNESS": True,
     }
     sge.evolutionary_algorithm(parameters=params, evaluation_function=None)
-    ut.delete_directory(params['EXPERIMENT_NAME'], "run_1", "iteration_1.json")
+    ut.delete_directory(params['EXPERIMENT_NAME'], "run_1")
     
 
 def test_archive():
