@@ -38,8 +38,13 @@ def initialize_population(solutions=[]):
     return population
 
 def evaluate(ind, eval_func):
-    mapping_values = [0 for i in ind['genotype']]
-    phen, tree_depth = grammar.mapping(ind['genotype'], mapping_values)
+    if 'phenotype' not in ind:
+        mapping_values = [0 for i in ind['genotype']]
+        phen, tree_depth = grammar.mapping(ind['genotype'], mapping_values)
+    else:
+        mapping_values = ind['mapping_values']
+        phen = ind['phenotype']
+        tree_depth = ind['tree_depth']
     other_info = {}
     if "FAKE_FITNESS" in params and params['FAKE_FITNESS']:
         import numpy as np
@@ -93,9 +98,9 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
         drive.mount('/content/drive')
     
     if 'RESUME' in params:
+        logger.load_random_state(params['RESUME'])
         population = logger.load_population(params['RESUME'])
         archive = logger.load_archive(params['RESUME'])
-        logger.load_random_state(params['RESUME'])
         it = params['RESUME']
         counter = int(np.max([archive[x]['id'] for x in archive]))
     else:
@@ -111,7 +116,6 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
             population = initialize_population()
         archive = {}
         for indiv in population:
-            indiv["evaluations"] = [] 
             mapping_values = [0 for i in indiv['genotype']]
             phen, tree_depth = grammar.mapping(indiv['genotype'], mapping_values)
             indiv['phenotype'] = phen
@@ -128,7 +132,9 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
             indiv_count += 1
             indiv['smart_phenotype'] = smart_phenotype(indiv['phenotype'])
             key = indiv['smart_phenotype']
-            if key not in archive or 'fitness' not in archive[key]:
+            if key in archive and 'fitness' not in archive[key]:
+                raise Exception('Incomplete archive entry')
+            if key not in archive:
                 archive[key] = {'evaluations': []}
                 archive[key]['id'] = indiv['id']
                 for _ in range(5):
@@ -197,7 +203,6 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
                 new_indiv = crossover(p1, p2)
             else:
                 new_indiv = tournament(population, params['TSIZE'])
-            print(type(params['PROB_MUTATION']))
             if type(params['PROB_MUTATION']) == float:
                 new_indiv = mutate(new_indiv, params['PROB_MUTATION'])
             elif type(params['PROB_MUTATION']) == dict:
@@ -214,15 +219,13 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
             else:
                 counter += 1
                 new_indiv['id'] = counter
-                archive[new_indiv['smart_phenotype']] = {'evaluations': [], 'id': new_indiv['id']}
             new_population.append(new_indiv)
         population = new_population
         it += 1
         logger.save_archive(it, archive)
         logger.save_population(it, population)
         logger.save_random_state(it)
-        logger.load_random_state(it)
-        #print(population)
+        evaluation_function.initial_populations[it] = copy.deepcopy(population)
         if "COLAB" in params and params["COLAB"]:
             drive.flush_and_unmount()
             drive.mount('/content/drive')
