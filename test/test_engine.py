@@ -54,7 +54,7 @@ def test_default_parameters():
     evaluation_function = Optimizer_Evaluator()
 
     sge.evolutionary_algorithm(evaluation_function=evaluation_function)
-    from parameters import params
+    from sge.parameters import params
     ut.delete_directory(params['EXPERIMENT_NAME'], "run_1")
 
 
