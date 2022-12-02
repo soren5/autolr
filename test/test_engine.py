@@ -32,7 +32,7 @@ def test_engine():
         "TSIZE": 2,
         "GRAMMAR": 'grammars/adaptive_autolr_grammar_mutate_level.txt',
         "EXPERIMENT_NAME": 'dumps/test_engine',
-        "RUN": 0,
+        "RUN": 1,
         "INCLUDE_GENOTYPE": True,
         "SAVE_STEP": 1,
         "VERBOSE": True,
@@ -42,6 +42,8 @@ def test_engine():
         "FITNESS_FLOOR": 0,
     }
     sge.evolutionary_algorithm(parameters=parameters)
+    ut.delete_directory(parameters['EXPERIMENT_NAME'], "run_1")
+
 
 def test_default_parameters():
     import sge.grammar as grammar
@@ -52,6 +54,8 @@ def test_default_parameters():
     evaluation_function = Optimizer_Evaluator()
 
     sge.evolutionary_algorithm(evaluation_function=evaluation_function)
+    ut.delete_directory("dumps/example", "run_1")
+
 
 def test_mutation_errors():
     import sge.grammar as grammar
@@ -80,6 +84,8 @@ def test_mutation_errors():
         print("Caught Invalid Mutation Type Error successfully")
     else:
         raise AssertionError("Failed to catch invalid Mutation Type Error successfully")
+    ut.delete_directory(parameters['EXPERIMENT_NAME'], "run_1")
+
         
 def test_short_run():
     import sge.grammar as grammar
@@ -134,6 +140,7 @@ def test_short_run():
     }
     evaluation_function = Optimizer_Evaluator()
     sge.evolutionary_algorithm(parameters=parameters, evaluation_function=evaluation_function)
+    ut.delete_directory(parameters['EXPERIMENT_NAME'], "run_1")
 
 def test_parameters():
     import sge, os
