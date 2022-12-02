@@ -225,7 +225,6 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
         logger.save_archive(it, archive)
         logger.save_population(it, population)
         logger.save_random_state(it)
-        evaluation_function.initial_populations[it] = copy.deepcopy(population)
         if "COLAB" in params and params["COLAB"]:
             drive.flush_and_unmount()
             drive.mount('/content/drive')

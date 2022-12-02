@@ -238,5 +238,3 @@ def test_reevaluation():
     indiv_2 = copy.deepcopy(indiv)
     evaluate(indiv_2, FitnessEvaluator())
     assert indiv == indiv_2
-if __name__ == "__main__":
-    test_reevaluation()
