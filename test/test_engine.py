@@ -48,10 +48,10 @@ def test_engine():
 def test_default_parameters():
     import sge.grammar as grammar
     import sge    
-    from main import Optimizer_Evaluator
+    from main import Optimizer_Evaluator_Tensorflow
     from utils import create_models
     create_models.create_models()
-    evaluation_function = Optimizer_Evaluator()
+    evaluation_function = Optimizer_Evaluator_Tensorflow()
 
     sge.evolutionary_algorithm(evaluation_function=evaluation_function)
 
@@ -60,11 +60,11 @@ def test_mutation_errors():
     import sge.grammar as grammar
     import sge
     import yaml
-    from main import Optimizer_Evaluator
+    from main import Optimizer_Evaluator_Tensorflow
     from utils import create_models
 
     create_models.create_models()
-    evaluation_function = Optimizer_Evaluator()
+    evaluation_function = Optimizer_Evaluator_Tensorflow()
 
     with open("parameters/adaptive_autolr.yml", 'r') as ymlfile:
         parameters = yaml.load(ymlfile, Loader=yaml.FullLoader)
@@ -124,7 +124,7 @@ def test_archive():
     import tensorflow as tf
     params = {
         "POPSIZE": 10,
-        "GENERATIONS": 2,
+        "GENERATIONS": 3,
         "ELITISM": 0,   
         "PROB_CROSSOVER": 0.0,
         "PROB_MUTATION": 0.9,
@@ -184,3 +184,6 @@ def test_reevaluation():
     indiv_2 = copy.deepcopy(indiv)
     evaluate(indiv_2, FitnessEvaluator())
     assert indiv == indiv_2
+
+if __name__ == "__main__":
+    test_archive()
