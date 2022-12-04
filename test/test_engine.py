@@ -97,7 +97,7 @@ def test_short_run():
         "ELITISM": 0,   
         "PROB_CROSSOVER": 0.0,
         "PROB_MUTATION": 0.1,
-        "TSIZE": 3,
+        "TSIZE": 2,
         "GRAMMAR": 'grammars/adaptive_autolr_grammar_mutate_level.txt',
         "EXPERIMENT_NAME": 'test_parameter',
         "RUN": 1,
