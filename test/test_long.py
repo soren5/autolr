@@ -2,7 +2,7 @@ import utils.utilities as ut
 def test_short_run():
     import sge.grammar as grammar
     import sge
-    from main import Optimizer_Evaluator
+    from main import Optimizer_Evaluator_Tensorflow
     from utils import create_models
     create_models.create_models()
     parameters = {
@@ -11,27 +11,7 @@ def test_short_run():
         "ELITISM": 0,   
         "SEED": 0,                
         "PROB_CROSSOVER": 0.0,
-        "PROB_MUTATION": {
-        0: 0.0, 
-        1: 0.01, 
-        2: 0.01, 
-        3: 0.01, 
-        4: 0.05, 
-        5: 0.15, 
-        6: 0.01, 
-        7: 0.01, 
-        8: 0.01, 
-        9: 0.05, 
-        10: 0.15, 
-        11: 0.01, 
-        12: 0.01, 
-        13: 0.01, 
-        14: 0.05, 
-        15: 0.15, 
-        16: 0.01, 
-        17: 0.01, 
-        18: 0.05, 
-        19: 0.15},
+        "PROB_MUTATION": 0.15,
         "TSIZE": 2,
         "GRAMMAR": 'grammars/adaptive_autolr_grammar_mutate_level.txt',
         "EXPERIMENT_NAME": 'dumps/test_engine',
@@ -50,7 +30,7 @@ def test_short_run():
         "PREPOPULATE": False,
         "PATIENCE": 0,
     }
-    evaluation_function = Optimizer_Evaluator()
+    evaluation_function = Optimizer_Evaluator_Tensorflow()
     sge.evolutionary_algorithm(parameters=parameters, evaluation_function=evaluation_function)
     ut.delete_directory(parameters['EXPERIMENT_NAME'], "run_1")
 
@@ -90,6 +70,7 @@ def test_short_run_cifar10():
         "TSIZE": 2,
         "GRAMMAR": 'grammars/adaptive_autolr_grammar_mutate_level.txt',
         "EXPERIMENT_NAME": 'dumps/test_engine',
+        "MODEL": 'models/cifar_model.h5'
         "RUN": 1,
         "INCLUDE_GENOTYPE": True,
         "SAVE_STEP": 1,
@@ -143,6 +124,7 @@ def test_short_run_mnist():
         19: 0.15},
         "TSIZE": 2,
         "GRAMMAR": 'grammars/adaptive_autolr_grammar_mutate_level.txt',
+        "MODEL": 'models/mnist_model.h5',
         "EXPERIMENT_NAME": 'dumps/test_engine',
         "RUN": 1,
         "INCLUDE_GENOTYPE": True,
