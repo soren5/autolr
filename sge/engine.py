@@ -54,8 +54,13 @@ def start_population_from_scratch():
     return population, archive, counter, it 
 
 def evaluate(ind, eval_func):
-    mapping_values = [0 for i in ind['genotype']]
-    phen, tree_depth = grammar.mapping(ind['genotype'], mapping_values)
+    if 'phenotype' not in ind:
+        mapping_values = [0 for i in ind['genotype']]
+        phen, tree_depth = grammar.mapping(ind['genotype'], mapping_values)
+    else:
+        mapping_values = ind['mapping_values']
+        phen = ind['phenotype']
+        tree_depth = ind['tree_depth']
     other_info = {}
     if "FAKE_FITNESS" in params and params['FAKE_FITNESS']:
         import numpy as np
@@ -107,7 +112,6 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
     if "COLAB" in params and params["COLAB"]:
         from google.colab import drive
         drive.mount('/content/drive')
-    
     if 'RESUME' in params and params["RESUME"] != False:
         if type(params["RESUME"]) == int: 
             last_gen = params['RESUME']
@@ -122,12 +126,10 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
             population = logger.load_population(last_gen)
             logger.load_random_state(last_gen)
             if 'LOAD_ARCHIVE' in params and params['LOAD_ARCHIVE'] == True:     
-                archive = logger.load_archive(last_gen)
-                counter = int(np.max([archive[x]['id'] for x in archive]))
+                archive = logger.load_archive(params['RESUME'])
             else:
                 archive = {}
-                id = len(population)
-                counter = id - 1
+            counter = int(np.max([x['id'] for x in population]))
             it = last_gen
         else:
             population, archive, counter, it = start_population_from_scratch()
@@ -142,14 +144,22 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
             population = initialize_population(genes_dict[params["GENES"]])
         else:
             population, archive, counter, it = start_population_from_scratch()  
-
-    while it <= params['GENERATIONS']:
-        print("GENERATION: " + str(it))
-        # evaluation_indices = list(range(len(population)))
+            for indiv in population:
+                mapping_values = [0 for i in indiv['genotype']]
+                phen, tree_depth = grammar.mapping(indiv['genotype'], mapping_values)
+                indiv['phenotype'] = phen
+                indiv['mapping_values'] = mapping_values
+    start_time = time.time()
+    while it <= params['GENERATIONS'] and (True if 'TIME_STOP' not in params else (True if time.time() - start_time < params['TIME_STOP'] else False)):
+        print(f"{it}")
+        evaluation_indices = list(range(len(population)))
+        indiv_count = 0
         for indiv in population:
             indiv['smart_phenotype'] = smart_phenotype(indiv['phenotype'])
             key = indiv['smart_phenotype']
-            if key not in archive or 'fitness' not in archive[key] or 'fitness' in archive[key] == None:
+            if key in archive and 'fitness' not in archive[key]:
+                raise Exception('Incomplete archive entry')
+            if key not in archive:
                 archive[key] = {'evaluations': []}
                 archive[key]['id'] = indiv['id']
                 # evaluate seems to be deterministic. 
@@ -255,14 +265,12 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
             else:
                 counter += 1
                 new_indiv['id'] = counter
-                archive[new_indiv['smart_phenotype']] = {'evaluations': [], 'id': new_indiv['id']}
             new_population.append(new_indiv)
         population = new_population
         it += 1
         logger.save_archive(it, archive)
         logger.save_population(it, population)
         logger.save_random_state(it)
-        #why are we reloading what we just saved? does it change in the meantime?
         if "COLAB" in params and params["COLAB"]:
             drive.flush_and_unmount()
             drive.mount('/content/drive')
