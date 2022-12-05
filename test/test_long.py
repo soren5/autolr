@@ -70,7 +70,7 @@ def test_short_run_cifar10():
         "TSIZE": 2,
         "GRAMMAR": 'grammars/adaptive_autolr_grammar_mutate_level.txt',
         "EXPERIMENT_NAME": 'dumps/test_engine',
-        "MODEL": 'models/cifar_model.h5'
+        "MODEL": 'models/cifar_model.h5',
         "RUN": 1,
         "INCLUDE_GENOTYPE": True,
         "SAVE_STEP": 1,
