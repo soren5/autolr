@@ -171,6 +171,52 @@ def test_archive():
     ut.delete_directory(params['EXPERIMENT_NAME'], "run_1")
     assert pop3 == pop2    
 
+def test_archive_id():
+    import sge
+    import tensorflow as tf
+    params = {
+        "POPSIZE": 10,
+        "GENERATIONS": 20,
+        "ELITISM": 9,   
+        "PROB_CROSSOVER": 0.0,
+        "PROB_MUTATION": 0.001,
+        "TSIZE": 3,
+        "GRAMMAR": 'grammars/adaptive_autolr_grammar_mutate_level.txt',
+        "EXPERIMENT_NAME": 'dumps/test_archive',
+        "RUN": 1,
+        "INCLUDE_GENOTYPE": True,
+        "SAVE_STEP": 1,
+        "VERBOSE": True,
+        "MIN_TREE_DEPTH": 2,
+        "MAX_TREE_DEPTH": 4,
+        "FITNESS_FLOOR": 0,
+        "SEED": 4,
+    }
+    from utils.smart_phenotype import smart_phenotype
+    class TensorflowFitnessGenerator:
+        def __init__(self) -> None:
+            self.fitness ={}
+            self.populations = {}
+            self.initial_populations = {}
+            self.random_states = {}
+            self.smart_phenotype = smart_phenotype
+            pass
+        def evaluate(self, phen, params):
+            if self.smart_phenotype(phen) in self.fitness:
+                fit = self.fitness[self.smart_phenotype(phen)]
+            else:
+                import tensorflow 
+                fit = -tensorflow.random.uniform(shape=[1])[0]
+                self.fitness[self.smart_phenotype(phen)] = fit
+            return float(fit), {}
+    fitness = TensorflowFitnessGenerator()
+    pop1 = sge.evolutionary_algorithm(parameters=params, evaluation_function=fitness)
+    params['RESUME'] = 1
+    params['LOAD_ARCHIVE'] = True
+    pop2 = sge.evolutionary_algorithm(parameters=params, evaluation_function=fitness)
+    ut.delete_directory(params['EXPERIMENT_NAME'], "run_1")
+    assert pop1 == pop2
+
 def test_reevaluation():
     from sge.engine import evaluate 
     
@@ -186,4 +232,4 @@ def test_reevaluation():
     assert indiv == indiv_2
 
 if __name__ == "__main__":
-    test_archive()
+    test_archive_id()
