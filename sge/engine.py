@@ -127,9 +127,10 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
             logger.load_random_state(last_gen)
             if 'LOAD_ARCHIVE' in params and params['LOAD_ARCHIVE'] == True:     
                 archive = logger.load_archive(params['RESUME'])
+                counter = archive['counter']
             else:
                 archive = {}
-            counter = int(np.max([x['id'] for x in population]))
+                counter = int(np.max([x['id'] for x in population]))
             it = last_gen
         else:
             population, archive, counter, it = start_population_from_scratch()
@@ -268,6 +269,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
             new_population.append(new_indiv)
         population = new_population
         it += 1
+        archive['counter'] = counter
         logger.save_archive(it, archive)
         logger.save_population(it, population)
         logger.save_random_state(it)
