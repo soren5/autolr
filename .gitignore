@@ -150,7 +150,7 @@ secret.py
 experiments*
 results/
 dumps/
-~/many_runs*/
+many_runs/
 deprecated_custom_optimizer.tst
 .vscode/
 *.pdf
