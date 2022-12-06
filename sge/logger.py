@@ -7,6 +7,8 @@ import random
 import pickle
 import glob
 import re
+import os.path
+from os import path
 
 def evolution_progress(generation, pop):
     fitness_samples = [i['fitness'] for i in pop]
@@ -61,14 +63,24 @@ def save_random_state(it):
 
 def load_random_state(it):
     import sys
-    with open(str(params['EXPERIMENT_NAME']) + '/run_' + str(params['RUN']) + f'/builtinstate_{it}', 'rb') as f:
-        builtin_state = pickle.load(f)
-    with open(str(params['EXPERIMENT_NAME']) + '/run_' + str(params['RUN']) + f'/numpystate_{it}', 'rb') as f:
-        numpy_state = pickle.load(f)
-    np.random.set_state(numpy_state)
-    random.setstate(builtin_state)
-    #tf_seed = random.randint(0, sys.maxsize)
-    #tf.random.set_seed(tf_seed)
+
+    #find files in correct folder
+    f = str(params['EXPERIMENT_NAME']) + '/run_' + str(params['RUN']) + f'/builtinstate_{it}'
+    g = str(params['EXPERIMENT_NAME']) + '/run_' + str(params['RUN']) + f'/numpystate_{it}'
+    if(not path.isfile(f)) and not path.isfile(g):
+        f = str(params['PARENT_EXPERIMENT']) + '/run_' + str(params['RUN']) + f'/builtinstate_{it}'
+        g = str(params['PARENT_EXPERIMENT']) + '/run_' + str(params['RUN']) + f'/numpystate_{it}'  
+    
+    #load files
+    if(path.isfile(f) and path.isfile(g)):
+        builtin_state = pickle.load(open(f, 'rb'))
+        numpy_state = pickle.load(open(g, 'rb'))
+        np.random.set_state(numpy_state)
+        random.setstate(builtin_state)
+    else:
+        raise Exception("Cannot open random state file of gen: ",  it, '\n',
+        "in folder: ", params["PARENT_EXPERIMENT"],'\\', params['RUN'])
+
 
 
 def save_progress_to_file(data):
@@ -85,8 +97,17 @@ def save_population(generation, population):
         json.dump(population, f)
 
 def load_population(generation):
-    with open('%s/run_%d/population_%d.json' % (params['EXPERIMENT_NAME'], params['RUN'], generation), 'r') as f:
-        population = json.load(f)
+    #find file in correct folder
+    f = '%s/run_%d/population_%d.json' % (params['EXPERIMENT_NAME'], params['RUN'], generation)
+    if(not path.isfile(f)):
+        f = '%s/run_%d/population_%d.json' % (params["PARENT_EXPERIMENT"], params['RUN'], generation)
+    
+    #laod file
+    if(path.isfile(f)):
+        population = json.load(open(f,'r'))
+    else:
+        raise Exception("Cannot open population file  of gen: ",  generation, '\n',
+        "in folder: ", params["PARENT_EXPERIMENT"],'\\', params['RUN'])
     return population
 
 def save_archive(generation, archive):
@@ -95,8 +116,17 @@ def save_archive(generation, archive):
 
 
 def load_archive(generation):
-    with open('%s/run_%d/z-archive_%d.json' % (params['EXPERIMENT_NAME'], params['RUN'], generation), 'r') as f:
-        archive = json.load(f)
+    #find file in correct folder
+    f ='%s/run_%d/z-archive_%d.json' % (params['EXPERIMENT_NAME'], params['RUN'], generation)
+    if(not path.isfile(f)):
+        f = '%s/run_%d/z-archive_%d.json' % (params["PARENT_EXPERIMENT"], params['RUN'], generation)
+    
+    #load file
+    if(path.isfile(f)):
+        archive = json.load(open(f,'r'))
+    else:
+        raise Exception("Cannot open archive file of gen: ", generation, '\n'
+        "in folder: " , params["PARENT_EXPERIMENT"],'\\', params['RUN'])   
     return archive
 
 def save_parameters():
@@ -118,21 +148,20 @@ def extract_number(f):
     return (int(s[0]) if s else -1,f)
 
 #finds the latest generation recorded in previous running on the simualtion based on the last population recorded
-def find_last_gen_recorded_in_folder():
+def find_last_gen_recorded_in_folder(folder):
 
-    filenames = glob.glob(('%s/run_%d/builtinstate_?*') % (params['EXPERIMENT_NAME'], params['RUN']))
-    if(len(filenames) == 0): return None, params['EXPERIMENT_NAME']
+    filenames = glob.glob(('%s/run_%d/builtinstate_?*') % (folder, params['RUN']))
+    if(len(filenames) == 0): return None
 
     last_gen_name = max(filenames, key=extract_number)
     last_gen = extract_number(last_gen_name)
     return int(last_gen[0])
 
-
 #Will find the most recent generation to load in case there are already some generations in the current experiment
 #else it will look for a parent experiment from which to load the data and change the experiment name so that now the folder of the parent expeirment is used to load the data 
 #if there is no data to load in any case it will return none
 
-def find_generation_to_load():
+def find_last_generation_to_load():
     last_gen = find_last_gen_recorded_in_folder(params["EXPERIMENT_NAME"])
     if last_gen == None and 'PARENT_EXPERIMENT' in params and params["PARENT_EXPERIMENT"] != False: 
         last_gen = find_last_gen_recorded_in_folder(params["PARENT_EXPERIMENT"])

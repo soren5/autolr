@@ -6,7 +6,7 @@ from xml.etree.ElementTree import tostring
 import sge.grammar as grammar
 import copy
 from datetime import datetime
-from sge.logger import find_generation_to_load
+from sge.logger import find_last_generation_to_load
 from sge.operators.recombination import crossover
 from sge.operators.mutation import mutate_level, mutate
 from sge.operators.selection import tournament
@@ -112,27 +112,28 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
     if "COLAB" in params and params["COLAB"]:
         from google.colab import drive
         drive.mount('/content/drive')
+    
     if 'RESUME' in params and params["RESUME"] != False:
+        
         if type(params["RESUME"]) == int: 
             last_gen = params['RESUME']
-            if 'PARENT_EXPERIMENT' in params: 
-                params["EXPERIMENT_NAME"] = params["PARENT_EXPERIMENT"]
-                print(f"Overiding Experiment Name with parent experiment name: {params['EXPERIMENT_NAME']}")
         elif params["RESUME"] == "Last":
-            last_gen = find_generation_to_load()
+            last_gen = find_last_generation_to_load()
         else:
             raise Exception("Invalid RESUME")
+
         if last_gen != None:           
             population = logger.load_population(last_gen)
             logger.load_random_state(last_gen)
             if 'LOAD_ARCHIVE' in params and params['LOAD_ARCHIVE'] == True:     
-                archive = logger.load_archive(params['RESUME'])
+                archive = logger.load_archive(last_gen)
             else:
                 archive = {}
             counter = int(np.max([x['id'] for x in population]))
             it = last_gen
         else:
             population, archive, counter, it = start_population_from_scratch()
+    
     else:
         if 'PREPOPULATE' in params and params['PREPOPULATE']:
             genes_dict={
@@ -149,6 +150,7 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
                 phen, tree_depth = grammar.mapping(indiv['genotype'], mapping_values)
                 indiv['phenotype'] = phen
                 indiv['mapping_values'] = mapping_values
+
     start_time = time.time()
     while it <= params['GENERATIONS'] and (True if 'TIME_STOP' not in params else (True if time.time() - start_time < params['TIME_STOP'] else False)):
         print(f"{it}")
