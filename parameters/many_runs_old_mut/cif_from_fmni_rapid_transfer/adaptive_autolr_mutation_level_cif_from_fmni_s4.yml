@@ -1,5 +1,5 @@
 POPSIZE: 100
-GENERATIONS: 200
+GENERATIONS: 60
 ELITISM: 1                   # number of individuals that survive
 PROB_CROSSOVER: 0.9
 PROB_MUTATION: 0.15
@@ -8,8 +8,8 @@ GRAMMAR: 'grammars/adaptive_autolr_grammar_mutate_level.txt'
 EXPERIMENT_NAME: '/data/p288427/many_runs_old_mut/cif_from_fmni'
 PARENT_EXPERIMENT: '/data/p288427/many_runs_old_mut/fmni'
 MODEL: 'models/cifar_model.h5'
-SEED: 3
-RUN: 3
+SEED: 4
+RUN:  4
 INCLUDE_GENOTYPE: True
 SAVE_STEP: 1
 VERBOSE: False
@@ -24,5 +24,5 @@ PROTECT: False
 GENES: 'adam'
 PATIENCE: 5
 FAKE_FITNESS: False
-RESUME: 100
+RESUME: 30
 LOAD_ARCHIVE: False
