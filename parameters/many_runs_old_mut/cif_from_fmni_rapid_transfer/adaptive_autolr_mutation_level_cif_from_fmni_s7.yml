@@ -5,7 +5,7 @@ PROB_CROSSOVER: 0.9
 PROB_MUTATION: 0.15
 TSIZE: 2
 GRAMMAR: 'grammars/adaptive_autolr_grammar_mutate_level.txt'
-EXPERIMENT_NAME: '/data/p288427/many_runs_old_mut/cif_from_fmni'
+EXPERIMENT_NAME: '/data/p288427/many_runs_old_mut/cif_from_fmni_rapid_transfer'
 PARENT_EXPERIMENT: '/data/p288427/many_runs_old_mut/fmni'
 MODEL: 'models/cifar_model.h5'
 SEED: 7
