@@ -27,6 +27,7 @@ TSIZE: 2
 GRAMMAR: 'grammars/adaptive_autolr_grammar_mutate_level.txt'
 EXPERIMENT_NAME: '/data/p288427/many_runs/fmni'
 MODEL: 'models/mnist_model.h5'
+DATASET: 'fmnist'
 SEED: 4
 RUN:  4
 INCLUDE_GENOTYPE: True

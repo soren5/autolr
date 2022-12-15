@@ -1,35 +1,15 @@
 POPSIZE: 100
 GENERATIONS: 200 
 ELITISM: 1                   # number of individuals that survive
-PROB_CROSSOVER: 0.0
-PROB_MUTATION: {
-  0: 0.0, 
-  1: 0.01, 
-  2: 0.01, 
-  3: 0.01, 
-  4: 0.05, 
-  5: 0.15, 
-  6: 0.01, 
-  7: 0.01, 
-  8: 0.01, 
-  9: 0.05, 
-  10: 0.15, 
-  11: 0.01, 
-  12: 0.01, 
-  13: 0.01, 
-  14: 0.05, 
-  15: 0.15, 
-  16: 0.01, 
-  17: 0.01, 
-  18: 0.05, 
-  19: 0.15}
+PROB_CROSSOVER: 0.9
+PROB_MUTATION: 0.15
 TSIZE: 2
 GRAMMAR: 'grammars/adaptive_autolr_grammar_mutate_level.txt'
-EXPERIMENT_NAME: '/data/p288427/many_runs/fmni'
+EXPERIMENT_NAME: '/data/p288427/many_runs_old_mut/fmni'
 MODEL: 'models/mnist_model.h5'
 DATASET: 'fmnist'
-SEED: 2
-RUN:  2
+SEED: 3
+RUN: 3
 INCLUDE_GENOTYPE: True
 SAVE_STEP: 1
 VERBOSE: False
