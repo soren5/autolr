@@ -14,6 +14,6 @@ for filename in ../../parameters/many_runs_no_elitism_big_tourn/cif_from_fmni/*;
 do(
     [ -e "$filename" ] || continue 
     echo "sending: $filename"
-    sbatch run_sims_given_param.sh $filename
+    sbatch ../run_sims_given_param.sh $filename
   )
 done
