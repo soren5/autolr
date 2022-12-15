@@ -1,4 +1,4 @@
-POPSIZE: 0
+POPSIZE: 100
 GENERATIONS: 200 
 ELITISM: 0                   # number of individuals that survive
 PROB_CROSSOVER: 0.0

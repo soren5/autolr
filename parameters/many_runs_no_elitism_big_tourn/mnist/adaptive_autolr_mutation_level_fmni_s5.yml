@@ -23,19 +23,20 @@ PROB_MUTATION: {
   17: 0.01, 
   18: 0.05, 
   19: 0.15}
-TSIZE: 10 
+TSIZE: 10
 GRAMMAR: 'grammars/adaptive_autolr_grammar_mutate_level.txt'
-EXPERIMENT_NAME: '/data/p288427/many_runs_no_elitism_big_tourn/cif'
-SEED: 13
-RUN: 13
+EXPERIMENT_NAME: '/data/p288427/many_runs_no_elitism_big_tourn/fmni'
+MODEL: 'models/mnist_model.h5' 
+DATASET: 'mnist'
+SEED: 5
+RUN:  5
 INCLUDE_GENOTYPE: True
 SAVE_STEP: 1
 VERBOSE: False
 MIN_TREE_DEPTH: 6
 MAX_TREE_DEPTH: 17
-MODEL: 'models/cifar_model.h5'
 VALIDATION_SIZE: 3500
-FITNESS_SIZE: 36500 #50000 - (36500 + 3500) = 10000 = training set 
+FITNESS_SIZE: 50000 #60000 - (50000 + 3500) = 6500 = training set 
 BATCH_SIZE: 1000
 EPOCHS: 100
 PREPOPULATE: False
