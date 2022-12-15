@@ -25,7 +25,7 @@ PROB_MUTATION: {
   19: 0.15}
 TSIZE: 2
 GRAMMAR: 'grammars/adaptive_autolr_grammar_mutate_level.txt'
-EXPERIMENT_NAME: 'dumps/cifar'
+EXPERIMENT_NAME: 'dumps/fmnist'
 RUN: 1
 INCLUDE_GENOTYPE: True
 SAVE_STEP: 1
