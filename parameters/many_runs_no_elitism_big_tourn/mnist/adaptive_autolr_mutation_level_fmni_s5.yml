@@ -25,7 +25,7 @@ PROB_MUTATION: {
   19: 0.15}
 TSIZE: 10
 GRAMMAR: 'grammars/adaptive_autolr_grammar_mutate_level.txt'
-EXPERIMENT_NAME: '/data/p288427/many_runs_no_elitism_big_tourn/fmni'
+EXPERIMENT_NAME: '/data/p288427/many_runs_no_elitism_big_tourn/mnist'
 MODEL: 'models/mnist_model.h5' 
 DATASET: 'mnist'
 SEED: 5
