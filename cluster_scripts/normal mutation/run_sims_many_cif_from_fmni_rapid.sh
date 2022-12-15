@@ -10,7 +10,7 @@ module load cuDNN
 pip install --upgrade pip
 pip install -r requirements.txt
 python -m utils.create_models
-for filename in ./parameters/many_runs/cif_from_fmni_rapid_transfer/*; 
+for filename in ../../parameters/many_runs/cif_from_fmni_rapid_transfer/*; 
 do(
     [ -e "$filename" ] || continue 
     echo "sending: $filename"
