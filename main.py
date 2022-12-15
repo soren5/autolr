@@ -52,10 +52,12 @@ if __name__ == "__main__":
     if 'MODEL' in params and params['MODEL'] == 'models/cifar_model.h5': 
         from evaluators.adaptive_optimizer_evaluator_f_race import train_model_tensorflow_cifar10
         evaluation_function = Optimizer_Evaluator_Tensorflow(train_model=train_model_tensorflow_cifar10)
-    else:    #rember to import a function if necessary
+    elif 'MODEL' in params and params['MODEL'] == 'models/mnist.h5' and params['DATASET'] == 'fmnist':    #rember to import a function if necessary
         from evaluators.adaptive_optimizer_evaluator_f_race import train_model_tensorflow_fmnist 
         evaluation_function = Optimizer_Evaluator_Tensorflow(train_model_tensorflow_fmnist)
-    #evaluation_function = Optimizer_Evaluator_Tensorflow()
+    elif 'MODEL' in params and params['MODEL'] == 'models/mnist.h5' and params['DATASET'] == 'mnist':    #rember to import a function if necessary
+        from evaluators.adaptive_optimizer_evaluator_f_race import train_model_tensorflow_mnist 
+        evaluation_function = Optimizer_Evaluator_Tensorflow(train_model_tensorflow_mnist)
 
     sge.evolutionary_algorithm(evaluation_function=evaluation_function)
         

@@ -185,7 +185,7 @@ def train_model_tensorflow_mnist(phen_params):
     if globals()['cached_dataset'] == None:
         # load_fashion_mnist_training loads, unpack and selects the validation/test set
         # we assume that selection is deterministic.
-        globals()['cached_dataset'] = load_fashion_mnist_training(validation_size=validation_size, test_size=fitness_size)
+        globals()['cached_dataset'] = load_mnist_training(validation_size=validation_size, test_size=fitness_size)
     if globals()['cached_model'] == None:
         globals()['cached_model'] = load_model(params['MODEL'], compile=False)
 
@@ -197,12 +197,9 @@ def train_model_tensorflow_mnist(phen_params):
     # optimizer is constant aslong as phen doesn't changed?
     # -> opportunity to cache opt and compiled model
     opt = CustomOptimizer(phen=phen, model=model)
-    
-    weights = model.get_weights()
-    model.set_weights(weights)    
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
     early_stop = keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=patience, restore_best_weights=True)
-
+    
     score = model.fit(dataset['x_train'], dataset['y_train'],
         batch_size=batch_size,
         epochs=epochs,

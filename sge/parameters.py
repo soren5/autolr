@@ -20,6 +20,7 @@ params = {
     'MIN_TREE_DEPTH': 6,
     'MAX_TREE_DEPTH': 17,
     'MODEL': 'models/mnist_model.h5',
+    'DATASET': 'fmnist',
     'VALIDATION_SIZE': 100,
     'FITNESS_SIZE': 59890,
     'BATCH_SIZE': 5,
@@ -81,7 +82,11 @@ def set_parameters(arguments):
     parser.add_argument('--model',
                         dest='MODEL',
                         type=str,
-                        help='Specifies the path to the grammar file.')
+                        help='Specifies the path to the model file.')
+    parser.add_argument('--dataset',
+                        dest='DATASET',
+                        type=str,
+                        help='Specifies the dataset to load.')
     parser.add_argument('--grammar',
                         dest='GRAMMAR',
                         type=str,
