@@ -10,6 +10,7 @@ params = {
     'ELITISM': 1,
     'PROB_CROSSOVER': 0.9,
     'PROB_MUTATION': 0.15,
+    'SELECTION_TYPE': 'tournament',
     'TSIZE': 2,
     'GRAMMAR': 'grammars/adaptive_autolr_grammar.txt',
     'EXPERIMENT_NAME': "dumps/example",
@@ -75,6 +76,10 @@ def set_parameters(arguments):
                         dest='PROB_MUTATION',
                         type=float,
                         help='Specifies the probability of mutation usage. Float required')
+    parser.add_argument('--selection',
+                        dest='SELECTION_TYPE',
+                        type=int,
+                        help='Specifies the type of selection, either tournament selection or stochastic sampling.')
     parser.add_argument('--tsize',
                         dest='TSIZE',
                         type=int,

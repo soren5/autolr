@@ -10,7 +10,7 @@ from datetime import datetime
 from sge.logger import find_last_generation_to_load
 from sge.operators.recombination import crossover
 from sge.operators.mutation import mutate_level, mutate
-from sge.operators.selection import tournament
+from sge.operators.selection import tournament, universal_stochastic_sampling
 import time
 import statistics
 from scipy import stats
@@ -104,10 +104,10 @@ def setup(parameters=None, logger=None):
 
 def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, parameters=None, logger_module=None):
     import os
-    logger = read_params(parameters, logger_module)
-    
     check_google_colab()
     
+    logger = read_params(parameters, logger_module)
+        
     population, archive, counter, it = initialize_pop(logger)
 
     return run_evolution(evaluation_function, os, logger, population, archive, counter, it)
@@ -160,39 +160,70 @@ def check_google_colab():
 
 def reproduction(os, logger, population, archive, counter, it, new_population):
     while len(new_population) < params['POPSIZE']:
-        if random.random() < params['PROB_CROSSOVER']:
-            p1 = tournament(population, params['TSIZE'])
-            p2 = tournament(population, params['TSIZE'])
-            new_indiv = crossover(p1, p2)
-        else:
-            new_indiv = tournament(population, params['TSIZE'])
-        if type(params['PROB_MUTATION']) == float:
-            new_indiv = mutate(new_indiv, params['PROB_MUTATION'])
-        elif type(params['PROB_MUTATION']) == dict:
-            assert len(params['PROB_MUTATION']) == len(new_indiv['genotype'])
-            new_indiv = mutate_level(new_indiv, params['PROB_MUTATION'])
-        else:
-            raise Exception("Invalid mutation type")
-        mapping_values = [0 for i in new_indiv['genotype']]
-        phen, tree_depth = grammar.mapping(new_indiv['genotype'], mapping_values)
-        new_indiv['phenotype'] = phen
-        new_indiv['smart_phenotype'] = smart_phenotype(phen)
-        if new_indiv['smart_phenotype'] in archive:
-            new_indiv['id'] = archive[new_indiv['smart_phenotype']]['id']
-        else:
-            counter += 1
-            new_indiv['id'] = counter
-        new_population.append(new_indiv)
+        new_indiv = selection(population)
+        new_indiv = mutation(new_indiv)
+        set_smart_phen_and_genotype_new_indiv(new_indiv)
+        update_archive_with_new_indiv(archive, counter, new_population, new_indiv)
+    population = update_pop_and_gen(it, new_population)
+    save_data_new_pop(logger, population, archive, it)
+    use_google_colab_in_reproduction()
+
+def selection(population):
+    if params['SELECTION_TYPE'] == 'tournament':
+        new_indiv = tournament_selection(population)
+    elif params['SELECTION_TYPE'] == 'stochastic':
+        new_indiv = universal_stochastic_sampling(population)
+    return new_indiv
+
+def update_pop_and_gen(it, new_population):
     population = new_population
     it += 1
-    logger.save_archive(it, archive)
-    logger.save_population(it, population)
-    logger.save_random_state(it)
+    return population
+
+def use_google_colab_in_reproduction():
     if "COLAB" in params and params["COLAB"]:
         driver.flush_and_unmount()
         driver.Driver.mount('/content/drive')
         import os
         print(os.listdir(f"{params['EXPERIMENT_NAME']}/run_{params['RUN']}"))
+
+def save_data_new_pop(logger, population, archive, it):
+    logger.save_archive(it, archive)
+    logger.save_population(it, population)
+    logger.save_random_state(it)
+
+def update_archive_with_new_indiv(archive, counter, new_population, new_indiv):
+    if new_indiv['smart_phenotype'] in archive:
+        new_indiv['id'] = archive[new_indiv['smart_phenotype']]['id']
+    else:
+        counter += 1
+        new_indiv['id'] = counter
+    new_population.append(new_indiv)
+
+def set_smart_phen_and_genotype_new_indiv(new_indiv):
+    mapping_values = [0 for i in new_indiv['genotype']]
+    phen, tree_depth = grammar.mapping(new_indiv['genotype'], mapping_values)
+    new_indiv['phenotype'] = phen
+    new_indiv['smart_phenotype'] = smart_phenotype(phen)
+
+def mutation(new_indiv):
+    if type(params['PROB_MUTATION']) == float:
+        new_indiv = mutate(new_indiv, params['PROB_MUTATION'])
+    elif type(params['PROB_MUTATION']) == dict:
+        assert len(params['PROB_MUTATION']) == len(new_indiv['genotype'])
+        new_indiv = mutate_level(new_indiv, params['PROB_MUTATION'])
+    else:
+        raise Exception("Invalid mutation type")
+    return new_indiv
+
+def tournament_selection(population):
+    if random.random() < params['PROB_CROSSOVER']:
+        p1 = tournament(population, params['TSIZE'])
+        p2 = tournament(population, params['TSIZE'])
+        new_indiv = crossover(p1, p2)
+    else:
+        new_indiv = tournament(population, params['TSIZE'])
+    return new_indiv
 
 def reproduce_via_elitism(population):
     new_population = population[:params['ELITISM']]
