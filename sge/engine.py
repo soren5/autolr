@@ -114,24 +114,36 @@ def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, param
 
 def run_evolution(evaluation_function, os, logger, population, archive, counter, it):
     start_time = time.time()
-    while it <= params['GENERATIONS'] and (True if 'TIME_STOP' not in params else (True if time.time() - start_time < params['TIME_STOP'] else False)):
+    
+    while simulation_is_running(it, start_time):
+        
         print(f"{it}")
-        for indiv in population:
-            update_archive(evaluation_function, archive, indiv)
- 
-        updat_best_fitness(population, archive)
-       
-        for indiv in population:
-            update_key_and_fitness_based_on_archive(archive, indiv)
-        #print(f"{[x['id'] for x in population]}")
-
-        sort_pop_and_print_best_fit(population, it)
+        
+        update_archive_and_fitness(evaluation_function, population, archive, it)
         
         save_data(logger, population, it)
 
-        if it == params['GENERATIONS']:
+        if simulation_is_over(it):
             return population
-        reproduction_and_elitism(os, logger, population, archive, counter, it)
+        else:
+            reproduction_and_elitism(os, logger, population, archive, counter, it)
+
+def update_archive_and_fitness(evaluation_function, population, archive, it):
+    for indiv in population:
+        update_archive(evaluation_function, archive, indiv)
+ 
+    updat_best_fitness(population, archive)
+       
+    for indiv in population:
+        update_key_and_fitness_based_on_archive(archive, indiv)
+
+    sort_pop_and_print_best_fit(population, it)
+
+def simulation_is_over(it):
+    return it == params['GENERATIONS']
+
+def simulation_is_running(it, start_time):
+    return it <= params['GENERATIONS'] and (True if 'TIME_STOP' not in params else (True if time.time() - start_time < params['TIME_STOP'] else False))
 
 def reproduction_and_elitism(os, logger, population, archive, counter, it):
     new_population = reproduce_via_elitism(population)
@@ -164,7 +176,7 @@ def reproduction(os, logger, population, archive, counter, it, new_population):
         new_indiv = mutation(new_indiv)
         set_smart_phen_and_genotype_new_indiv(new_indiv)
         update_archive_with_new_indiv(archive, counter, new_population, new_indiv)
-    population = update_pop_and_gen(it, new_population)
+    population = update_pop_and_generation(it, new_population)
     save_data_new_pop(logger, population, archive, it)
     use_google_colab_in_reproduction()
 
@@ -175,7 +187,7 @@ def selection(population):
         new_indiv = universal_stochastic_sampling(population)
     return new_indiv
 
-def update_pop_and_gen(it, new_population):
+def update_pop_and_generation(it, new_population):
     population = new_population
     it += 1
     return population
