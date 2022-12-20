@@ -176,7 +176,7 @@ def reproduction(os, logger, population, archive, counter, it, new_population):
         new_indiv = mutation(new_indiv)
         set_smart_phen_and_genotype_new_indiv(new_indiv)
         update_archive_with_new_indiv(archive, counter, new_population, new_indiv)
-    population = update_pop_and_generation(it, new_population)
+    population = go_to_next_generation(it, new_population)
     save_data_new_pop(logger, population, archive, it)
     use_google_colab_in_reproduction()
 
@@ -187,7 +187,7 @@ def selection(population):
         new_indiv = universal_stochastic_sampling(population)
     return new_indiv
 
-def update_pop_and_generation(it, new_population):
+def go_to_next_generation(it, new_population):
     population = new_population
     it += 1
     return population
