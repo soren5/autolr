@@ -20,13 +20,13 @@ do(
   for task in "${tasks[@]}"
   do(
     path="$path"/$task
-    # echo "files number: " ls "$path"/*.yml | wc -l
+    [ -e "$path" ] || continue 
     for filename in "$path"/*.yml ; 
     do(
+      [ -e "$filename" ] || continue 
       echo "filename is:" $filename   
         for seed in $(seq 1 15)
         do(
-
           [ -e "$filename" ] || continue 
           echo "sending: $filename"
           sbatch run_sims_given_param_from_loop.sh $filename $seed
