@@ -29,7 +29,7 @@ do(
 
           [ -e "$filename" ] || continue 
           echo "sending: $filename"
-          sbatch run_sims_given_param.sh $filename $seed
+          sbatch run_sims_given_param_from_loop.sh $filename $seed
           )
         done
       ) 
