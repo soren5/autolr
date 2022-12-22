@@ -110,34 +110,36 @@ def evolutionary_algorithm(evaluation_function=None, parameters=None, logger_mod
         
     population, archive, counter, it = initialize_pop(logger)
 
-    return run_evolution(evaluation_function, os, logger, population, archive, counter, it)
+    return run_evolution(evaluation_function, logger, population, archive, counter, it)
 
-def run_evolution(evaluation_function, os, logger, population, archive, counter, it):
+def run_evolution(evaluation_function, logger, population, archive, counter, it):
+    
     start_time = time.time()
     
     while simulation_is_running(it, start_time):
         
         print(f"{it}")
         
-        update_archive_and_fitness(evaluation_function, population, archive, it)
+        evaluation_function, population, archive, it = update_archive_and_fitness(evaluation_function, population, archive, it)
         
         save_data(logger, population, it)
 
         if simulation_is_over(it):
             return population
         else:
-            it, counter = reproduction_and_elitism(logger, population, archive, counter, it)
+            logger, population, archive, counter, it = reproduction_and_elitism(logger, population, archive, counter, it)
 
 def update_archive_and_fitness(evaluation_function, population, archive, it):
     for indiv in population:
-        update_archive(evaluation_function, archive, indiv)
+        evaluation_function, archive, indiv = update_archive(evaluation_function, archive, indiv)
  
-    updat_best_fitness(population, archive)
+    population, archive = updat_best_fitness(population, archive)
        
     for indiv in population:
-        update_key_and_fitness_based_on_archive(archive, indiv)
+        archive, indiv = update_key_and_fitness_based_on_archive(archive, indiv)
 
-    sort_pop_and_print_best_fit(population, it)
+    population, it  = sort_pop_and_print_best_fit(population, it)
+    return evaluation_function, population, archive, it
 
 def simulation_is_over(it):
     return it == params['GENERATIONS']
@@ -146,17 +148,18 @@ def simulation_is_running(it, start_time):
     return it <= params['GENERATIONS'] and (True if 'TIME_STOP' not in params else (True if time.time() - start_time < params['TIME_STOP'] else False))
 
 def reproduction_and_elitism(logger, population, archive, counter, it):
-    new_population = reproduce_via_elitism(population)
-    it, counter = reproduction(logger, population, archive, counter, it, new_population)
-    return it, counter
+    new_population, population = reproduce_via_elitism(population)
+    logger, population, archive, counter, it, new_population = reproduction(logger, population, archive, counter, it, new_population)
+    return logger, population, archive, counter, it
 
 def save_data(logger, population, it):
     logger.evolution_progress(it, population)
     logger.elicit_progress(it, population)
 
 def sort_pop_and_print_best_fit(population, it):
-    sort_pop_based_on_fitness(population)
+    population = sort_pop_based_on_fitness(population)
     print("\ngeneration: " + str(it) + "; best fit so far: " + str(population[0]['fitness']) + "\n")
+    return population, it
 
 def read_params(parameters, logger_module):
     if logger_module != None:
@@ -175,12 +178,12 @@ def reproduction(logger, population, archive, counter, it, new_population):
     while len(new_population) < params['POPSIZE']:
         new_indiv = selection(population)
         new_indiv = mutation(new_indiv)
-        set_smart_phen_and_genotype_new_indiv(new_indiv)
-        counter = update_archive_with_new_indiv(archive, counter, new_population, new_indiv)
+        new_indiv = set_smart_phen_and_genotype_new_indiv(new_indiv)
+        archive, counter, new_population, new_indiv = update_archive_with_new_indiv(archive, counter, new_population, new_indiv)
     it, population = go_to_next_generation(it, new_population)
     save_data_new_pop(logger, population, archive, it)
     use_google_colab_in_reproduction()
-    return it, counter
+    return logger, population, archive, counter, it, new_population
 
 def selection(population):
     if params['SELECTION_TYPE'] == 'tournament':
@@ -213,13 +216,14 @@ def update_archive_with_new_indiv(archive, counter, new_population, new_indiv):
         counter += 1
         new_indiv['id'] = counter
     new_population.append(new_indiv)
-    return counter
+    return archive, counter, new_population, new_indiv
 
 def set_smart_phen_and_genotype_new_indiv(new_indiv):
     mapping_values = [0 for i in new_indiv['genotype']]
     phen, tree_depth = grammar.mapping(new_indiv['genotype'], mapping_values)
     new_indiv['phenotype'] = phen
     new_indiv['smart_phenotype'] = smart_phenotype(phen)
+    return new_indiv
 
 def mutation(new_indiv):
     if type(params['PROB_MUTATION']) == float:
@@ -244,14 +248,16 @@ def reproduce_via_elitism(population):
     new_population = population[:params['ELITISM']]
     for indiv in new_population:
         indiv['operation'] = 'elitism'
-    return new_population
+    return new_population, population
 
 def sort_pop_based_on_fitness(population):
     population.sort(key=lambda x: x['fitness'])
+    return population
 
 def update_key_and_fitness_based_on_archive(archive, indiv):
     key = update_key(indiv)
     update_fitness_based_on_archive(archive, indiv, key)
+    return archive, indiv
 
 def update_fitness_based_on_archive(archive, indiv, key):
     indiv['fitness'] = archive[key]['fitness']
@@ -300,6 +306,7 @@ def updat_best_fitness(population, archive):
                 except ValueError as e:
                     p_value_kruskal = 1
         """
+        return population, archive
 
 def update_archive(evaluation_function, archive, indiv):
     indiv['smart_phenotype'] = smart_phenotype(indiv['phenotype'])
@@ -332,6 +339,7 @@ def update_archive(evaluation_function, archive, indiv):
         p_value_kruskal = 1
     while p_value_kruskal < 0.05 and len(evaluation_indices) > 1:
     """
+    return evaluation_function, archive, indiv
 
 def initialize_pop(logger):
     if 'RESUME' in params and params["RESUME"] != False:
@@ -370,5 +378,5 @@ def initialize_pop(logger):
                 phen, tree_depth = grammar.mapping(indiv['genotype'], mapping_values)
                 indiv['phenotype'] = phen
                 indiv['mapping_values'] = mapping_values
-    return population,archive,counter,it
+    return population, archive, counter, it
 

@@ -7,7 +7,7 @@ params = {
     'PARAMETERS': None,
     'POPSIZE': 2,
     'GENERATIONS': 3,
-    'ELITISM': 1,
+    'ELITISM': 0,
     'PROB_CROSSOVER': 0.9,
     'PROB_MUTATION': 0.15,
     'SELECTION_TYPE': 'tournament',
