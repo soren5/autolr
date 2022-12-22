@@ -102,7 +102,7 @@ def setup(parameters=None, logger=None):
 
 
 
-def evolutionary_algorithm(evaluation_function=None, resume_generation=-1, parameters=None, logger_module=None):
+def evolutionary_algorithm(evaluation_function=None, parameters=None, logger_module=None):
     import os
     check_google_colab()
     
@@ -126,7 +126,7 @@ def run_evolution(evaluation_function, os, logger, population, archive, counter,
         if simulation_is_over(it):
             return population
         else:
-            reproduction_and_elitism(os, logger, population, archive, counter, it)
+            it, counter = reproduction_and_elitism(logger, population, archive, counter, it)
 
 def update_archive_and_fitness(evaluation_function, population, archive, it):
     for indiv in population:
@@ -145,9 +145,10 @@ def simulation_is_over(it):
 def simulation_is_running(it, start_time):
     return it <= params['GENERATIONS'] and (True if 'TIME_STOP' not in params else (True if time.time() - start_time < params['TIME_STOP'] else False))
 
-def reproduction_and_elitism(os, logger, population, archive, counter, it):
+def reproduction_and_elitism(logger, population, archive, counter, it):
     new_population = reproduce_via_elitism(population)
-    reproduction(os, logger, population, archive, counter, it, new_population)
+    it, counter = reproduction(logger, population, archive, counter, it, new_population)
+    return it, counter
 
 def save_data(logger, population, it):
     logger.evolution_progress(it, population)
@@ -170,15 +171,16 @@ def check_google_colab():
         from google.colab import drive
         drive.mount('/content/drive')
 
-def reproduction(os, logger, population, archive, counter, it, new_population):
+def reproduction(logger, population, archive, counter, it, new_population):
     while len(new_population) < params['POPSIZE']:
         new_indiv = selection(population)
         new_indiv = mutation(new_indiv)
         set_smart_phen_and_genotype_new_indiv(new_indiv)
-        update_archive_with_new_indiv(archive, counter, new_population, new_indiv)
-    population = go_to_next_generation(it, new_population)
+        counter = update_archive_with_new_indiv(archive, counter, new_population, new_indiv)
+    it, population = go_to_next_generation(it, new_population)
     save_data_new_pop(logger, population, archive, it)
     use_google_colab_in_reproduction()
+    return it, counter
 
 def selection(population):
     if params['SELECTION_TYPE'] == 'tournament':
@@ -190,7 +192,7 @@ def selection(population):
 def go_to_next_generation(it, new_population):
     population = new_population
     it += 1
-    return population
+    return it, population
 
 def use_google_colab_in_reproduction():
     if "COLAB" in params and params["COLAB"]:
@@ -211,6 +213,7 @@ def update_archive_with_new_indiv(archive, counter, new_population, new_indiv):
         counter += 1
         new_indiv['id'] = counter
     new_population.append(new_indiv)
+    return counter
 
 def set_smart_phen_and_genotype_new_indiv(new_indiv):
     mapping_values = [0 for i in new_indiv['genotype']]

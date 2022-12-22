@@ -40,22 +40,6 @@ def train_model_tensorflow_cifar10(phen_params):
         
     return evaluate_model(phen, validation_size, batch_size, epochs, patience)
 
-
-def train_model_tensorflow_fmnist_cached(phen_params):
-    phen, params, validation_size, fitness_size, batch_size, epochs, patience = find_params(phen_params)
-
-    
-    # Note that globals are borderline -- consider an object or a closure 
-    # deliberately using globals() to make it ugly...
-    if globals()['cached_dataset'] == None:
-        # load_fashion_mnist_training loads, unpack and selects the validation/test set
-        # we assume that selection is deterministic.
-        globals()['cached_dataset'] = load_fashion_mnist_training(validation_size=validation_size, test_size=fitness_size)
-    cache_model(params)
-
-    return evaluate_model(phen, validation_size, batch_size, epochs, patience)
-
-
 def train_model_tensorflow_fmnist(phen_params):
     phen, params, validation_size, fitness_size, batch_size, epochs, patience = find_params(phen_params)
 
@@ -63,6 +47,7 @@ def train_model_tensorflow_fmnist(phen_params):
     # deliberately using globals() to make it ugly...
     if globals()['cached_dataset'] == None:
         globals()['cached_dataset'] = load_fashion_mnist_training(validation_size=validation_size, test_size=fitness_size)
+    
     cache_model(params)
        
     return evaluate_model(phen, validation_size, batch_size, epochs, patience)
@@ -75,6 +60,7 @@ def train_model_tensorflow_mnist(phen_params):
     # deliberately using globals() to make it ugly...
     if globals()['cached_dataset'] == None:
         globals()['cached_dataset'] = load_mnist_training(validation_size=validation_size, test_size=fitness_size)
+    
     cache_model(params)
         
     # we assume validation and test sets are deterministic

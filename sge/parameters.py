@@ -5,7 +5,7 @@ import yaml
 """"Algorithm Parameters"""
 params = {
     'PARAMETERS': None,
-    'POPSIZE': 3,
+    'POPSIZE': 2,
     'GENERATIONS': 3,
     'ELITISM': 1,
     'PROB_CROSSOVER': 0.9,
