@@ -16,7 +16,7 @@ declare -a tasks=("cif" "fmni")
 
 for folder in "${folders[@]}"
 do(
-  path=../parameters/$folder
+  path=./parameters/$folder
   for task in "${tasks[@]}"
   do(
     path="$path"/$task
