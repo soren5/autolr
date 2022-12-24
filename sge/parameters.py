@@ -10,7 +10,7 @@ params = {
     'ELITISM': 0,
     'PROB_CROSSOVER': 0.9,
     'PROB_MUTATION': 0.15,
-    'SELECTION_TYPE': 'tournament',
+    'SELECTION_TYPE': 'stochastic',
     'TSIZE': 2,
     'GRAMMAR': 'grammars/adaptive_autolr_grammar.txt',
     'EXPERIMENT_NAME': "dumps/example",
