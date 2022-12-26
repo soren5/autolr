@@ -28,7 +28,7 @@ GRAMMAR: 'grammars/adaptive_autolr_grammar_mutate_level.txt'
 EXPERIMENT_NAME: '/data/p288427/many_runs_no_elitism_stoc/mnist'
 MODEL: 'models/mnist_model.h5' 
 DATASET: 'mnist'
-SELECTION_TYPE: 'stochastic
+SELECTION_TYPE: 'stochastic'
 SEED: 1
 RUN: 1
 INCLUDE_GENOTYPE: True
