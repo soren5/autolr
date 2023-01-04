@@ -25,8 +25,7 @@ PROB_MUTATION: {
   19: 0.15}
 TSIZE: 10 
 GRAMMAR: 'grammars/adaptive_autolr_grammar_mutate_level.txt'
-EXPERIMENT_NAME: '/data/p288427/many_runs_no_elitism_stoc/cif'
-SELECTION_TYPE: 'stochastic'
+EXPERIMENT_NAME: '/data/p288427/many_runs_no_elitism_big_tourn/cif'
 SEED: 1
 RUN: 1
 INCLUDE_GENOTYPE: True
@@ -35,8 +34,8 @@ VERBOSE: False
 MIN_TREE_DEPTH: 6
 MAX_TREE_DEPTH: 17
 MODEL: 'models/cifar_model.h5'
-VALIDATION_SIZE: 3500
-FITNESS_SIZE: 36500 #50000 - (36500 + 3500) = 10000 = training set 
+VALIDATION_SIZE: 3000
+FITNESS_SIZE: 3000 #50000 - (3000 + 3000) = 44000 = training set
 BATCH_SIZE: 1000
 EPOCHS: 100
 PREPOPULATE: False
