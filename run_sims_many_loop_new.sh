@@ -1,15 +1,15 @@
 #!/bin/bash{
-#SBATCH --partition=short
-#SBATCH --time=00:10:00
-#SBATCH --job-name=bt_sending_loop
-#SBATCH --output=bt_sending_loop%j.log
-# export PATH=$HOME/.local/bin:$PATH
-# module load Python
-# module load CUDA
-# module load cuDNN
-# pip install --upgrade pip
-# pip install -r requirements.txt
-# python -m utils.create_models
+SBATCH --partition=short
+SBATCH --time=00:10:00
+SBATCH --job-name=bt_sending_loop
+SBATCH --output=bt_sending_loop%j.log
+export PATH=$HOME/.local/bin:$PATH
+module load Python
+module load CUDA
+module load cuDNN
+pip install --upgrade pip
+pip install -r requirements.txt
+python -m utils.create_models
 declare -a folders=("many_runs_no_crossover")
 declare -a tasks=("mnist")
 declare data_path=../data/p288427   
@@ -98,7 +98,7 @@ do(
           [ -e "$filename" ] || continue 
           todos="--parameters $filename --run $seed --seed $seed --parent_experiment $parent_experiment --experiment_name $experiment_name --model $model --dataset $dataset --resume $resume --generations $generations --validation_size $validation_set --test_size $fitness_set"
           echo "todos: $todos"  
-          python3 -m main $todos
+          sbatch run_sims_given_param_from_loop_new.sh $todos
           )
         done
       ) 
