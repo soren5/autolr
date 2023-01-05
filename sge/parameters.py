@@ -66,7 +66,7 @@ def set_parameters(arguments):
                         help='Specifies the total number of individuals that should survive in each generation.')
     parser.add_argument('--seed',
                         dest='SEED',
-                        type=float,
+                        type=int,
                         help='Specifies the seed to be used by the random number generator.')
     parser.add_argument('--prob_crossover',
                         dest='PROB_CROSSOVER',
