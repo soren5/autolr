@@ -1,4 +1,4 @@
-#!/bin/bash{
+#!/bin/bash
 # SBATCH --partition=short
 # SBATCH --time=00:10:00
 # SBATCH --job-name=bt_sending_loop
