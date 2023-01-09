@@ -96,9 +96,9 @@ do(
           echo "validation size $validation_set"
           echo "fitness size $fitness_set"
           [ -e "$filename" ] || continue 
-          todos="--parameters $filename --run $seed --seed $seed --parent_experiment $parent_experiment --experiment_name $experiment_name --model $model --dataset $dataset --resume $resume --generations $generations --validation_size $validation_set --test_size $fitness_set"
-          echo "todos: $todos"  
-          sbatch run_sims_given_param_from_loop_new.sh $todos
+          declare -a todos=("--parameters" "$filename" "--run" "$seed" "--seed" "$seed" "--parent_experiment" "$parent_experiment" "--experiment_name" "$experiment_name" "--model" "$model" "--dataset" "$dataset" "--resume" "$resume" "--generations" "$generations" "--validation_size" "$validation_set" "--test_size" "$fitness_set")
+          echo "todos: ${todos[@]}"  
+          bash run_sims_given_param_from_loop_new.sh "--parameters" "$filename" "--run" "$seed" "--seed" "$seed" "--parent_experiment" "$parent_experiment" "--experiment_name" "$experiment_name" "--model" "$model" "--dataset" "$dataset" "--resume" "$resume" "--generations" "$generations" "--validation_size" "$validation_set" "--test_size" "$fitness_set"
           )
         done
       ) 
