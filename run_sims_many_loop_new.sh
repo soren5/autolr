@@ -1,8 +1,22 @@
-#!/bin/bash{
-SBATCH --partition=short
-SBATCH --time=00:10:00
-SBATCH --job-name=bt_sending_loop
-SBATCH --output=bt_sending_loop%j.log
+#!/bin/bash
+# SBATCH --partition=short
+# SBATCH --time=00:10:00
+# SBATCH --job-name=bt_sending_loop
+# SBATCH --output=bt_sending_loop%j.log
+
+
+###usage:
+### set the data_path variable to the folder where the data should be saved
+### set the folders variable as the array of folders from where the parameters files should be read
+### set the tasks variables WITH THE CORRECT NOMENCLATURE as the array of simulations you want to run
+### TASK NOMENCLATURE:
+### (separate each word with an dash '_')
+### First word: 'cif, mnist, fmni' -> name of the task on whihc to train the network 
+### (optional -> for transference experiments)
+### Second word : 'from' -> bash script will understand it is a transference experiment
+### Third word : 'rapid' -> bash script will understand that it is a rapid transference experiment and adjust starting and finishing generation
+### Fourth word : 'cif, mnist, fmni' -> name of task from which the population is seeded
+
 export PATH=$HOME/.local/bin:$PATH
 module load Python
 module load CUDA
@@ -64,7 +78,7 @@ do(
 
     if [[ "$task" == *"from"* ]]; then
       resume="100"
-      if [[ "$task" == *"rapid" ]]; then
+      if [[ "$task" == *"rapid"* ]]; then
         resume="30"
         generations="60"
       fi
