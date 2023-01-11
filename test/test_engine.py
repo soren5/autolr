@@ -3,7 +3,8 @@ def test_engine():
     import sge.grammar as grammar
     import sge
     parameters = {
-       "POPSIZE": 10,
+        "SELECTION_TYPE": "tournament",       
+        "POPSIZE": 10,
         "GENERATIONS": 10,
         "ELITISM": 0,   
         "SEED": 0,                
@@ -88,7 +89,8 @@ def test_mutation_errors():
 
 def test_parameters():
     import sge, os
-    params = {
+    parameters = {
+        "SELECTION_TYPE": "tournament",
         "POPSIZE": 10,
         "GENERATIONS": 1,
         "ELITISM": 0,   
@@ -112,8 +114,8 @@ def test_parameters():
         "PREPOPULATE": False,
         "FAKE_FITNESS": True,
     }
-    sge.evolutionary_algorithm(parameters=params, evaluation_function=None)
-    ut.delete_directory(params['EXPERIMENT_NAME'], "run_1")
+    sge.evolutionary_algorithm(parameters=parameters, evaluation_function=None)
+    ut.delete_directory(parameters['EXPERIMENT_NAME'], "run_1")
     
 
 def test_archive():
@@ -122,7 +124,8 @@ def test_archive():
     This will not yield the same result as fitness evaluation burns random seed numbers (to map the genotype)."""
     import sge
     import tensorflow as tf
-    params = {
+    parameters = {
+        "SELECTION_TYPE": "tournament",
         "POPSIZE": 10,
         "GENERATIONS": 3,
         "ELITISM": 0,   
@@ -149,7 +152,7 @@ def test_archive():
             self.random_states = {}
             self.smart_phenotype = smart_phenotype
             pass
-        def evaluate(self, phen, params):
+        def evaluate(self, phen, parameters):
             if self.smart_phenotype(phen) in self.fitness:
                 fit = self.fitness[self.smart_phenotype(phen)]
             else:
@@ -158,23 +161,24 @@ def test_archive():
                 self.fitness[self.smart_phenotype(phen)] = fit
             return float(fit), {}
     fitness = TensorflowFitnessGenerator()
-    pop1 = sge.evolutionary_algorithm(parameters=params, evaluation_function=fitness)
-    params['RESUME'] = 1
-    params['LOAD_ARCHIVE'] = True
+    pop1 = sge.evolutionary_algorithm(parameters=parameters, evaluation_function=fitness)
+    parameters['RESUME'] = 1
+    parameters['LOAD_ARCHIVE'] = True
     import os
-    old_path = os.path.join(params['EXPERIMENT_NAME'], "run_1", "z-archive_3.json")
-    new_path = os.path.join(params['EXPERIMENT_NAME'], "run_1", "z-archive_1.json")
+    old_path = os.path.join(parameters['EXPERIMENT_NAME'], "run_1", "z-archive_3.json")
+    new_path = os.path.join(parameters['EXPERIMENT_NAME'], "run_1", "z-archive_1.json")
     os.remove(new_path)
     os.rename(old_path, new_path)
-    pop2 = sge.evolutionary_algorithm(parameters=params, evaluation_function=fitness)
-    pop3 = sge.evolutionary_algorithm(parameters=params, evaluation_function=fitness)
-    ut.delete_directory(params['EXPERIMENT_NAME'], "run_1")
+    pop2 = sge.evolutionary_algorithm(parameters=parameters, evaluation_function=fitness)
+    pop3 = sge.evolutionary_algorithm(parameters=parameters, evaluation_function=fitness)
+    ut.delete_directory(parameters['EXPERIMENT_NAME'], "run_1")
     assert pop3 == pop2    
 
 def test_archive_id():
     import sge
     import tensorflow as tf
-    params = {
+    parameters = {
+        "SELECTION_TYPE": "tournament",
         "POPSIZE": 10,
         "GENERATIONS": 20,
         "ELITISM": 9,   
@@ -201,7 +205,7 @@ def test_archive_id():
             self.random_states = {}
             self.smart_phenotype = smart_phenotype
             pass
-        def evaluate(self, phen, params):
+        def evaluate(self, phen, parameters):
             if self.smart_phenotype(phen) in self.fitness:
                 fit = self.fitness[self.smart_phenotype(phen)]
             else:
@@ -210,11 +214,11 @@ def test_archive_id():
                 self.fitness[self.smart_phenotype(phen)] = fit
             return float(fit), {}
     fitness = TensorflowFitnessGenerator()
-    pop1 = sge.evolutionary_algorithm(parameters=params, evaluation_function=fitness)
-    params['RESUME'] = 1
-    params['LOAD_ARCHIVE'] = True
-    pop2 = sge.evolutionary_algorithm(parameters=params, evaluation_function=fitness)
-    ut.delete_directory(params['EXPERIMENT_NAME'], "run_1")
+    pop1 = sge.evolutionary_algorithm(parameters=parameters, evaluation_function=fitness)
+    parameters['RESUME'] = 1
+    parameters['LOAD_ARCHIVE'] = True
+    pop2 = sge.evolutionary_algorithm(parameters=parameters, evaluation_function=fitness)
+    ut.delete_directory(parameters['EXPERIMENT_NAME'], "run_1")
     assert pop1 == pop2
 
 def test_reevaluation():
@@ -224,7 +228,7 @@ def test_reevaluation():
     class FitnessEvaluator:
         def __init__(self) -> None:
             pass
-        def evaluate(self, phen, params):
+        def evaluate(self, phen, parameters):
             return 1, {}
     indiv = {'genotype': [[0], [1], [], [0], [1], [], [1], [], [0], [0], [8], [0, 1, 1], [6], [0, 1], [1], [], [0, 1, 0, 1, 0, 1, 0], [1, 4, 4, 9], [1, 1, 2], [43]], 'fitness': 1, 'tree_depth': 9, 'operation': 'initialization', 'id': 0, 'phenotype': 'alpha_func, beta_func, sigma_func, grad_func = lambda shape,  alpha, grad: alpha, lambda shape,  alpha, beta, grad: tf.constant(2.28478855e-04, shape=shape, dtype=tf.float32), lambda shape,  alpha, beta, sigma, grad: tf.math.divide_no_nan(alpha, grad), lambda shape,  alpha, beta, sigma, grad: grad', 'mapping_values': [1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 3, 1, 2, 1, 0, 7, 4, 3, 1], 'smart_phenotype': 'subtract(alpha, pow(alpha, pow(constant(2.28478855e-04), constant(2.11963334e-01))))', 'other_info': {}}
     indiv_2 = copy.deepcopy(indiv)
