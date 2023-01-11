@@ -8,26 +8,9 @@ class Optimizer_Evaluator_Tensorflow:
             from evaluators.adaptive_optimizer_evaluator_f_race import train_model_tensorflow_fmnist as train_model
         self.train_model = train_model
     
-    # cached_model = None
-    # cached_dataset = None
-    # cached_weights = None
-    
     def evaluate(self, phen, params):
         foo = self.train_model([phen, params])
         return -foo[0], foo[1]
-         # import contextlib
-        # import multiprocessing
-        # from multiprocessing import Pool    
-        # multiprocessing.set_start_method('spawn', True)
-        # num_pool_workers=1 
-        # value, other_info = None, None
-        #with contextlib.closing(Pool(num_pool_workers)) as po: 
-        # phen_params = (phen, params)
-        # foo = po.map(self.train_model, [phen_params])
-        # value,  other_info = self.train_model(phen_params)
-        # value = foo[0][0]
-        # other_info = foo[0][1]
-        # return -value, other_info
 
 class Optimizer_Evaluator_Torch:
     def __init__(self, train_model=None):   
@@ -52,10 +35,12 @@ if __name__ == "__main__":
     if 'MODEL' in params and params['MODEL'] == 'models/cifar_model.h5': 
         from evaluators.adaptive_optimizer_evaluator_f_race import train_model_tensorflow_cifar10
         evaluation_function = Optimizer_Evaluator_Tensorflow(train_model=train_model_tensorflow_cifar10)
-    else:    #rember to import a function if necessary
+    elif 'MODEL' in params and params['MODEL'] == 'models/mnist_model.h5' and params['DATASET'] == 'fmnist':    
         from evaluators.adaptive_optimizer_evaluator_f_race import train_model_tensorflow_fmnist 
         evaluation_function = Optimizer_Evaluator_Tensorflow(train_model_tensorflow_fmnist)
-    #evaluation_function = Optimizer_Evaluator_Tensorflow()
+    elif 'MODEL' in params and params['MODEL'] == 'models/mnist_model.h5' and params['DATASET'] == 'mnist':    
+        from evaluators.adaptive_optimizer_evaluator_f_race import train_model_tensorflow_mnist 
+        evaluation_function = Optimizer_Evaluator_Tensorflow(train_model_tensorflow_mnist)
 
     sge.evolutionary_algorithm(evaluation_function=evaluation_function)
         
