@@ -16,17 +16,9 @@
 ### Second word : 'from' -> bash script will understand it is a transference experiment
 ### Third word : 'rapid' -> bash script will understand that it is a rapid transference experiment and adjust starting and finishing generation
 ### Fourth word : 'cif, mnist, fmni' -> name of task from which the population is seeded
-
-export PATH=$HOME/.local/bin:$PATH
-module load Python
-module load CUDA
-module load cuDNN
-pip install --upgrade pip
-pip install -r requirements.txt
-python -m utils.create_models
 declare -a folders=("many_runs_no_crossover")
 declare -a tasks=("mnist")
-declare data_path=../data/p288427   
+declare data_path=/data/p288427  
 
 for folder in "${folders[@]}"
 do(
