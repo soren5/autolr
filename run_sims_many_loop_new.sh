@@ -100,7 +100,7 @@ do(
             expected_last_file=$experiment_name/run_$seed/"population_"$generations.json
             if ( [ -e "$expected_last_file" ])
             then
-              echo "contains files for last expected iteration= $generations, no need to update resume"
+              echo "contains files for last expected iteration= $generations, no need to re-run"
               continue
             else
               echo "does not contain file for last expected iteration"
