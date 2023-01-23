@@ -118,7 +118,7 @@ def set_parameters(arguments):
                         help='Turns on the verbose output of the program')
     parser.add_argument('--resume',
                         dest="RESUME",
-                        type=int,
+                        type=str,
                         help="")
     parser.add_argument('--prepopulate',
                         dest="PREPOPULATE",

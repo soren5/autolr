@@ -16,8 +16,8 @@
 ### Second word : 'from' -> bash script will understand it is a transference experiment
 ### Third word : 'rapid' -> bash script will understand that it is a rapid transference experiment and adjust starting and finishing generation
 ### Fourth word : 'cif, mnist, fmni' -> name of task from which the population is seeded
-declare -a folders=("many_runs_no_crossover")
-declare -a tasks=("cif_from_rapid_fmni_big")
+declare -a folders=("many_runs")
+declare -a tasks=("fmni")
 declare data_path=./many_results  
 
 for folder in "${folders[@]}"
