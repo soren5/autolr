@@ -1,8 +1,8 @@
 #!/bin/bash
-# SBATCH --partition=short
-# SBATCH --time=00:10:00
-# SBATCH --job-name=bt_sending_loop
-# SBATCH --output=bt_sending_loop%j.log
+#SBATCH --partition=short
+#SBATCH --time=00:10:00
+#SBATCH --job-name=bt_sending_loop
+#SBATCH --output=bt_sending_loop%j.log
 
 
 ###usage:
