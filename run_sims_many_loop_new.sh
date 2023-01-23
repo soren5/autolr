@@ -17,8 +17,8 @@
 ### Third word : 'rapid' -> bash script will understand that it is a rapid transference experiment and adjust starting and finishing generation
 ### Fourth word : 'cif, mnist, fmni' -> name of task from which the population is seeded
 declare -a folders=("many_runs_no_crossover")
-declare -a tasks=("mnist")
-declare data_path=/data/p288427  
+declare -a tasks=("cif_from_rapid_fmni_big")
+declare data_path=./many_results  
 
 for folder in "${folders[@]}"
 do(
@@ -62,12 +62,12 @@ do(
       echo "dataset and model is cif"
     fi
     
-    #based ont ask find if resume paramerter is needed
-    # and adjust based if it is rapid or normal resume time and generations
+    #find if resume paramerter is needed
     resume="0"
     generations="200"
     parent_experiment="None"
 
+    #based on task adjust based if it is rapid or normal resume time and generations
     if [[ "$task" == *"from"* ]]; then
       resume="100"
       if [[ "$task" == *"rapid"* ]]; then
@@ -89,8 +89,28 @@ do(
 
     for filename in "$path"/*.yml ; 
     do(
-        for seed in $(seq 1 1)
+        for seed in $(seq 1 30)
         do(
+         
+          #based on files present in folder decide if resume needs to be 'Last' (need to resume run that did not complete)
+          files=$(shopt -s nullglob dotglob; echo $experiment_name/run_$seed/*) # check if folder has files
+          if (( ${#files} ))
+          then
+            #check if expected last file exists
+            expected_last_file=$experiment_name/run_$seed/"population_"$generations.json
+            if ( [ -e "$expected_last_file" ])
+            then
+              echo "contains files for last expected iteration= $generations, no need to update resume"
+              continue
+            else
+              echo "does not contain file for last expected iteration"
+              echo "resume becomes: Last"
+              resume="Last"
+            fi
+          else 
+            echo "does not contain files, leave resume as defined previously, resume=$resume"
+          fi
+          
           echo "sending: $filename"
           echo "seed: $seed"
           echo "experiment name: $experiment_name"
@@ -103,8 +123,8 @@ do(
           echo "fitness size $fitness_set"
           [ -e "$filename" ] || continue 
           declare -a todos=("--parameters" "$filename" "--run" "$seed" "--seed" "$seed" "--parent_experiment" "$parent_experiment" "--experiment_name" "$experiment_name" "--model" "$model" "--dataset" "$dataset" "--resume" "$resume" "--generations" "$generations" "--validation_size" "$validation_set" "--test_size" "$fitness_set")
-          echo "todos: ${todos[@]}"  
-          sbatch run_sims_given_param_from_loop_new.sh "${todos[@]}" 
+          # echo "todos: ${todos[@]}"  
+          # sbatch run_sims_given_param_from_loop_new.sh "${todos[@]}" 
           )
         done
       ) 
