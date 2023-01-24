@@ -112,6 +112,8 @@ def evolutionary_algorithm(evaluation_function=None, parameters=None, logger_mod
         
     population, archive, counter, it = initialize_pop(logger)
 
+    print(params)
+    
     return run_evolution(evaluation_function, logger, population, archive, counter, it)
 
 def run_evolution(evaluation_function, logger, population, archive, counter, it):
