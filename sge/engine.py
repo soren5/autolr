@@ -347,8 +347,11 @@ def initialize_pop(logger):
     if 'RESUME' in params:
         if params["RESUME"] == "Last":
             last_gen = find_last_generation_to_load()
-        elif type(params["RESUME"]) == int: 
-            last_gen = params['RESUME']
+        elif type(params["RESUME"]) == int:
+            if params["RESUME"] != 0: 
+                last_gen = params['RESUME']
+            else: 
+                last_gen = None
         else:
             raise Exception("Invalid RESUME")
 
