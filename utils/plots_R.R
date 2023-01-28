@@ -152,13 +152,13 @@ cumulative_unique_behaviours_over_time_across_setups_per_run <- function(all_dat
                   y = sum_uniques,
                   color = setup)
   )+
-    # geom_line() +
-    geom_smooth() + 
-    # scale_color_viridis(option ="magma", discrete = T) +
+    geom_line() +
     # geom_line(aes(group = interaction(setup, run))) + 
+    geom_smooth() +
+    # scale_color_viridis(option ="magma", discrete = T) +
     scale_color_viridis(discrete = T) +
     xlab("generations")+
-    ylab(paste("cumulative number of unique solutions", sep = "")) +
+    ylab(paste("cumulative number of unique solutions with fitness above ", accuracy, " over time per run across setups", sep = "")) +
     theme_bw()
   
   print(p)
@@ -181,18 +181,18 @@ cumulative_unique_behaviours_over_time_across_setup <- function(all_data, accura
                   y = sum_uniques,
                   color = setup)
   )+
-    # geom_line() +
-    geom_smooth() + 
+    geom_line() +
+    # geom_smooth() + 
     # scale_color_viridis(option ="magma", discrete = T) +
     # geom_line(aes(group = interaction(setup, run))) + 
     scale_color_viridis(discrete = T) +
     xlab("generations")+
-    ylab(paste("cumulative number of unique solutions", sep = "")) +
+    ylab(paste("cumulative number of unique solutions", accuracy, " over time across setups", sep = "")) +
     theme_bw()
   
   print(p)
-  ggsave(paste("number of cumulative unique solutions with fitness above ", accuracy, " over time per run across setups.jpg"))
-  ggsave(paste("number of cumulative unique solutions with fitness above ", accuracy, " over time per run across setups.pdf"))
+  ggsave(paste("number of cumulative unique solutions with fitness above ", accuracy, " over time across setups.jpg"))
+  ggsave(paste("number of cumulative unique solutions with fitness above ", accuracy, " over time across setups.pdf"))
 }
 
 
@@ -223,10 +223,15 @@ unique_behaviours_over_time_across_setups(all_data, accuracy = 0.5)
 unique_behaviours_over_time_across_setups(all_data, accuracy = 0.2)
 unique_behaviours_over_time_across_setups(all_data, accuracy = 0.1)
 
-cumulative_unique_behaviours_over_time_across_setups(all_data, accuracy = 0.8)
-cumulative_unique_behaviours_over_time_across_setups(all_data, accuracy = 0.5)
-cumulative_unique_behaviours_over_time_across_setups(all_data, accuracy = 0.2)
-cumulative_unique_behaviours_over_time_across_setups(all_data, accuracy = 0.1)
+cumulative_unique_behaviours_over_time_across_setups_per_run(all_data, accuracy = 0.8)
+cumulative_unique_behaviours_over_time_across_setups_per_run(all_data, accuracy = 0.5)
+cumulative_unique_behaviours_over_time_across_setups_per_run(all_data, accuracy = 0.2)
+cumulative_unique_behaviours_over_time_across_setups_per_run(all_data, accuracy = 0.1)
+
+cumulative_unique_behaviours_over_time_across_setup(all_data, accuracy = 0.8)
+cumulative_unique_behaviours_over_time_across_setup(all_data, accuracy = 0.5)
+cumulative_unique_behaviours_over_time_across_setup(all_data, accuracy = 0.2)
+cumulative_unique_behaviours_over_time_across_setup(all_data, accuracy = 0.1)
 
 fitness_over_time_across_setups(all_data)
 make_fitness_t_test_boxplot(all_data)
