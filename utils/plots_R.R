@@ -1,6 +1,8 @@
 library(here)
+library(ggforce)
 library(ggplot2)
 library(ggpubr)
+library(readr)
 library(tidyverse)
 library(viridis)
 
@@ -28,16 +30,18 @@ read_and_save_data <- function(){
   #bind the dataframes in a unique dataframe
   all_data = rbind(FM,FMX,OM,OMX)
   
+  post_hoc = read.csv2("best_fitnesses_post_hoc.csv", sep = ",", header = T)
   create_and_move_to_plots_subdir()
   
   #Save
   saveRDS(all_data, "all_data.Rds")
+  saveRDS(post_hoc, "post_hoc.Rds")
 }
 
 ### Make boxplots for unique phenotypes above accuracy
 maxe_unique_t_test_boxplot <- function(all_data, accuracy = 0){
   
-  my_comparisons <- list( c("OM", "OMX"), c("FMX", "OM"), c("FM", "FMX"), c("FMX", "OMX"), c("FM", "OMX"))
+  my_comparisons <- list( c("OM", "OMX"), c("OM", "FM"), c("FM", "OMX"), c("FM", "FMX"), c("FMX", "OM"), c("FMX", "OMX"))
   p <- ggplot(all_data %>% 
                 filter(fitness < -accuracy) %>% 
                 group_by(setup, run) %>% 
@@ -66,17 +70,18 @@ maxe_unique_t_test_boxplot <- function(all_data, accuracy = 0){
 fitness_over_time_across_setups <- function(all_data){
   p <- ggplot(all_data%>% 
                 group_by(setup, run, iteration) %>% 
-                summarise(avg_fit = mean(fitness)),
+                summarise(avg_fit = -1 * mean(fitness)),
               aes(x = iteration, 
-              y = avg_fit,
-              color = setup)
-             )+
+                  y = avg_fit,
+                  color = setup,
+                  fill = setup)
+  )+
     # geom_line() +
     geom_smooth() + 
     # scale_color_viridis(option ="magma", discrete = T) +
     # geom_line(aes(group = interaction(setup, run))) + 
     scale_color_viridis(discrete = T) +
-    ylim(c(0,-1))+
+    ylim(c(0, 1))+
     xlab("generations")+
     ylab(paste("average fitness", sep = "")) +
     theme_bw()
@@ -85,15 +90,14 @@ fitness_over_time_across_setups <- function(all_data){
   ggsave("fitness over time per run across setups.jpg")
   ggsave("fitness over time per run across setups.pdf")
 }
-
-###Plot final fitness 
-make_fitness_t_test_boxplot <- function(all_data){
+###Plot final best fitness 
+make_fitness_t_test_boxplot = function(all_data){
   
-  my_comparisons <- list( c("OM", "OMX"), c("FMX", "OM"), c("FM", "FMX"), c("FMX", "OMX"), c("FM", "OMX"))
+  my_comparisons <- list( c("OM", "OMX"), c("OM", "FM"), c("FM", "OMX"), c("FM", "FMX"), c("FMX", "OM"), c("FMX", "OMX"))
   p <- ggplot(all_data %>% 
                 group_by(setup, run) %>% 
                 filter(iteration == max(iteration)) %>% 
-                summarise(avg_final_fitness = mean(fitness)),
+                summarise(avg_final_fitness = mean(-1 * fitness)),
               aes(x = as.factor(setup),
                   y = avg_final_fitness,
                   fill = setup
@@ -113,6 +117,31 @@ make_fitness_t_test_boxplot <- function(all_data){
   ggsave(paste("average fitness in last generation across setups.pdf", sep = ""))
 }
 
+###Plot final best fitness 
+make_best_fitness_t_test_boxplot <- function(post_hoc){
+  
+  my_comparisons <- list( c("OM", "OMX"), c("OM", "FM"), c("FM", "OMX"), c("FM", "FMX"), c("FMX", "OM"), c("FMX", "OMX"))
+  p <- ggplot(post_hoc %>% 
+                pivot_longer(c(test, val), names_to = "dataset", values_to = "fitness"),
+              aes(x = as.factor(setup),
+                  y = fitness,
+                  fill = setup)
+  ) + 
+    geom_violin() + 
+    geom_boxplot(width = 0.1) +
+    geom_point() +
+    stat_compare_means(comparisons = my_comparisons)+ # Add pairwise comparisons p-value
+    scale_fill_viridis(discrete = T) +
+    xlab("setup")+
+    ylab(paste("average fitness in last generation", sep = "")) +
+    theme_bw() +
+    facet_grid(.~dataset)
+  
+  print(p)
+  ggsave(paste("average fitness in best solutions across setups.jpg", sep = ""))
+  ggsave(paste("average fitness in best solutions across setups.pdf", sep = ""))
+}
+
 ###Plot unique behaviours over time
 unique_behaviours_over_time_across_setups <- function(all_data, accuracy){
   p <- ggplot(all_data %>% 
@@ -122,15 +151,15 @@ unique_behaviours_over_time_across_setups <- function(all_data, accuracy){
                 summarise(uniques = n()),
               aes(x = iteration, 
                   y = uniques,
-                  color = setup)
+                  color = setup,
+                  fill = setup)
   )+
-    # geom_line() +
     geom_smooth() + 
-    # scale_color_viridis(option ="magma", discrete = T) +
     # geom_line(aes(group = interaction(setup, run))) + 
     scale_color_viridis(discrete = T) +
+    scale_fill_viridis(discrete = T) +
     xlab("generations")+
-    ylab(paste("number of unique solutions", sep = "")) +
+    ylab(paste("number of unique solutions with fitness above ", accuracy, " over time per run across setups", sep = "")) +
     theme_bw()
   
   print(p)
@@ -138,25 +167,37 @@ unique_behaviours_over_time_across_setups <- function(all_data, accuracy){
   ggsave(paste("number of unique solutions with fitness above ", accuracy, " over time per run across setups.pdf"))
 }
 
-###Plot cumulative unique behaviours over time
+###Plot cumulative unique behaviors over time
+p <- all_data %>% filter(iteration < 60, run == 1, setup == "FM") %>% 
+  filter(fitness < -0.2) %>%
+  group_by(setup, run) %>% 
+  arrange(iteration) %>% 
+  mutate(unique_inds = !duplicated(smart_phenotype)) %>% 
+  group_by(setup, run, iteration) %>% 
+  mutate(uniques = sum(unique_inds)) %>% 
+  group_by(setup, run) %>% 
+  mutate(sum_uniques = cumsum(uniques))
+
 cumulative_unique_behaviours_over_time_across_setups_per_run <- function(all_data, accuracy){
-  p <- ggplot(all_data %>% 
-                filter(fitness < -accuracy) %>% 
-                group_by(setup, run, iteration) %>% 
-                distinct(smart_phenotype, .keep_all = TRUE) %>% 
-                summarise(uniques = n()) %>% 
-                arrange(iteration) %>% 
-                mutate(sum_uniques = cumsum(uniques))
-                ,
-              aes(x = iteration, 
-                  y = sum_uniques,
-                  color = setup)
-  )+
-    geom_line() +
-    # geom_line(aes(group = interaction(setup, run))) + 
-    geom_smooth() +
-    # scale_color_viridis(option ="magma", discrete = T) +
+  p <- all_data %>% 
+    filter(fitness < -0.8) %>%
+    group_by(setup, run) %>% 
+    arrange(iteration) %>% 
+    mutate(unique_inds = !duplicated(smart_phenotype)) %>% 
+    group_by(setup, run, iteration) %>% 
+    summarise(uniques = sum(unique_inds)) %>% 
+    mutate(sum_uniques = cumsum(uniques)) %>% 
+    group_by(setup, iteration) %>% 
+    summarise(min_sum_uniques = min(sum_uniques),
+              max_sum_uniques = max(sum_uniques),
+              avg_uniques = mean(sum_uniques))  %>% 
+    mutate(setup = factor(setup)) %>% 
+    mutate(setup = fct_relevel(setup,c("FMX","FM","OM","OMX"))) %>% 
+    ggplot(aes(x = iteration, y = avg_uniques, fill = setup)) +
+    geom_area(aes(y = max_sum_uniques)) +
+    scale_fill_viridis(discrete = T) +
     scale_color_viridis(discrete = T) +
+    # scale_color_viridis(option ="magma", discrete = T) +
     xlab("generations")+
     ylab(paste("cumulative number of unique solutions with fitness above ", accuracy, " over time per run across setups", sep = "")) +
     theme_bw()
@@ -166,7 +207,6 @@ cumulative_unique_behaviours_over_time_across_setups_per_run <- function(all_dat
   ggsave(paste("number of cumulative unique solutions with fitness above ", accuracy, " over time per run across setups.pdf"))
 }
 
-
 ###Plot cumulative unique behaviours over time
 cumulative_unique_behaviours_over_time_across_setup <- function(all_data, accuracy){
   p <- ggplot(all_data %>% 
@@ -175,17 +215,18 @@ cumulative_unique_behaviours_over_time_across_setup <- function(all_data, accura
                 distinct(smart_phenotype, .keep_all = TRUE) %>% 
                 summarise(uniques = n()) %>% 
                 arrange(iteration) %>% 
-                mutate(sum_uniques = cumsum(uniques))
-                ,
+                mutate(sum_uniques = cumsum(uniques)),
               aes(x = iteration, 
                   y = sum_uniques,
-                  color = setup)
+                  color = setup,
+                  fill = setup)
   )+
-    geom_line() +
+    geom_line(linewidth = 3) +
     # geom_smooth() + 
     # scale_color_viridis(option ="magma", discrete = T) +
     # geom_line(aes(group = interaction(setup, run))) + 
     scale_color_viridis(discrete = T) +
+    scale_fill_viridis(discrete = T) +
     xlab("generations")+
     ylab(paste("cumulative number of unique solutions", accuracy, " over time across setups", sep = "")) +
     theme_bw()
@@ -195,6 +236,135 @@ cumulative_unique_behaviours_over_time_across_setup <- function(all_data, accura
   ggsave(paste("number of cumulative unique solutions with fitness above ", accuracy, " over time across setups.pdf"))
 }
 
+####Converts smart_phenotypes constants to asterisks
+convert_constants_to_asterisks = function(smart_phenotype){
+  
+  for (phen in smart_phenotype) {
+    for (str in str_match_all(phen, "constant\\(\\s*(.*?)\\s*\\)")[[1]][,-1]){
+      phen = gsub(str,"*",phen)
+    }
+  }
+  
+  return(phen)
+}
+#### Check for convergence over all setups
+plot_convergent_phen_across_all_setups = function(all_data, accuracy){
+  p = all_data %>%
+    filter(fitness < -accuracy) %>% 
+    group_by(setup, run) %>% 
+    distinct(smart_phenotype, .keep_all = TRUE) %>% 
+    ungroup() %>% 
+    group_by(smart_phenotype) %>% 
+    filter(n() > 1) %>%
+    ggplot(aes(x = smart_phenotype_s, y = as.factor(run), fill = fitness)) +
+    geom_tile() +
+    scale_fill_viridis() +
+    facet_grid( setup ~ .) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = -90, vjust = 0.5)) 
+  
+  print(p)
+  ggsave(paste("solutions found in multiple runs with fitness above ", accuracy, " across all setups.jpg"))
+  ggsave(paste("solutions found in multiple runs with fitness above ", accuracy, " across all setups.pdf"))
+}
+
+####Plot all uniques phenotypes that have appeared in different runs in the same setup
+plot_convergent_phen_per_setup = function(all_data, accuracy){
+  for ( i_setup in levels(all_data$setup)) {
+    p = all_data %>%
+      filter(fitness < -accuracy) %>% 
+      group_by(setup, run) %>% 
+      distinct(smart_phenotype, .keep_all = TRUE) %>% 
+      ungroup() %>% 
+      group_by(setup, smart_phenotype) %>% 
+      filter(n() > 1 & setup == i_setup) %>%
+      ggplot(aes(x = smart_phenotype,
+                 y = as.factor(run),
+                 fill = fitness)) +
+      geom_tile() +
+      scale_fill_viridis() +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = -90, vjust = 0.5)) +
+      ggtitle(i_setup)
+    print(p)
+    
+    print(p)
+    ggsave(paste("solutions found in multiple runs with fitness above ", accuracy, " for ", i_setup," setup.jpg"))
+    ggsave(paste("solutions found in multiple runs with fitness above ", accuracy, " for ", i_setup," setup.pdf"))
+    
+  }
+}
+
+###Plot all_unique phentoytpes that emerged in different runs 
+### but considering constants as all equal
+#### Check for convergence over all setups
+plot_convergent_phen_across_all_setups_simplified = function(all_data, accuracy){
+  p = all_data %>%
+    filter(fitness < -accuracy) %>% 
+    group_by(setup, run) %>% 
+    distinct(smart_phenotype, .keep_all = TRUE) %>% 
+    ungroup() %>% 
+    group_by(smart_phenotype) %>% 
+    filter(n() > 1)  %>%
+    mutate(smart_phenotype_s = convert_constants_to_asterisks(smart_phenotype)) %>% 
+    group_by(setup, run) %>% 
+    distinct(smart_phenotype_s, .keep_all = TRUE) %>%
+    ggplot(aes(x = smart_phenotype_s, y = as.factor(run), fill = fitness)) +
+    geom_tile() +
+    scale_fill_viridis() +
+    facet_grid( setup ~ .) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = -90, vjust = 0.5)) 
+  
+  print(p)
+  ggsave(paste("simplified solutions found in multiple runs with fitness above ", accuracy, " across all setups.jpg"),
+         width = 30,
+         height = 20,
+         units = "cm"
+  )
+  ggsave(paste("simplified solutions found in multiple runs with fitness above ", accuracy, " across all setups.pdf"),
+         width = 30,
+         height = 20,
+         units = "cm")
+}
+
+####Plot all uniques phenotypes that have appeared in different runs in the same setup
+plot_convergent_phen_per_setup_simplified = function(all_data, accuracy){
+  for ( i_setup in levels(all_data$setup)) {
+    p = all_data %>%
+      filter(fitness < -accuracy) %>% 
+      group_by(setup, run) %>% 
+      distinct(smart_phenotype, .keep_all = TRUE) %>% 
+      ungroup() %>% 
+      group_by(setup, smart_phenotype) %>% 
+      filter(n() > 1 & setup == i_setup)  %>%
+      mutate(smart_phenotype_s = convert_constants_to_asterisks(smart_phenotype)) %>% 
+      group_by(setup, run) %>% 
+      distinct(smart_phenotype_s, .keep_all = TRUE) %>%
+      ggplot(aes(x = smart_phenotype_s,
+                 y = as.factor(run),
+                 fill = fitness)) +
+      geom_tile() +
+      scale_fill_viridis() +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = -90, vjust = 0.5)) +
+      ggtitle(i_setup)
+    print(p)
+    
+    print(p)
+    ggsave(paste("simplified solutions found in multiple runs with fitness above ", accuracy, " for ", i_setup," setup.jpg"),
+           width = 30,
+           height = 20,
+           units = "cm")
+    ggsave(paste("simplified solutions found in multiple runs with fitness above ", accuracy, " for ", i_setup," setup.pdf"),
+           width = 30,
+           height = 20,
+           units = "cm")
+    
+  }
+}
+
+
 
 ####Either read data from csv if not done yet or load from Rds
 read_or_load <- function(){
@@ -202,16 +372,30 @@ read_or_load <- function(){
   setwd(paste(dirname(rstudioapi::getSourceEditorContext()$path),"many_results/", sep = '/'))
   if(!file.exists(plot_dir_name())){
     read_and_save_data()
-  }
-    # Load
+  }else{
     setwd(plot_dir_name())
-    all_data = readRDS("all_data.Rds") %>% mutate(fitness = as.numeric(fitness))
-    return(all_data)
-   
+  }
+  # Load
+  all_data = readRDS("all_data.Rds") %>% 
+    mutate(fitness = as.numeric(fitness)) %>% 
+    mutate(setup = factor(setup)) %>% 
+    mutate(setup = fct_relevel(setup,c("FMX","FM","OM","OMX"))) 
+  
+  post_hoc = readRDS("post_hoc.Rds") %>% 
+    rename(setup  =  1) %>% 
+    rename(val  =  2) %>% 
+    rename(test  = 3) %>% 
+    mutate(val = as.numeric(val)) %>% 
+    mutate(test = as.numeric(test)) %>% 
+    mutate(setup = factor(setup)) %>% 
+    mutate(setup = fct_relevel(setup,c("FMX","FM","OM","OMX"))) 
+  
+  return(all_data)
+  
 }
 #######Running code
 
-all_data = read_or_load()
+# all_data = read_or_load() 
 
 maxe_unique_t_test_boxplot(all_data, accuracy = 0.8)  
 maxe_unique_t_test_boxplot(all_data, accuracy = 0.5)  
@@ -235,3 +419,14 @@ cumulative_unique_behaviours_over_time_across_setup(all_data, accuracy = 0.1)
 
 fitness_over_time_across_setups(all_data)
 make_fitness_t_test_boxplot(all_data)
+make_best_fitness_t_test_boxplot(post_hoc = post_hoc)
+
+plot_convergent_phen_across_all_setups_simplified(all_data,0.8)
+plot_convergent_phen_across_all_setups_simplified(all_data,0.5)
+plot_convergent_phen_across_all_setups_simplified(all_data,0.2)
+
+plot_convergent_phen_per_setup_simplified(all_data, 0.8)
+plot_convergent_phen_per_setup_simplified(all_data, 0.5)
+plot_convergent_phen_per_setup_simplified(all_data, 0.2)
+
+
