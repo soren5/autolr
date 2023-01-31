@@ -3,7 +3,7 @@ library(ggplot2)
 library(ggpubr)
 library(tidyverse)
 library(viridis)
-
+library(patchwork)
 ###Definitions 
 
 plot_dir_name <- function(){
@@ -111,6 +111,8 @@ make_fitness_t_test_boxplot <- function(all_data){
   print(p)
   ggsave(paste("average fitness in last generation across setups.jpg", sep = ""))
   ggsave(paste("average fitness in last generation across setups.pdf", sep = ""))
+  
+  return(p)
 }
 
 ###Plot unique behaviours over time
@@ -142,9 +144,8 @@ unique_behaviours_over_time_across_setups <- function(all_data, accuracy){
 cumulative_unique_behaviours_over_time_across_setups_per_run <- function(all_data, accuracy){
   p <- ggplot(all_data %>% 
                 filter(fitness < -accuracy) %>% 
-                group_by(setup, run, iteration) %>% 
-                distinct(smart_phenotype, .keep_all = TRUE) %>% 
-                summarise(uniques = n()) %>% 
+                group_by(setup, run) %>% 
+                mutate(uniques= !duplicated(smart_phenotype)) %>% 
                 arrange(iteration) %>% 
                 mutate(sum_uniques = cumsum(uniques))
                 ,
@@ -152,11 +153,10 @@ cumulative_unique_behaviours_over_time_across_setups_per_run <- function(all_dat
                   y = sum_uniques,
                   color = setup)
   )+
-    geom_line() +
-    # geom_line(aes(group = interaction(setup, run))) + 
+    geom_line(linewidth =0.01, linetype = "dotted", aes(group = interaction(setup, run))) +
     geom_smooth() +
-    # scale_color_viridis(option ="magma", discrete = T) +
     scale_color_viridis(discrete = T) +
+    scale_fill_viridis(discrete = T) +
     xlab("generations")+
     ylab(paste("cumulative number of unique solutions with fitness above ", accuracy, " over time per run across setups", sep = "")) +
     theme_bw()
@@ -164,7 +164,10 @@ cumulative_unique_behaviours_over_time_across_setups_per_run <- function(all_dat
   print(p)
   ggsave(paste("number of cumulative unique solutions with fitness above ", accuracy, " over time per run across setups.jpg"))
   ggsave(paste("number of cumulative unique solutions with fitness above ", accuracy, " over time per run across setups.pdf"))
+  
+  return(p)
 }
+cumulative_unique_behaviours_over_time_across_setups_per_run(all_data, accuracy = 0.5)
 
 
 ###Plot cumulative unique behaviours over time
@@ -181,11 +184,12 @@ cumulative_unique_behaviours_over_time_across_setup <- function(all_data, accura
                   y = sum_uniques,
                   color = setup)
   )+
-    geom_line() +
-    # geom_smooth() + 
+    # geom_line() +
+    geom_smooth() +
     # scale_color_viridis(option ="magma", discrete = T) +
     # geom_line(aes(group = interaction(setup, run))) + 
     scale_color_viridis(discrete = T) +
+    scale_fill_viridis(discrete = T) +
     xlab("generations")+
     ylab(paste("cumulative number of unique solutions", accuracy, " over time across setups", sep = "")) +
     theme_bw()
@@ -212,6 +216,9 @@ read_or_load <- function(){
 #######Running code
 
 all_data = read_or_load()
+
+p = cumulative_unique_behaviours_over_time_across_setups_per_run(all_data, accuracy = 0.5) | maxe_unique_t_test_boxplot(all_data, accuracy = 0.5)  
+print(p)
 
 maxe_unique_t_test_boxplot(all_data, accuracy = 0.8)  
 maxe_unique_t_test_boxplot(all_data, accuracy = 0.5)  
