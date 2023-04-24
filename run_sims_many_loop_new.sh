@@ -10,15 +10,15 @@
 ### set the folders variable as the array of folders from where the parameters files should be read
 ### set the tasks variables WITH THE CORRECT NOMENCLATURE as the array of simulations you want to run
 ### TASK NOMENCLATURE:
-### (separate each word with an dash '_')
+### (separate each word with an underscore '_')
 ### First word: 'cif, mnist, fmni' -> name of the task on whihc to train the network 
 ### (optional -> for transference experiments)
 ### Second word : 'from' -> bash script will understand it is a transference experiment
 ### Third word : 'rapid' -> bash script will understand that it is a rapid transference experiment and adjust starting and finishing generation
 ### Fourth word : 'cif, mnist, fmni' -> name of task from which the population is seeded
-declare -a folders=("many_runs_no_crossover")
-declare -a tasks=("mnist")
-declare data_path=/data/p288427  
+declare -a folders=("many_runs",  "many_runs_old_mut", "many_runs_no_crossover")
+declare -a tasks=("fmni")
+declare data_path=/home/pfcarvalho/autolr/dumps ### Must be created already
 
 for folder in "${folders[@]}"
 do(
@@ -89,7 +89,8 @@ do(
 
     for filename in "$path"/*.yml ; 
     do(
-        for seed in $(seq 1 1)
+        #for seed in $(seq 1 1)
+        for seed in $(seq 15 30)
         do(
           echo "sending: $filename"
           echo "seed: $seed"
@@ -104,7 +105,8 @@ do(
           [ -e "$filename" ] || continue 
           declare -a todos=("--parameters" "$filename" "--run" "$seed" "--seed" "$seed" "--parent_experiment" "$parent_experiment" "--experiment_name" "$experiment_name" "--model" "$model" "--dataset" "$dataset" "--resume" "$resume" "--generations" "$generations" "--validation_size" "$validation_set" "--test_size" "$fitness_set")
           echo "todos: ${todos[@]}"  
-          sbatch run_sims_given_param_from_loop_new.sh "${todos[@]}" 
+          python3 -m main "${todos[@]}"
+          #sbatch run_sims_given_param_from_loop_new.sh "${todos[@]}" 
           )
         done
       ) 
