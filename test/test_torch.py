@@ -3,6 +3,7 @@ def test_pytorch():
     from main import Optimizer_Evaluator_Torch
     evaluation_function = Optimizer_Evaluator_Torch()
     parameters = {
+        "SELECTION_TYPE": "tournament",
         "POPSIZE": 2,
         "GENERATIONS": 2,
         "ELITISM": 0,   
