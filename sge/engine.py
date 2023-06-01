@@ -177,6 +177,15 @@ def check_google_colab():
     if "COLAB" in params and params["COLAB"]:
         from google.colab import drive
         drive.mount('/content/drive')
+    if 'RESUME' in params:
+        population = logger.load_population(params['RESUME'])
+        if params['LOAD_ARCHIVE']:
+            archive = logger.load_archive(params['RESUME'])
+        else:
+            archive = {}
+        logger.load_random_state(params['RESUME'])
+        it = params['RESUME']
+        counter = int(np.max([archive[x]['id'] for x in archive]))
 
 def reproduction(logger, population, archive, counter, it, new_population):
     while len(new_population) < params['POPSIZE']:
