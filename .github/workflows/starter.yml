@@ -7,8 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8.9"]
-
+        python-version: ["3.8.X"]
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
@@ -35,3 +34,6 @@ jobs:
       - name: Test Torch
         run: |
           pytest test/test_torch.py
+      - name: Test Long
+        run: |
+          pytest test/test_long.py

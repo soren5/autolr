@@ -51,6 +51,9 @@ In order to run your own experiments you will need to change the configuration u
 > python -m main --parameters parameters/your_configuration_file.yml
 ```
 
+At the moment on this branch the parameter files used are
+
+```bash
+parameters/adaptive_autolr_mutate_level_1.yml
+```
 Additional guidelines on how to create custom evaluators coming soon.
-
-
