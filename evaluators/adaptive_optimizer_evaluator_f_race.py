@@ -1,6 +1,9 @@
+from copy import deepcopy
 import csv
-from utils.data_functions import load_fashion_mnist_training, load_cifar10_training, load_mnist_training
+from pickle import NONE
+from utils.data_functions import load_fashion_mnist_training, load_cifar10_training, load_mnist_training, select_fashion_mnist_training
 import tensorflow as tf
+
 gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
     try:
@@ -15,83 +18,69 @@ if gpus:
 
 from keras.models import load_model
 from tensorflow import keras
-from keras import backend as K
+from tensorflow.keras import backend as K
 from optimizers.custom_optimizer import CustomOptimizer
-
-import sys
-
-import numpy as np
 import datetime
 experiment_time = datetime.datetime.now()
 
+cached_dataset = None
+cached_model = None
+cached_weights = None
+
 def train_model_tensorflow_cifar10(phen_params):
-    phen, params = phen_params
-    validation_size = params['VALIDATION_SIZE']
-    fitness_size =params['FITNESS_SIZE'] 
-    batch_size = params['BATCH_SIZE']
-    epochs = params['EPOCHS']
-    patience = params['PATIENCE']
+    phen, params, validation_size, fitness_size, batch_size, epochs, patience = find_params(phen_params)
 
-    dataset = load_cifar10_training(validation_size=validation_size, test_size=fitness_size)
-    if 'MODEL' in params:
-        model = load_model(params['MODEL'], compile=False)
-    else:
-        model = load_model('models/cifar_model.h5')
-    weights = model.get_weights()
-    print(len(dataset['x_train']))
 
-    model.set_weights(weights)
-    opt = CustomOptimizer(phen=phen, model=model)
+    # Note that globals are borderline -- consider an object or a closure 
+    # deliberately using globals() to make it ugly...
+    if globals()['cached_dataset'] == None:
+        globals()['cached_dataset'] = load_cifar10_training(validation_size=validation_size, test_size=fitness_size)
     
-    
-    model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
-    early_stop = keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=patience, restore_best_weights=True)
-
-    score = model.fit(dataset['x_train'], dataset['y_train'],
-        batch_size=batch_size,
-        epochs=epochs,
-        verbose=2,
-        validation_data=(dataset['x_val'], dataset['y_val']),
-        validation_steps= validation_size // batch_size,
-        callbacks=[
-            early_stop
-        ])
-
-    K.clear_session()
-    results = {}
-    for metric in score.history:
-        results[metric] = []
-        for n in score.history[metric]:
-            results[metric].append(n)
-    test_score = model.evaluate(x=dataset['x_test'],y=dataset["y_test"], verbose=0, callbacks=[keras.callbacks.History()])
-    return test_score[-1], results
+    cache_model(params)
+        
+    return evaluate_model(phen, validation_size, batch_size, epochs, patience)
 
 def train_model_tensorflow_fmnist(phen_params):
-    phen, params = phen_params
-    print(params['EPOCHS'])
-    validation_size = params['VALIDATION_SIZE']
-    fitness_size =params['FITNESS_SIZE'] 
-    batch_size = params['BATCH_SIZE']
-    epochs = params['EPOCHS']
-    patience = params['PATIENCE']
+    phen, params, validation_size, fitness_size, batch_size, epochs, patience = find_params(phen_params)
 
-    dataset = load_fashion_mnist_training(validation_size=validation_size, test_size=fitness_size)
+    # Note that globals are borderline -- consider an object or a closure 
+    # deliberately using globals() to make it ugly...
+    if globals()['cached_dataset'] == None:
+        globals()['cached_dataset'] = load_fashion_mnist_training(validation_size=validation_size, test_size=fitness_size)
+    
+    cache_model(params)
+       
+    return evaluate_model(phen, validation_size, batch_size, epochs, patience)
 
-    if 'MODEL' in params:
-        model = load_model(params['MODEL'], compile=False)
-    else:
-        model = load_model('models/mnist_model.h5')
 
-    weights = model.get_weights()
-    print(len(dataset['x_train']))
+def train_model_tensorflow_mnist(phen_params):
+    phen, params, validation_size, fitness_size, batch_size, epochs, patience = find_params(phen_params)
 
-    model.set_weights(weights)
+    # Note that globals are borderline -- consider an object or a closure 
+    # deliberately using globals() to make it ugly...
+    if globals()['cached_dataset'] == None:
+        globals()['cached_dataset'] = load_mnist_training(validation_size=validation_size, test_size=fitness_size)
+    
+    cache_model(params)
+        
+    # we assume validation and test sets are deterministic
+    return evaluate_model(phen, validation_size, batch_size, epochs, patience)
+
+def cache_model(params):
+    if globals()['cached_model'] == None:
+        globals()['cached_model'] = load_model(params['MODEL'], compile=False)
+        globals()['cached_weights'] = globals()['cached_model'].get_weights()
+
+def evaluate_model(phen, validation_size, batch_size, epochs, patience):
+    dataset = globals()['cached_dataset'] 
+    model = tf.keras.models.clone_model(globals()['cached_model'])
+    
+    # optimizer is constant aslong as phen doesn't changed?
+    # -> opportunity to cache opt and compiled model
     opt = CustomOptimizer(phen=phen, model=model)
-    
-    
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
     early_stop = keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=patience, restore_best_weights=True)
-
+    
     score = model.fit(dataset['x_train'], dataset['y_train'],
         batch_size=batch_size,
         epochs=epochs,
@@ -111,7 +100,7 @@ def train_model_tensorflow_fmnist(phen_params):
     test_score = model.evaluate(x=dataset['x_test'],y=dataset["y_test"], verbose=0, callbacks=[keras.callbacks.History()])
     return test_score[-1], results
 
-def train_model_tensorflow_mnist(phen_params):
+def find_params(phen_params):
     phen, params = phen_params
     print(params['EPOCHS'])
     validation_size = params['VALIDATION_SIZE']
@@ -119,39 +108,4 @@ def train_model_tensorflow_mnist(phen_params):
     batch_size = params['BATCH_SIZE']
     epochs = params['EPOCHS']
     patience = params['PATIENCE']
-
-    dataset = load_mnist_training(validation_size=validation_size, test_size=fitness_size)
-
-    if 'MODEL' in params:
-        model = load_model(params['MODEL'], compile=False)
-    else:
-        model = load_model('models/mnist_model.h5')
-
-    weights = model.get_weights()
-    print(len(dataset['x_train']))
-
-    model.set_weights(weights)
-    opt = CustomOptimizer(phen=phen, model=model)
-    
-    
-    model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
-    early_stop = keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=patience, restore_best_weights=True)
-
-    score = model.fit(dataset['x_train'], dataset['y_train'],
-        batch_size=batch_size,
-        epochs=epochs,
-        verbose=2,
-        validation_data=(dataset['x_val'], dataset['y_val']),
-        validation_steps= validation_size // batch_size,
-        callbacks=[
-            early_stop
-        ])
-
-    K.clear_session()
-    results = {}
-    for metric in score.history:
-        results[metric] = []
-        for n in score.history[metric]:
-            results[metric].append(n)
-    test_score = model.evaluate(x=dataset['x_test'],y=dataset["y_test"], verbose=0, callbacks=[keras.callbacks.History()])
-    return test_score[-1], results  
+    return phen,params,validation_size,fitness_size,batch_size,epochs,patience
