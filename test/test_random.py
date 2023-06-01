@@ -17,7 +17,8 @@ def test_numpy_random():
 
 def test_engine_random():
     import sge
-    params = {
+    parameters = {
+        "SELECTION_TYPE": "tournament",
         "POPSIZE": 10,
         "GENERATIONS": 10,
         "ELITISM": 0,   
@@ -42,16 +43,17 @@ def test_engine_random():
         "PREPOPULATE": False,
         "FAKE_FITNESS": True,
     }
-    pop1 = sge.evolutionary_algorithm(parameters=params, evaluation_function=None)
-    params["RUN"] = 2
-    pop2 = sge.evolutionary_algorithm(parameters=params, evaluation_function=None)
-    ut.delete_directory(params['EXPERIMENT_NAME'], ['run_1', 'run_2'])
+    pop1 = sge.evolutionary_algorithm(parameters=parameters, evaluation_function=None)
+    parameters["RUN"] = 2
+    pop2 = sge.evolutionary_algorithm(parameters=parameters, evaluation_function=None)
+    ut.delete_directory(parameters['EXPERIMENT_NAME'], ['run_1', 'run_2'])
     assert pop1 == pop2
 
 
 def test_engine_resume():
     import sge
-    params = {
+    parameters = {
+        "SELECTION_TYPE": "tournament",
         "POPSIZE": 10,
         "GENERATIONS": 3,
         "ELITISM": 0,   
@@ -69,11 +71,11 @@ def test_engine_resume():
         "FAKE_FITNESS": True,
         "SEED": 0,
     }
-    pop1 = sge.evolutionary_algorithm(parameters=params, evaluation_function=None)
-    params['RESUME'] = 1
-    params['LOAD_ARCHIVE'] = True
-    pop2 = sge.evolutionary_algorithm(parameters=params, evaluation_function=None)
-    ut.delete_directory(params['EXPERIMENT_NAME'], 'run_1')
+    pop1 = sge.evolutionary_algorithm(parameters=parameters, evaluation_function=None)
+    parameters['RESUME'] = 1
+    parameters['LOAD_ARCHIVE'] = True
+    pop2 = sge.evolutionary_algorithm(parameters=parameters, evaluation_function=None)
+    ut.delete_directory(parameters['EXPERIMENT_NAME'], 'run_1')
     assert pop1 == pop2    
     
 

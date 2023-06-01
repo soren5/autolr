@@ -13,7 +13,7 @@ def tournament(population, tsize=3):
     return indiv
 
 def universal_stochastic_sampling(population):
-    fits = [indiv['fitness'] for indiv in population]
+    fits = [-1 * indiv['fitness'] for indiv in population] #return fitnesses to positive values
     max = sum(fits)
     pick = random.uniform(0, max)
     current = 0

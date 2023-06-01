@@ -6,6 +6,7 @@ def test_short_run():
     from utils import create_models
     create_models.create_models()
     parameters = {
+        "SELECTION_TYPE": "tournament",
         "POPSIZE": 2,
         "GENERATIONS": 2,
         "ELITISM": 0,   
@@ -41,6 +42,7 @@ def test_short_run_cifar10():
     from utils import create_models
     create_models.create_models()
     parameters = {
+        "SELECTION_TYPE": "tournament",
         "POPSIZE": 2,
         "GENERATIONS": 2,
         "ELITISM": 0,   
@@ -96,6 +98,7 @@ def test_short_run_mnist():
     from utils import create_models
     create_models.create_models()
     parameters = {
+        "SELECTION_TYPE": "tournament",
         "POPSIZE": 2,
         "GENERATIONS": 2,
         "ELITISM": 0,   

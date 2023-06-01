@@ -1,11 +1,8 @@
 import tensorflow as tf
 from tensorflow import keras
-from keras.preprocessing.image import ImageDataGenerator
 from sklearn.model_selection import train_test_split
-from keras.models import Sequential, load_model
 from keras.datasets import fashion_mnist, cifar10, mnist
 from keras import backend as K
-from optimizers.custom_optimizer import CustomOptimizer
 import numpy as np
 
 def resize_data(args):
@@ -232,11 +229,11 @@ def load_cifar10_training(n_classes=10, validation_size=3500, test_size=3500):
 
     return dataset
 
-def load_fashion_mnist_full(n_classes=10, validation_size=3500, test_size=3500):
+def load_fashion_mnist_full(n_classes=10, validation_size=3500):
     (x_train, y_train), (x_test, y_test) = fashion_mnist.load_data()
 
     x_train, x_val, y_train, y_val = train_test_split(x_train, y_train,
-                                                    test_size=validation_size + test_size,
+                                                    test_size=validation_size,
                                                     stratify=y_train,
                                                     random_state=0)
 
