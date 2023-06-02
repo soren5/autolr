@@ -7,6 +7,7 @@ import pandas as pd
 from optimizers.evolved.ades import ADES
 from optimizers.evolved.sign import Sign
 import math
+from utils.bayesian_optimization import *
 
 cwd_path = os.getcwd()
 
@@ -229,7 +230,87 @@ def optimize_sign(n_inter, init_points):
         n_iter=n_inter,
     )
 
-#optimize_adam(90,10)
+def optimize_generic(phenotype, name, n_iter, init_points):
+    constants, probes = get_constants_and_probe(phenotype)
+    pbounds = {}
+    pparams = {}
+    i=0
+
+    for constant, probe_value in zip(constants, probes):
+        param_key = 'param_' + str(i)
+        pbounds[param_key] = (0, 1)
+        pparams[param_key] = probe_value
+        phenotype.replace(constant, param_key, 1)
+        i += 1
+    f = create_evaluate_generic(phenotype, name)
+
+    bayesian_optimizer = BayesianOptimization(f=f, pbounds=pbounds, verbose=2)
+    bayesian_optimizer.probe(params=pparams)
+    bayesian_optimizer.maximize(init_points=init_points, n_iter=n_iter)
+
+def create_evaluate_generic(phenotype, name):
+    def evaluate_generic(**kwargs):
+        from tensorflow.keras.models import load_model
+        import tensorflow as tf
+        import numpy as np
+
+        for key, value in kwargs.items():
+            phenotype.replace(key, f"tf.constant({value}, shape=shape, dtype=tf.float32)")
+
+        model = load_model('models/cifar_model.h5', compile=False)
+        optimizer = CustomOptimizer(phen=phenotype, model=model)
+        print("Going to evaluate")
+        result = evaluate_cifar_model(optimizer=optimizer, model=model, verbose=0, epochs=100, experiment_name=f'{name}_bo_cifar_results')
+
+
+
+        data_frame = pd.read_csv(os.path.join(cwd_path, 'results/' , f"{name}_bo_cifar_results.csv"))
+        if len(data_frame) > 1:
+            total_epochs = data_frame.loc[len(data_frame) - 2, "epochs"]
+        else:
+            total_epochs = 0
+
+        col_values = [total_epochs + 100]
+        col_names = ["epochs"] 
+        for key, value in kwargs.items():
+            col_names.append(key)
+            col_values.append(value)
+        
+        data_frame.loc[len(data_frame) - 1, col_names] = col_values
+        data_frame.to_csv(os.path.join(cwd_path, 'results/' , f"{name}_bo_cifar_results.csv"), index=False)
+
+        return max(result[1]['val_accuracy'])
+    return evaluate_generic
+
+#optimize_adam(10,1)
 #optimize_rmsprop(90,10)
 #optimize_nesterov(90,10)
 evaluate_ades(0.08922, 0.0891)
+optimize_ades(90,10)
+#phenotype = "alpha_func, beta_func, sigma_func, grad_func = lambda shape,  alpha, grad: tf.math.add(alpha, tf.constant(4.70911357e-03, shape=shape, dtype=tf.float32)), lambda shape,  alpha, beta, grad: tf.math.multiply(tf.math.add(tf.math.add(grad, grad), tf.math.add(tf.constant(9.98279874e-01, shape=shape, dtype=tf.float32), tf.math.sqrt(tf.math.square(tf.math.negative(tf.math.multiply(tf.constant(9.94242714e-01, shape=shape, dtype=tf.float32), tf.math.divide_no_nan(grad, grad))))))), grad), lambda shape,  alpha, beta, sigma, grad: tf.constant(9.99720385e-01, shape=shape, dtype=tf.float32), lambda shape,  alpha, beta, sigma, grad: tf.math.multiply(beta, alpha)"
+#optimize_generic(phenotype, "best1.3", 90, 10)
+
+#phenotype = "alpha_func, beta_func, sigma_func, grad_func = lambda shape,  alpha, grad: tf.math.add(alpha, grad), lambda shape,  alpha, beta, grad: beta, lambda shape,  alpha, beta, sigma, grad: tf.constant(3.14881358e-03, shape=shape, dtype=tf.float32), lambda shape,  alpha, beta, sigma, grad: tf.math.multiply(sigma, alpha)"
+#optimize_generic(phenotype, "1.3_epoch35_id742", 10, 1)
+"""
+phenotype = "alpha_func, beta_func, sigma_func, grad_func = lambda shape,  alpha, grad: tf.math.add(alpha, tf.constant(4.70911357e-03, shape=shape, dtype=tf.float32)), lambda shape,  alpha, beta, grad: tf.math.multiply(tf.math.add(tf.math.add(grad, grad), tf.math.add(tf.constant(9.99847452e-01, shape=shape, dtype=tf.float32), tf.math.sqrt(tf.math.square(tf.math.negative(tf.math.multiply(grad, tf.constant(9.99944439e-01, shape=shape, dtype=tf.float32))))))), grad), lambda shape,  alpha, beta, sigma, grad: beta, lambda shape,  alpha, beta, sigma, grad: tf.math.multiply(beta, alpha)"
+optimize_generic(phenotype, "1.3_epoch36_id775", 10, 1)
+
+phenotype = "alpha_func, beta_func, sigma_func, grad_func = lambda shape,  alpha, grad: tf.math.add(alpha, tf.math.subtract(grad, tf.constant(1.90885420e-02, shape=shape, dtype=tf.float32))), lambda shape,  alpha, beta, grad: tf.math.multiply(tf.math.add(tf.math.add(grad, grad), grad), tf.math.subtract(tf.math.negative(tf.constant(1.52547986e-04, shape=shape, dtype=tf.float32)), tf.constant(3.85103236e-03, shape=shape, dtype=tf.float32))), lambda shape,  alpha, beta, sigma, grad: grad, lambda shape,  alpha, beta, sigma, grad: beta"
+optimize_generic(phenotype, "1.3_epoch42_id999", 10, 1)
+
+phenotype = "alpha_func, beta_func, sigma_func, grad_func = lambda shape,  alpha, grad: tf.math.add(alpha, tf.math.subtract(grad, alpha)), lambda shape,  alpha, beta, grad: tf.math.multiply(tf.math.add(tf.math.add(grad, grad), grad), tf.math.subtract(tf.math.negative(tf.constant(2.57431039e-03, shape=shape, dtype=tf.float32)), tf.constant(7.67413430e-04, shape=shape, dtype=tf.float32))), lambda shape,  alpha, beta, sigma, grad: grad, lambda shape,  alpha, beta, sigma, grad: beta"
+optimize_generic(phenotype, "1.3_epoch45_id1134", 10, 1)
+
+phenotype = "alpha_func, beta_func, sigma_func, grad_func = lambda shape,  alpha, grad: tf.math.add(alpha, tf.constant(4.70911357e-03, shape=shape, dtype=tf.float32)), lambda shape,  alpha, beta, grad: tf.math.multiply(tf.math.add(tf.math.add(grad, grad), tf.math.add(tf.constant(9.99875353e-01, shape=shape, dtype=tf.float32), tf.math.sqrt(tf.math.square(tf.math.negative(tf.math.multiply(alpha, tf.constant(9.99581233e-01, shape=shape, dtype=tf.float32))))))), grad), lambda shape,  alpha, beta, sigma, grad: beta, lambda shape,  alpha, beta, sigma, grad: tf.math.multiply(beta, alpha)"
+optimize_generic(phenotype, "1.3_epoch47_id1202", 10, 1)
+
+phenotype = "alpha_func, beta_func, sigma_func, grad_func = lambda shape,  alpha, grad: tf.math.add(alpha, tf.constant(4.70911357e-03, shape=shape, dtype=tf.float32)), lambda shape,  alpha, beta, grad: tf.math.multiply(tf.math.add(tf.math.add(grad, grad), tf.math.add(tf.constant(9.99847452e-01, shape=shape, dtype=tf.float32), tf.math.sqrt(tf.math.square(tf.math.negative(tf.math.multiply(grad, tf.constant(8.59898661e-03, shape=shape, dtype=tf.float32))))))), grad), lambda shape,  alpha, beta, sigma, grad: tf.constant(3.14881358e-03, shape=shape, dtype=tf.float32), lambda shape,  alpha, beta, sigma, grad: tf.math.multiply(beta, alpha)"
+optimize_generic(phenotype, "1.3_epoch54_id1519", 10, 1)
+
+phenotype = "alpha_func, beta_func, sigma_func, grad_func = lambda shape,  alpha, grad: tf.math.add(alpha, tf.constant(4.70911357e-03, shape=shape, dtype=tf.float32)), lambda shape,  alpha, beta, grad: tf.math.multiply(tf.math.add(tf.math.add(grad, grad), tf.math.add(tf.constant(9.99847452e-01, shape=shape, dtype=tf.float32), tf.math.sqrt(tf.math.square(tf.math.negative(tf.math.multiply(grad, tf.constant(3.76354517e-01, shape=shape, dtype=tf.float32))))))), grad), lambda shape,  alpha, beta, sigma, grad: tf.constant(3.14881358e-03, shape=shape, dtype=tf.float32), lambda shape,  alpha, beta, sigma, grad: tf.math.multiply(beta, alpha)"
+optimize_generic(phenotype, "1.3_epoch55_id1522", 10, 1)
+
+phenotype = "alpha_func, beta_func, sigma_func, grad_func = lambda shape,  alpha, grad: tf.math.add(alpha, tf.constant(4.70911357e-03, shape=shape, dtype=tf.float32)), lambda shape,  alpha, beta, grad: tf.math.multiply(tf.math.add(tf.math.add(grad, grad), tf.math.add(tf.constant(9.98279874e-01, shape=shape, dtype=tf.float32), tf.math.sqrt(tf.math.square(tf.math.negative(tf.math.multiply(tf.constant(9.94242714e-01, shape=shape, dtype=tf.float32), tf.math.divide_no_nan(grad, grad))))))), grad), lambda shape,  alpha, beta, sigma, grad: tf.constant(9.99720385e-01, shape=shape, dtype=tf.float32), lambda shape,  alpha, beta, sigma, grad: tf.math.multiply(beta, alpha)"
+optimize_generic(phenotype, "1.3_epoch75_id2458", 10, 1)
+"""

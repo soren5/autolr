@@ -60,7 +60,7 @@ def evaluate_cifar_model(dataset=None, model=None, optimizer=None, batch_size=10
 
     if dataset is None:
         dataset = load_cifar10_full()
-    
+
     from tensorflow.compat.v1 import ConfigProto
     from tensorflow.compat.v1 import InteractiveSession
 
@@ -92,7 +92,7 @@ def evaluate_cifar_model(dataset=None, model=None, optimizer=None, batch_size=10
         score = model.fit(dataset['x_train'], dataset['y_train'],
             batch_size=batch_size,
             epochs=run_epochs,
-            verbose=verbose,
+            verbose=2,
             validation_data=(dataset['x_val'], dataset['y_val']),
             validation_steps= validation_size // batch_size,
             callbacks=[model_checkpoint_callback])

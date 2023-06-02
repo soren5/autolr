@@ -91,6 +91,8 @@ def setup(parameters=None, logger=None):
     if logger is None:
         import sge.logger as logger
         print("Using Native Logger")
+    if 'RESUME' in params and type(params['RESUME']) == str and params["RESUME"].isdecimal():
+        params["RESUME"] = int(params["RESUME"])
     logger.params = params 
     logger.prepare_dumps()
     random.seed(params['SEED'])
@@ -110,6 +112,8 @@ def evolutionary_algorithm(evaluation_function=None, parameters=None, logger_mod
         
     population, archive, counter, it = initialize_pop(logger)
 
+    print(params)
+    
     return run_evolution(evaluation_function, logger, population, archive, counter, it)
 
 def run_evolution(evaluation_function, logger, population, archive, counter, it):
@@ -342,11 +346,14 @@ def update_archive(evaluation_function, archive, indiv):
     return evaluation_function, archive, indiv
 
 def initialize_pop(logger):
-    if 'RESUME' in params and params["RESUME"] != False:
-        if type(params["RESUME"]) == int: 
-            last_gen = params['RESUME']
-        elif params["RESUME"] == "Last":
+    if 'RESUME' in params:
+        if params["RESUME"] == "Last":
             last_gen = find_last_generation_to_load()
+        elif type(params["RESUME"]) == int:
+            if params["RESUME"] != 0: 
+                last_gen = params['RESUME']
+            else: 
+                last_gen = None
         else:
             raise Exception("Invalid RESUME")
 
