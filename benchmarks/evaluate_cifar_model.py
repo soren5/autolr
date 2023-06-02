@@ -55,7 +55,7 @@ def get_metric_dictionary(score):
             pain[metric].append(n)
     return pain
 
-def evaluate_cifar_model(dataset=None, model=None, optimizer=None, batch_size=1000, epochs=100, step=100, verbose=0, experiment_name='development_results', save_best_only=False):
+def evaluate_cifar_model(dataset=None, model=None, optimizer=None, batch_size=1000, epochs=100, step=1, verbose=0, experiment_name='development_results', save_best_only=False):
     assert optimizer != None
 
     if dataset is None:

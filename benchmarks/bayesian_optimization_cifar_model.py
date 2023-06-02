@@ -1,12 +1,11 @@
-from deap import creator, base, tools
 from benchmarks.evaluate_cifar_model import evaluate_cifar_model
 from tensorflow.keras.optimizers import Adam, SGD, RMSprop
 import random
 import os
 import pandas as pd
-from bayes_opt import BayesianOptimization
+#from bayes_opt import BayesianOptimization
 from optimizers.evolved.ades import ADES
-from optimizers.evolved.signved.sign import Sign
+from optimizers.evolved.sign import Sign
 import math
 
 cwd_path = os.getcwd()
@@ -233,4 +232,4 @@ def optimize_sign(n_inter, init_points):
 #optimize_adam(90,10)
 #optimize_rmsprop(90,10)
 #optimize_nesterov(90,10)
-optimize_ades(90,10)
+evaluate_ades(0.08922, 0.0891)
