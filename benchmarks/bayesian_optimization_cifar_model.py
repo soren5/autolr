@@ -3,8 +3,9 @@ from tensorflow.keras.optimizers import Adam, SGD, RMSprop
 import random
 import os
 import pandas as pd
-from bayes_opt import BayesianOptimization
+#from bayes_opt import BayesianOptimization
 from optimizers.evolved.ades import ADES
+from optimizers.evolved.sign import Sign
 import math
 from utils.bayesian_optimization import *
 

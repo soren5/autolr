@@ -91,7 +91,7 @@ def setup(parameters=None, logger=None):
     if logger is None:
         import sge.logger as logger
         print("Using Native Logger")
-    if params["RESUME"].isdecimal():
+    if 'RESUME' in params and type(params['RESUME']) == str and params["RESUME"].isdecimal():
         params["RESUME"] = int(params["RESUME"])
     logger.params = params 
     logger.prepare_dumps()
