@@ -12,7 +12,7 @@ cwd_path = os.getcwd()
 
 def evaluate_adam(learning_rate, beta_1, beta_2):
     optimizer = Adam(learning_rate=learning_rate, beta_1=beta_1, beta_2=beta_2)
-    result = evaluate_cifar_model(optimizer=optimizer, verbose=0, epochs=100, experiment_name='adam_bo_cifar_results')
+    result = evaluate_cifar_model(optimizer=optimizer, verbose=0, epochs=1000, step=1000, experiment_name='adam_bo_cifar_results')
 
     data_frame = pd.read_csv(os.path.join(cwd_path, 'results/' , "adam_bo_cifar_results.csv"))
     if len(data_frame) > 1:
@@ -46,7 +46,7 @@ def evaluate_rmsprop(learning_rate, rho):
 
 def evaluate_nesterov(learning_rate, momentum):
     optimizer = SGD(learning_rate=learning_rate, momentum=momentum, nesterov=True)
-    result = evaluate_cifar_model(optimizer=optimizer, verbose=0, epochs=100, experiment_name='nesterov_bo_cifar_results')
+    result = evaluate_cifar_model(optimizer=optimizer, verbose=0, epochs=1000, step=1000, experiment_name='nesterov_bo_cifar_results')
 
     data_frame = pd.read_csv(os.path.join(cwd_path, 'results/' , "nesterov_bo_cifar_results.csv"))
     if len(data_frame) > 1:
@@ -72,7 +72,8 @@ def evaluate_ades(beta_1, beta_2):
         for trainable_weight in layer._trainable_weights:
             alpha_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="alpha" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
     optimizer = ADES(beta_1=beta_1, beta_2=beta_2, alpha=alpha_dict)
-    result = evaluate_cifar_model(optimizer=optimizer, model=model, verbose=0, epochs=100, experiment_name='ades_bo_cifar_results')
+    result = evaluate_cifar_model(optimizer=optimizer, model=model, verbose=0, epochs=1000, step=1000, experiment_name='ades_bo_cifar_results')
+    #result = evaluate_cifar_model(optimizer=optimizer, model=model, verbose=0, epochs=10, experiment_name='ades_bo_cifar_results')
 
     data_frame = pd.read_csv(os.path.join(cwd_path, 'results/' , "ades_bo_cifar_results.csv"))
     if len(data_frame) > 1:
@@ -281,10 +282,23 @@ def create_evaluate_generic(phenotype, name):
         return max(result[1]['val_accuracy'])
     return evaluate_generic
 
-#optimize_adam(10,1)
+#optimize_adam(90,10)
 #optimize_rmsprop(90,10)
 #optimize_nesterov(90,10)
-optimize_ades(90,10)
+#optimize_ades(90,10)
+for i in range(29):
+    beta_1 = 0.92226
+    beta_2 = 0.69285
+    evaluate_ades(beta_1, beta_2)
+    learning_rate = 0.00163
+    beta_1 = 0.81344
+    beta_2 = 0.71023
+    evaluate_adam(learning_rate, beta_1, beta_2)
+    learning_rate = 0.00907
+    momentum = 0.98433
+    evaluate_nesterov(learning_rate, momentum)
+
+
 #phenotype = "alpha_func, beta_func, sigma_func, grad_func = lambda shape,  alpha, grad: tf.math.add(alpha, tf.constant(4.70911357e-03, shape=shape, dtype=tf.float32)), lambda shape,  alpha, beta, grad: tf.math.multiply(tf.math.add(tf.math.add(grad, grad), tf.math.add(tf.constant(9.98279874e-01, shape=shape, dtype=tf.float32), tf.math.sqrt(tf.math.square(tf.math.negative(tf.math.multiply(tf.constant(9.94242714e-01, shape=shape, dtype=tf.float32), tf.math.divide_no_nan(grad, grad))))))), grad), lambda shape,  alpha, beta, sigma, grad: tf.constant(9.99720385e-01, shape=shape, dtype=tf.float32), lambda shape,  alpha, beta, sigma, grad: tf.math.multiply(beta, alpha)"
 #optimize_generic(phenotype, "best1.3", 90, 10)
 

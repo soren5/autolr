@@ -14,6 +14,7 @@ class ADES(CustomOptimizer):
         super(ADES, self).__init__(name, **kwargs)
 
         self._alpha_dict = alpha
+        """
         self._alpha_func = lambda shape, alpha, grad: tf.math.add(
                 tf.math.multiply(
                     tf.constant(beta_1, shape=shape, dtype=tf.float32),
@@ -36,6 +37,12 @@ class ADES(CustomOptimizer):
                     )
                 )
             )
+        """
+        self._alpha_func = lambda shape, alpha, grad: tf.math.multiply(
+            tf.constant(1 - beta_1, shape=shape, dtype=tf.float32), 
+            tf.math.add(
+                alpha, 
+                tf.math.multiply(tf.math.add(alpha, tf.constant(beta_2, shape=shape, dtype=tf.float32)), tf.math.add(alpha, grad))))
         self._grad_func = lambda shape, alpha, grad: tf.math.negative(alpha)
 
 
