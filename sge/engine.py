@@ -128,16 +128,16 @@ def run_evolution(evaluation_function, logger, population, archive, counter, it)
         
         save_data(logger, population, it)
 
-        if simulation_is_over(it):
-            return population
-        else:
-            logger, population, archive, counter, it = reproduction_and_elitism(logger, population, archive, counter, it)
+
+        logger, population, archive, counter, it = reproduction_and_elitism(logger, population, archive, counter, it)
+
+    return population
 
 def update_archive_and_fitness(evaluation_function, population, archive, it):
     for indiv in population:
         evaluation_function, archive, indiv = update_archive(evaluation_function, archive, indiv)
  
-    population, archive = updat_best_fitness(population, archive)
+    population, archive = update_best_fitness(population, archive)
        
     for indiv in population:
         archive, indiv = update_key_and_fitness_based_on_archive(archive, indiv)
@@ -149,7 +149,7 @@ def simulation_is_over(it):
     return it == params['GENERATIONS']
 
 def simulation_is_running(it, start_time):
-    return it <= params['GENERATIONS'] and (True if 'TIME_STOP' not in params else (True if time.time() - start_time < params['TIME_STOP'] else False))
+    return it < params['GENERATIONS'] and (True if 'TIME_STOP' not in params else (True if time.time() - start_time < params['TIME_STOP'] else False))
 
 def reproduction_and_elitism(logger, population, archive, counter, it):
     new_population, population = reproduce_via_elitism(population)
@@ -190,8 +190,9 @@ def check_google_colab():
 def reproduction(logger, population, archive, counter, it, new_population):
     while len(new_population) < params['POPSIZE']:
         new_indiv = selection(population)
+        new_indiv = crossover(population)
         new_indiv = mutation(new_indiv)
-        new_indiv = set_smart_phen_and_genotype_new_indiv(new_indiv)
+        new_indiv = map_phenotype(new_indiv)
         archive, counter, new_population, new_indiv = update_archive_with_new_indiv(archive, counter, new_population, new_indiv)
     it, population = go_to_next_generation(it, new_population)
     save_data_new_pop(logger, population, archive, it)
@@ -231,7 +232,7 @@ def update_archive_with_new_indiv(archive, counter, new_population, new_indiv):
     new_population.append(new_indiv)
     return archive, counter, new_population, new_indiv
 
-def set_smart_phen_and_genotype_new_indiv(new_indiv):
+def map_phenotype(new_indiv):
     mapping_values = [0 for i in new_indiv['genotype']]
     phen, tree_depth = grammar.mapping(new_indiv['genotype'], mapping_values)
     new_indiv['phenotype'] = phen
@@ -279,7 +280,7 @@ def update_key(indiv):
     key = indiv['smart_phenotype']
     return key
 
-def updat_best_fitness(population, archive):
+def update_best_fitness(population, archive):
     best_fit = params['FITNESS_FLOOR'] + 1
     for indiv in population:
         key = indiv['smart_phenotype']
