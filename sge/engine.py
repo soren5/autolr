@@ -106,10 +106,12 @@ def setup(parameters=None, logger=None):
 
 def evolutionary_algorithm(evaluation_function=None, parameters=None, logger_module=None):
     import os
-    check_google_colab()
     
     logger = read_params(parameters, logger_module)
         
+    check_google_colab(params, logger)
+
+
     population, archive, counter, it = initialize_pop(logger)
 
     print(params)
@@ -173,7 +175,7 @@ def read_params(parameters, logger_module):
     setup(parameters, logger_module)
     return logger
 
-def check_google_colab():
+def check_google_colab(params, logger):
     if "COLAB" in params and params["COLAB"]:
         from google.colab import drive
         drive.mount('/content/drive')
