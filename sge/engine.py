@@ -192,7 +192,8 @@ def check_google_colab(params, logger):
 def reproduction(logger, population, archive, counter, it, new_population):
     while len(new_population) < params['POPSIZE']:
         new_indiv = selection(population)
-        new_indiv = crossover(population)
+        new_indiv_2 = selection(population) 
+        new_indiv = crossover(new_indiv, new_indiv_2)
         new_indiv = mutation(new_indiv)
         new_indiv = map_phenotype(new_indiv)
         archive, counter, new_population, new_indiv = update_archive_with_new_indiv(archive, counter, new_population, new_indiv)
