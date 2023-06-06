@@ -193,6 +193,7 @@ def reproduction(logger, population, archive, counter, it, new_population):
     while len(new_population) < params['POPSIZE']:
         new_indiv = selection(population)
         new_indiv_2 = selection(population) 
+        print(new_indiv)
         new_indiv = crossover(new_indiv, new_indiv_2)
         new_indiv = mutation(new_indiv)
         new_indiv = map_phenotype(new_indiv)
