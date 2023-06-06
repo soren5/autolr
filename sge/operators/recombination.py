@@ -15,4 +15,4 @@ def crossover(p1, p2):
     mapping_values = [0] * gen_size
     # compute nem individual
     _, tree_depth = grammar.mapping(genotype, mapping_values)
-    return {'genotype': genotype, 'fitness': None, 'mapping_values': mapping_values, 'tree_depth': tree_depth, 'operation': 'crossover', 'parent': [p1['parent'], p2['parent']]}
+    return {'genotype': genotype, 'fitness': None, 'mapping_values': mapping_values, 'tree_depth': tree_depth, 'operation': 'crossover', 'parent': [p1['parent'][0], p2['parent'][0]]}
