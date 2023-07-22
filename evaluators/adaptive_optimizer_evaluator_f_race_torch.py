@@ -64,7 +64,6 @@ def train_model_torch(phen, params, net, train_loader, validation_loader, fitnes
                 outputs = net(inputs.to(device))
                 _, predictions = torch.max(outputs, 1)
                 loss = criterion(outputs.to(device), labels.to(device))
-                loss.backward()
                 
                 validation_loss += loss.item()
 
