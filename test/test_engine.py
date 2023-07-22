@@ -236,4 +236,4 @@ def test_reevaluation():
     assert indiv == indiv_2
 
 if __name__ == "__main__":
-    test_archive_id()
+    test_engine()

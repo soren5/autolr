@@ -104,8 +104,9 @@ def setup(evaluation_function=None, parameters=None, logger=None):
     grammar.set_max_tree_depth(params['MAX_TREE_DEPTH'])
     grammar.set_min_init_tree_depth(params['MIN_TREE_DEPTH'])
     
-    evaluation_function.init_net(params)
-    evaluation_function.init_data(params)
+    if evaluation_function != None:
+        evaluation_function.init_net(params)
+        evaluation_function.init_data(params)
 
 
 
