@@ -1,5 +1,27 @@
 import utils.utilities as ut
+class TensorflowFitnessGenerator:
+    def __init__(self) -> None:
+        self.fitness ={}
+        self.populations = {}
+        self.initial_populations = {}
+        self.random_states = {}
+        from utils.smart_phenotype import smart_phenotype
+        self.smart_phenotype = smart_phenotype
+        pass
+    def evaluate(self, phen, parameters):
+        if self.smart_phenotype(phen) in self.fitness:
+            fit = self.fitness[self.smart_phenotype(phen)]
+        else:
+            import tensorflow 
+            fit = -tensorflow.random.uniform(shape=[1])[0]
+            self.fitness[self.smart_phenotype(phen)] = fit
+        return float(fit), {}
+    def init_net(self, parameters):
+        pass
+    def init_data(self, parameters):
+        pass
 def test_engine():
+
     import sge.grammar as grammar
     import sge
     parameters = {
@@ -144,22 +166,7 @@ def test_archive():
         "SEED": 4,
     }
     from utils.smart_phenotype import smart_phenotype
-    class TensorflowFitnessGenerator:
-        def __init__(self) -> None:
-            self.fitness ={}
-            self.populations = {}
-            self.initial_populations = {}
-            self.random_states = {}
-            self.smart_phenotype = smart_phenotype
-            pass
-        def evaluate(self, phen, parameters):
-            if self.smart_phenotype(phen) in self.fitness:
-                fit = self.fitness[self.smart_phenotype(phen)]
-            else:
-                import tensorflow 
-                fit = -tensorflow.random.uniform(shape=[1])[0]
-                self.fitness[self.smart_phenotype(phen)] = fit
-            return float(fit), {}
+
     fitness = TensorflowFitnessGenerator()
     pop1 = sge.evolutionary_algorithm(parameters=parameters, evaluation_function=fitness)
     parameters['RESUME'] = 1
@@ -196,23 +203,7 @@ def test_archive_id():
         "FITNESS_FLOOR": 0,
         "SEED": 4,
     }
-    from utils.smart_phenotype import smart_phenotype
-    class TensorflowFitnessGenerator:
-        def __init__(self) -> None:
-            self.fitness ={}
-            self.populations = {}
-            self.initial_populations = {}
-            self.random_states = {}
-            self.smart_phenotype = smart_phenotype
-            pass
-        def evaluate(self, phen, parameters):
-            if self.smart_phenotype(phen) in self.fitness:
-                fit = self.fitness[self.smart_phenotype(phen)]
-            else:
-                import tensorflow 
-                fit = -tensorflow.random.uniform(shape=[1])[0]
-                self.fitness[self.smart_phenotype(phen)] = fit
-            return float(fit), {}
+
     fitness = TensorflowFitnessGenerator()
     pop1 = sge.evolutionary_algorithm(parameters=parameters, evaluation_function=fitness)
     parameters['RESUME'] = 1
