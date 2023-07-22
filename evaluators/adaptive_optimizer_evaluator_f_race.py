@@ -74,6 +74,16 @@ def cache_model(params):
 def evaluate_model(phen, validation_size, batch_size, epochs, patience):
     dataset = globals()['cached_dataset'] 
     model = tf.keras.models.clone_model(globals()['cached_model'])
+    import numpy as np
+    l = []
+    for p in model.trainable_weights:
+        l.append(K.count_params(p))
+    #non_trainable_count = int(
+    #    np.sum([K.count_params(p.ref()) for p in set(model.non_trainable_weights)]))
+
+    #print('Total params: {:,}'.format(trainable_count + non_trainable_count))
+    print('Trainable params: {:,}'.format(np.sum(l)))
+    #print('Non-trainable params: {:,}'.format(non_trainable_count))
     
     # optimizer is constant aslong as phen doesn't changed?
     # -> opportunity to cache opt and compiled model

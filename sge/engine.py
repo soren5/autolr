@@ -79,7 +79,7 @@ def evaluate(ind, eval_func):
     ind['tree_depth'] = tree_depth
 
 
-def setup(parameters=None, logger=None):
+def setup(evaluation_function=None, parameters=None, logger=None):
     global params
     if parameters is None:
         set_parameters(sys.argv[1:])
@@ -95,12 +95,18 @@ def setup(parameters=None, logger=None):
         params["RESUME"] = int(params["RESUME"])
     logger.params = params 
     logger.prepare_dumps()
+    
     random.seed(params['SEED'])
     np.random.seed(params['SEED'])
+    
     grammar.set_path(params['GRAMMAR'])
     grammar.read_grammar()
     grammar.set_max_tree_depth(params['MAX_TREE_DEPTH'])
     grammar.set_min_init_tree_depth(params['MIN_TREE_DEPTH'])
+    
+    evaluation_function.init_net(params)
+    evaluation_function.init_data(params)
+
 
 
 
@@ -108,7 +114,8 @@ def evolutionary_algorithm(evaluation_function=None, parameters=None, logger_mod
     import os
     
     logger = read_params(parameters, logger_module)
-        
+    setup(evaluation_function, parameters, logger_module)
+
     check_google_colab(params, logger)
 
 
@@ -172,7 +179,6 @@ def read_params(parameters, logger_module):
         logger = logger_module
     else:
         import sge.logger as logger
-    setup(parameters, logger_module)
     return logger
 
 def check_google_colab(params, logger):

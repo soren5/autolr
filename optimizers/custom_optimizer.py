@@ -106,19 +106,21 @@ class CustomOptimizerTorch(torch.optim.Optimizer):
                             alpha_func=None,
                             beta_func=None,
                             sigma_func=None,
+                            device=None,
                             **kwargs):
 
 
         defaults = dict(lr=lr)
         super(CustomOptimizerTorch, self).__init__(params, defaults)
+        self.device = device
         for group in self.param_groups:
             group['alpha'] = []
             group['beta'] = []
             group['sigma'] = []
             for p in group['params']:
-                group['alpha'].append(torch.zeros_like(p.data))
-                group['beta'].append(torch.zeros_like(p.data))
-                group['sigma'].append(torch.zeros_like(p.data))
+                group['alpha'].append(torch.zeros_like(p.data, device=device))
+                group['beta'].append(torch.zeros_like(p.data, device=device))
+                group['sigma'].append(torch.zeros_like(p.data, device=device))
         if phen == None:
             self.alpha_func = alpha_func
             self.beta_func = beta_func
@@ -154,13 +156,16 @@ class CustomOptimizerTorch(torch.optim.Optimizer):
 
                 for p, alpha, beta, sigma in zip(group['params'], group['alpha'], group['beta'], group['sigma']):
                     if p.grad is not None:
+                        if str(p.grad.device) != 'cuda:0' or str(alpha.device) != 'cuda:0' or str(beta.device) != 'cuda:0' or str(sigma.device) != 'cuda:0':
+                            print(p.grad.device, alpha.device, beta.device, sigma.device)
+                        p.grad = p.grad.to(self.device)
                         params_with_grad.append(p)
                         d_p_list.append(p.grad)
 
                         state = self.state[p]
-                        alpha = torch.add(alpha, self.alpha_func(p.size(), p.grad, alpha))
-                        beta = torch.add(beta, self.beta_func(p.size(), p.grad, alpha, beta))
-                        sigma = torch.add(sigma, self.sigma_func(p.size(), p.grad, alpha, beta, sigma))
-                        p.add_(self.grad_func(p.size(), p.grad, alpha, beta, sigma), alpha=1.0)
+                        alpha = torch.add(alpha, self.alpha_func(p.size(), p.grad, alpha, self.device))
+                        beta = torch.add(beta, self.beta_func(p.size(), p.grad, alpha, beta, self.device))
+                        sigma = torch.add(sigma, self.sigma_func(p.size(), p.grad, alpha, beta, sigma, self.device))
+                        p.add_(self.grad_func(p.size(), p.grad, alpha, beta, sigma, self.device), alpha=1.0)
             return loss
             
