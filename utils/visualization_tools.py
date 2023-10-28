@@ -25,6 +25,42 @@ def extract_number(file_path):
         # If the pattern is not found, return None or raise an exception
         return None
 
+def extract_second_json(input_file, output_file):
+    with open(input_file, 'r') as f:
+        content = f.read()
+    content = content.replace('NaN', '0.0')
+
+    first_json_start = None
+    first_json_end = None
+    nesting_level = 0
+
+    for i, char in enumerate(content):
+        if char == '[':
+            if nesting_level == 0:
+                first_json_start = i
+            nesting_level += 1
+            print(f'nesting_level: {nesting_level} char: {char} i: {i}')
+        elif char == ']':
+            nesting_level -= 1
+            if nesting_level == 0:
+                first_json_end = i
+                break
+
+    if first_json_start is None or first_json_end is None:
+        raise ValueError("Invalid JSON structure in the concatenated content.")
+
+    first_json = content[first_json_start:first_json_end + 1]
+    second_json = content[first_json_end + 1:]
+    #print(second_json)
+
+    # Parse both JSON strings
+    first_json_obj = json.loads(first_json)
+    second_json_obj = json.loads(second_json)
+
+    # Write the second JSON string to the output file
+    with open(output_file, 'w') as f:
+        json.dump(second_json_obj, f, indent=2)
+    print(f"Extracted second JSON from {input_file} to {output_file}")
 
 def get_all_json_files(root_dir):
     # Step 2: Combine Data in Chunks
@@ -98,19 +134,4 @@ def load_results(root_dir):
             combined_data.extend(processed_data)
     df = pd.DataFrame(combined_data)
     return df
-    # Step 2: Combine Data in Chunks
-"""     json_files, experiment_names, run_numbers = get_all_json_files(root_dir)
-    chunk_size = 200
-
-    chunks = [json_files[i:i + chunk_size] for i in range(0, len(json_files), chunk_size)]
-
-    combined_data = []
-
-    for chunk in chunks:
-        for file_path in chunk:
-            processed_data = preprocess_data_from_json(file_path)
-            combined_data.extend(processed_data) """
-
-    # Step 3: Create DataFrame
-
 
