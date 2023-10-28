@@ -20,6 +20,9 @@ class TensorflowFitnessGenerator:
         pass
     def init_data(self, parameters):
         pass
+    def init_evaluation(self, parameters):
+        pass
+
 def test_engine():
 
     import sge.grammar as grammar
