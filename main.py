@@ -17,6 +17,52 @@ class Optimizer_Evaluator_Tensorflow:
     def init_data(self, params):
         pass
 
+class Optimizer_Evaluator_Dual_Task:
+    def __init__(self):  #should give a function 
+        pass
+    
+    def evaluate(self, phen, params):
+        foo = self.train_model_fmnist(phen)
+        fit = -foo[0]
+        other_info = []
+        other_info.append(foo[1])
+        foo = self.train_model_cifar(phen)
+        fit += -foo[0]
+        other_info.append(foo[1])
+        return fit, other_info
+
+    def init_net(self, params):
+        from models.keras_model_adapter import adapt_mobile
+        #TODO Continue from here
+        define_compile_model, preprocess_input = adapt_mobile()
+        self.fmnist_model = define_compile_model((28,28,1))
+        self.cifar_model = define_compile_model((32,32,3))
+
+        
+    def init_data(self, params):
+        from models.keras_model_adapter import adapt_mobile
+        from utils.data_functions import load_fashion_mnist_training, load_cifar10_training, load_mnist_training, select_fashion_mnist_training
+        training_size = params['TRAINING_SIZE']
+        validation_size = params['VALIDATION_SIZE']
+
+
+        define_compile_model, preprocess_input = adapt_mobile()
+
+        self.fmnist_data = {}
+        data = load_fashion_mnist_training(training_size=training_size, validation_size=validation_size)
+        for key in data:
+            self.fmnist_data[key] = preprocess_input(data[key])
+        self.cifar_data = {}
+        data = load_cifar10_training(training_size=training_size, validation_size=validation_size)
+        for key in data:
+            self.cifar_data[key] = preprocess_input(data[key])
+
+    def init_evaluation(self, params):
+        from evaluators.adaptive_optimizer_evaluator_f_race import create_train_model
+
+        self.train_model_fmnist = create_train_model(self.fmnist_model, self.fmnist_data, self.fmnist_model.get_weights())
+        self.train_model_cifar = create_train_model(self.cifar_model, self.cifar_data, self.cifar_model.get_weights())
+
 class Optimizer_Evaluator_Torch:
     def __init__(self, train_model=None): 
         import torch  
@@ -138,6 +184,6 @@ if __name__ == "__main__":
             from evaluators.adaptive_optimizer_evaluator_f_race import train_model_tensorflow_mnist 
             evaluation_function = Optimizer_Evaluator_Tensorflow(train_model_tensorflow_mnist)
 
-    sge.evolutionary_algorithm(evaluation_function=evaluation_function)
+    sge.evolutionary_algorithm(evaluation_function=Optimizer_Evaluator_Dual_Task())
         
 

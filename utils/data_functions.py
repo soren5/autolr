@@ -166,8 +166,12 @@ def load_cifar10_full(n_classes=10, validation_size=3500, test_size=3500):
 
     return dataset
 
-def load_cifar10_training(n_classes=10, validation_size=3500, test_size=3500):
-    #Confirmar mnist
+def load_cifar10_training(n_classes=10, training_size=None, validation_size=None, test_size=None):
+    if training_size != None and validation_size != None and test_size != None:
+        assert training_size + validation_size + test_size == 50000
+    if test_size == None:
+        assert training_size != None and validation_size != None
+        test_size = 50000 - training_size - validation_size
     (x_train, y_train), (_, _) = cifar10.load_data()
 
     x_train, x_val, y_train, y_val = train_test_split(x_train, y_train,
@@ -407,7 +411,13 @@ def select_fashion_mnist_training(fashion, n_classes=10, validation_size=3500, t
     return dataset
 
 
-def load_fashion_mnist_training(n_classes=10, validation_size=3500, test_size=3500):
+def load_fashion_mnist_training(n_classes=10, training_size=None, validation_size=None, test_size=None):
+
+    if training_size != None and validation_size != None and test_size != None:
+        assert training_size + validation_size + test_size == 60000
+    if test_size == None:
+        assert training_size != None and validation_size != None
+        test_size = 60000 - training_size - validation_size
 
     (x_train, y_train), (_, _) = fashion_mnist.load_data()
 

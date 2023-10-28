@@ -3,7 +3,7 @@ from tensorflow.keras.preprocessing import image
 from tensorflow.keras.optimizers import Adam
 from utils.data_functions import load_cifar10_full
 import tensorflow as tf
-
+import cv2 
 from tensorflow.compat.v1 import ConfigProto
 from tensorflow.compat.v1 import InteractiveSession
 
@@ -11,7 +11,7 @@ config = ConfigProto()
 config.gpu_options.allow_growth = True
 session = InteractiveSession(config=config)
 
-def try_mobile():
+def adapt_mobile(input_shape=(32,32,3)):
   from tensorflow.keras.applications.mobilenet import MobileNet
   from tensorflow.keras.applications.mobilenet import preprocess_input, decode_predictions
   '''
@@ -41,9 +41,17 @@ def try_mobile():
   Since input image size is (32 x 32), first upsample the image by factor of (7x7) to transform it to (224 x 224)
   Connect the feature extraction and "classifier" layers to build the model.
   '''
-  def final_model(inputs):
+  def final_model(inputs, input_shape=(32,32,3)):
+      size = int(224/input_shape[0])
+      channels = input_shape[2]
 
-      resize = tf.keras.layers.UpSampling2D(size=(7,7))(inputs)
+      resize = tf.keras.layers.UpSampling2D(size=(size,size))(inputs)
+      if channels == 1:
+        resize = tf.concat([resize] * 3, axis=-1)
+      elif channels == 3:
+        pass
+      else:
+        raise Exception("Invalid channel number")
 
       resnet_feature_extractor = feature_extractor(resize)
       classification_output = classifier(resnet_feature_extractor)
@@ -51,14 +59,12 @@ def try_mobile():
       return classification_output
 
   '''
-  Define the model and compile it. 
-  Use Stochastic Gradient Descent as the optimizer.
-  Use Sparse Categorical CrossEntropy as the loss function.
+  Define the model and compile it.
   '''
-  def define_compile_model():
-    inputs = tf.keras.layers.Input(shape=(32,32,3))
+  def define_compile_model(input_shape=(32,32,3)):
+    inputs = tf.keras.layers.Input(shape=input_shape)
     
-    classification_output = final_model(inputs) 
+    classification_output = final_model(inputs, input_shape) 
     model = tf.keras.Model(inputs=inputs, outputs = classification_output)
     
     return model
@@ -509,6 +515,7 @@ def try_model(try_function):
       callbacks=[early_stop]
       )
 
+"""
 try_model(try_mobile)
 #try_model(try_mobile_none)
 try_model(try_xception)
@@ -518,3 +525,4 @@ try_model(try_inception)
 try_model(try_densenet)
 try_model(try_nasnet)
 try_model(try_efficient)
+"""
