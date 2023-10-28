@@ -16,6 +16,8 @@ class Optimizer_Evaluator_Tensorflow:
         pass
     def init_data(self, params):
         pass
+    def init_evaluation(self, params):
+        pass
 
 class Optimizer_Evaluator_Torch:
     def __init__(self, train_model=None): 
@@ -114,7 +116,8 @@ class Optimizer_Evaluator_Torch:
         self.net.load_state_dict(torch.load('./cifar_net.pth'))
         value, other_info = self.train_model(phen, params, self.net, self.train_loader, self.validation_loader, self.fitness_loader)
         return -value, other_info
-
+    def init_evaluation(self, params):
+        pass
 
 if __name__ == "__main__":
     import os
