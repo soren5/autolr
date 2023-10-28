@@ -107,6 +107,7 @@ def setup(evaluation_function=None, parameters=None, logger=None):
     if evaluation_function != None:
         evaluation_function.init_net(params)
         evaluation_function.init_data(params)
+        evaluation_function.init_evaluation(params)
 
 
 
