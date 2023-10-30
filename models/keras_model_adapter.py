@@ -3,6 +3,7 @@ from tensorflow.keras.preprocessing import image
 from tensorflow.keras.optimizers import Adam
 from utils.data_functions import load_cifar10_full
 import tensorflow as tf
+from tensorflow.keras import Sequential
 import cv2 
 from tensorflow.compat.v1 import ConfigProto
 from tensorflow.compat.v1 import InteractiveSession
@@ -18,54 +19,57 @@ def adapt_mobile(input_shape=(32,32,3)):
   Feature Extraction is performed by ResNet50 pretrained on imagenet weights. 
   Input size is 224 x 224.
   '''
-  def feature_extractor(inputs):
+  def feature_extractor(model):
 
     feature_extractor = MobileNet(input_shape=(224, 224, 3),
                                                 include_top=False,
-                                                weights='imagenet')(inputs)
-    return feature_extractor
+                                                weights='imagenet')
+    #(inputs)
+    for layer in feature_extractor.layers:
+       model.add(layer)
+    return model
 
 
   '''
   Defines final dense layers and subsequent softmax layer for classification.
   '''
-  def classifier(inputs):
-      x = tf.keras.layers.GlobalAveragePooling2D()(inputs)
-      x = tf.keras.layers.Flatten()(x)
-      x = tf.keras.layers.Dense(1024, activation="relu")(x)
-      x = tf.keras.layers.Dense(512, activation="relu")(x)
-      x = tf.keras.layers.Dense(10, activation="softmax", name="classification")(x)
-      return x
+  def classifier(model):
+      model.add(tf.keras.layers.GlobalAveragePooling2D())
+      model.add(tf.keras.layers.Flatten())
+      model.add(tf.keras.layers.Dense(1024, activation="relu"))
+      model.add(tf.keras.layers.Dense(512, activation="relu"))
+      model.add(tf.keras.layers.Dense(10, activation="softmax", name="classification"))
+      return model
 
   '''
   Since input image size is (32 x 32), first upsample the image by factor of (7x7) to transform it to (224 x 224)
   Connect the feature extraction and "classifier" layers to build the model.
   '''
-  def final_model(inputs, input_shape=(32,32,3)):
+  def final_model(model, input_shape=(32,32,3)):
       size = int(224/input_shape[0])
-      channels = input_shape[2]
+      channels = int(3/input_shape[2])
 
-      resize = tf.keras.layers.UpSampling2D(size=(size,size))(inputs)
-      if channels == 1:
-        resize = tf.concat([resize] * 3, axis=-1)
-      elif channels == 3:
-        pass
-      else:
-        raise Exception("Invalid channel number")
+      resize = tf.keras.layers.UpSampling3D(size=(size,size,channels))
+      #if channels == 1:
+      #  resize = tf.concat([resize] * 3, axis=-1)
+      #elif channels == 3:
+      #  pass
+      #else:
+      #  raise Exception("Invalid channel number")
+      model.add(resize)
+      model = feature_extractor(model)
+      model = classifier(model)
 
-      resnet_feature_extractor = feature_extractor(resize)
-      classification_output = classifier(resnet_feature_extractor)
-
-      return classification_output
+      return model
 
   '''
   Define the model and compile it.
   '''
   def define_compile_model(input_shape=(32,32,3)):
-    inputs = tf.keras.layers.Input(shape=input_shape)
+    model = Sequential()
+    model.add(tf.keras.layers.Input(shape=input_shape))
     
-    classification_output = final_model(inputs, input_shape) 
-    model = tf.keras.Model(inputs=inputs, outputs = classification_output)
+    model = final_model(model, input_shape)
     
     return model
   return define_compile_model, preprocess_input

@@ -38,6 +38,8 @@ class Optimizer_Evaluator_Dual_Task:
         #TODO Continue from here
         define_compile_model, preprocess_input = adapt_mobile()
         self.fmnist_model = define_compile_model((28,28,1))
+        #print(self.fmnist_model.layers)
+        print(self.fmnist_model.summary())
         self.cifar_model = define_compile_model((32,32,3))
 
         
