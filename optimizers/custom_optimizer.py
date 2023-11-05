@@ -115,7 +115,7 @@ class CustomOptimizerArch(keras.optimizers.Optimizer):
                             sigma_func=None,
                             **kwargs):
 
-        super(CustomOptimizer, self).__init__(name, **kwargs)
+        super(CustomOptimizerArch, self).__init__(name, **kwargs)
         if phen == None:
             self._alpha_dict = alpha
             self._beta_dict = beta
@@ -130,12 +130,17 @@ class CustomOptimizerArch(keras.optimizers.Optimizer):
             self._alpha_dict = {}
             self._beta_dict = {}
             self._sigma_dict = {}
+            self.depth_dict = {}
+            depth = 0
             for layer in model.layers:
                 for trainable_weight in layer._trainable_weights:
                     print(trainable_weight.name)
+                    self.depth_dict[trainable_weight.name] = tf.constant(depth, shape=trainable_weight.shape, dtype=tf.float32) 
                     self._alpha_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="alpha" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
                     self._beta_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="beta" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
                     self._sigma_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="sigma" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
+                    depth += 1
+            self.layer_count = depth
             exec_env = {"tf": tf}
             exec(phen, exec_env)
             self._alpha_func = exec_env["alpha_func"]
@@ -169,7 +174,7 @@ class CustomOptimizerArch(keras.optimizers.Optimizer):
         pass
 
     def _prepare_local(self, var_device, var_dtype, apply_state):
-        super(CustomOptimizer, self)._prepare_local(var_device, var_dtype, apply_state)
+        super(CustomOptimizerArch, self)._prepare_local(var_device, var_dtype, apply_state)
 
 
     def _resource_apply_dense(self, grad, var, apply_state=None):
@@ -187,16 +192,49 @@ class CustomOptimizerArch(keras.optimizers.Optimizer):
         
         if self._alpha_func != None:
             training_ops.resource_apply_gradient_descent(
-                        self._alpha_dict[variable_name].handle, tf.constant(1.0), self._alpha_func(var.shape, self._alpha_dict[variable_name], grad), use_locking=self._use_locking)
+                self._alpha_dict[variable_name].handle, 
+                tf.constant(1.0), 
+                self._alpha_func(
+                    tf.constant(self.layer_count, shape=var.shape, dtype=tf.float32),
+                    self.depth_dict[variable_name],
+                    var.shape, 
+                    self._alpha_dict[variable_name], 
+                    grad), use_locking=self._use_locking)
         if self._beta_func != None:
             training_ops.resource_apply_gradient_descent(
-                            self._beta_dict[variable_name].handle, tf.constant(1.0), self._beta_func(var.shape, self._alpha_dict[variable_name], self._beta_dict[variable_name], grad), use_locking=self._use_locking)
+                self._beta_dict[variable_name].handle, 
+                tf.constant(1.0), 
+                self._beta_func(
+                    tf.constant(self.layer_count, shape=var.shape, dtype=tf.float32),
+                    self.depth_dict[variable_name],
+                    var.shape, 
+                    self._alpha_dict[variable_name], 
+                    self._beta_dict[variable_name], 
+                    grad), use_locking=self._use_locking)
         if self._sigma_func!= None:
             training_ops.resource_apply_gradient_descent(
-                                self._sigma_dict[variable_name].handle, tf.constant(1.0), self._sigma_func(var.shape, self._alpha_dict[variable_name], self._beta_dict[variable_name], self._sigma_dict[variable_name], grad), use_locking=self._use_locking)
+                self._sigma_dict[variable_name].handle, 
+                tf.constant(1.0), 
+                self._sigma_func(
+                    tf.constant(self.layer_count, shape=var.shape, dtype=tf.float32),
+                    self.depth_dict[variable_name],
+                    var.shape, 
+                    self._alpha_dict[variable_name], 
+                    self._beta_dict[variable_name], 
+                    self._sigma_dict[variable_name], 
+                    grad), use_locking=self._use_locking)
             
         foo = training_ops.resource_apply_gradient_descent(
-                var.handle, tf.constant(1.0), self._grad_func(var.shape, self._alpha_dict[variable_name], self._beta_dict[variable_name], self._sigma_dict[variable_name], grad), use_locking=self._use_locking)
+                var.handle, 
+                tf.constant(1.0), 
+                self._grad_func(
+                    tf.constant(self.layer_count, shape=var.shape, dtype=tf.float32),
+                    self.depth_dict[variable_name],
+                    var.shape, 
+                    self._alpha_dict[variable_name], 
+                    self._beta_dict[variable_name], 
+                    self._sigma_dict[variable_name], 
+                    grad), use_locking=self._use_locking)
         return foo
 
 class CustomOptimizerTorch(torch.optim.Optimizer):

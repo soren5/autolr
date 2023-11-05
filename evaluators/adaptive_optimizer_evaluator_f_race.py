@@ -19,7 +19,7 @@ if gpus:
 from keras.models import load_model
 from tensorflow import keras
 from tensorflow.keras import backend as K
-from optimizers.custom_optimizer import CustomOptimizer
+from optimizers.custom_optimizer import CustomOptimizerArch
 import datetime
 experiment_time = datetime.datetime.now()
 
@@ -81,7 +81,7 @@ def create_train_model(model_, data, weights):
                 print(trainable_weight.name)
         # optimizer is constant aslong as phen doesn't changed?
         # -> opportunity to cache opt and compiled model
-        opt = CustomOptimizer(phen=phen, model=model)
+        opt = CustomOptimizerArch(phen=phen, model=model)
         model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
         early_stop = keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=patience, restore_best_weights=True)
         

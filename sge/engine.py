@@ -134,7 +134,7 @@ def run_evolution(evaluation_function, logger, population, archive, counter, it)
     while simulation_is_running(it, start_time):
         
         print(f"{it}")
-        
+        params["CURRENT_GEN"] = it
         evaluation_function, population, archive, it = update_archive_and_fitness(evaluation_function, population, archive, it)
         
         save_data(logger, population, it)

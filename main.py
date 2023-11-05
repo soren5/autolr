@@ -24,13 +24,17 @@ class Optimizer_Evaluator_Dual_Task:
         pass
     
     def evaluate(self, phen, params):
-        foo = self.train_model_fmnist(phen)
-        fit = -foo[0]
-        other_info = []
-        other_info.append(foo[1])
-        foo = self.train_model_cifar(phen)
-        fit += -foo[0]
-        other_info.append(foo[1])
+        print(params["CURRENT_GEN"])
+        if params["CURRENT_GEN"] % 2 == 0:
+            foo = self.train_model_fmnist(phen)
+            fit = -foo[0]
+            other_info = foo[1]
+        elif params["CURRENT_GEN"] % 2 == 1:
+            foo = self.train_model_cifar(phen)
+            fit = -foo[0]
+            other_info = foo[1]
+        else:
+            raise Exception("CURRENT GEN IN EVALUATE IS INVALID")
         return fit, other_info
 
     def init_net(self, params):
@@ -39,7 +43,7 @@ class Optimizer_Evaluator_Dual_Task:
         define_compile_model, preprocess_input = adapt_mobile()
         self.fmnist_model = define_compile_model((28,28,1))
         #print(self.fmnist_model.layers)
-        print(self.fmnist_model.summary())
+        #print(self.fmnist_model.summary())
         self.cifar_model = define_compile_model((32,32,3))
 
         
