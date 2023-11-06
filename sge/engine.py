@@ -146,7 +146,7 @@ def run_evolution(evaluation_function, logger, population, archive, counter, it)
 
 def update_archive_and_fitness(evaluation_function, population, archive, it):
     for indiv in population:
-        evaluation_function, archive, indiv = update_archive(evaluation_function, archive, indiv)
+        evaluation_function, archive, indiv = update_archive(evaluation_function, archive, indiv, it)
  
     population, archive = update_best_fitness(population, archive)
        
@@ -334,13 +334,19 @@ def update_best_fitness(population, archive):
         """
         return population, archive
 
-def update_archive(evaluation_function, archive, indiv):
+def update_archive(evaluation_function, archive, indiv, it):
     indiv['smart_phenotype'] = smart_phenotype(indiv['phenotype'])
-    key = indiv['smart_phenotype']
+    task = ''
+    if it % 2 == 0:
+        task = 'FMNIST/VGG16: '
+    else:
+        task = 'CIFAR10/MOBILE: '
+    key = task + indiv['smart_phenotype']
     if key in archive and 'fitness' not in archive[key]:
         raise Exception('Incomplete archive entry')
     if key not in archive:
         archive[key] = {'evaluations': []}
+        #ID IS TECHNICALLY WRONG FOR DUAL TASK TODO
         archive[key]['id'] = indiv['id']
                 # evaluate seems to be deterministic. 
                 # Btw., if not, the caching of key|fitness pairs wouldn't be 100% correct
