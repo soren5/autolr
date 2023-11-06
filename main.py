@@ -38,12 +38,13 @@ class Optimizer_Evaluator_Dual_Task:
         return fit, other_info
 
     def init_net(self, params):
-        from models.keras_model_adapter import adapt_mobile
+        from models.keras_model_adapter import adapt_mobile, adapt_vgg16
         #TODO Continue from here
-        define_compile_model, preprocess_input = adapt_mobile()
+        define_compile_model, preprocess_input = adapt_vgg16()
         self.fmnist_model = define_compile_model((28,28,1))
         #print(self.fmnist_model.layers)
         #print(self.fmnist_model.summary())
+        define_compile_model, preprocess_input = adapt_mobile()
         self.cifar_model = define_compile_model((32,32,3))
 
         

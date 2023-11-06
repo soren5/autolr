@@ -74,6 +74,69 @@ def adapt_mobile(input_shape=(32,32,3)):
     return model
   return define_compile_model, preprocess_input
 
+def adapt_vgg16(input_shape=(32,32,3)):
+  from tensorflow.keras.applications.vgg16 import VGG16
+  from tensorflow.keras.applications.vgg16 import preprocess_input, decode_predictions
+  '''
+  Feature Extraction is performed by ResNet50 pretrained on imagenet weights. 
+  Input size is 224 x 224.
+  '''
+  def feature_extractor(model):
+
+    feature_extractor = VGG16(input_shape=(224, 224, 3),
+                                                include_top=False,
+                                                weights='imagenet')
+    #(inputs)
+    for layer in feature_extractor.layers:
+       model.add(layer)
+    return model
+
+
+  '''
+  Defines final dense layers and subsequent softmax layer for classification.
+  '''
+  def classifier(model):
+      model.add(tf.keras.layers.GlobalAveragePooling2D())
+      model.add(tf.keras.layers.Flatten())
+      model.add(tf.keras.layers.Dense(1024, activation="relu"))
+      model.add(tf.keras.layers.Dense(512, activation="relu"))
+      model.add(tf.keras.layers.Dense(10, activation="softmax", name="classification"))
+      return model
+
+  '''
+  Since input image size is (32 x 32), first upsample the image by factor of (7x7) to transform it to (224 x 224)
+  Connect the feature extraction and "classifier" layers to build the model.
+  '''
+  def final_model(model, input_shape=(32,32,3)):
+      size = int(224/input_shape[0])
+      channels = int(3/input_shape[2])
+
+      resize = tf.keras.layers.UpSampling3D(size=(size,size,channels))
+      #if channels == 1:
+      #  resize = tf.concat([resize] * 3, axis=-1)
+      #elif channels == 3:
+      #  pass
+      #else:
+      #  raise Exception("Invalid channel number")
+      model.add(resize)
+      model = feature_extractor(model)
+      model = classifier(model)
+
+      return model
+
+  '''
+  Define the model and compile it.
+  '''
+  def define_compile_model(input_shape=(32,32,3)):
+    model = Sequential()
+    model.add(tf.keras.layers.Input(shape=input_shape))
+    
+    model = final_model(model, input_shape)
+    
+    return model
+  return define_compile_model, preprocess_input
+
+
 def try_mobile_none():
   from tensorflow.keras.applications.mobilenet import MobileNet
   from tensorflow.keras.applications.mobilenet import preprocess_input, decode_predictions
