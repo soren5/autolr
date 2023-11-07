@@ -20,7 +20,7 @@ from sge.parameters import (
     set_parameters
 )
 from utils.genotypes import *
-from utils.smart_phenotype import smart_phenotype
+from utils.smart_phenotype import smart_phenotype, dual_task_key
 
 
 def generate_random_individual():
@@ -77,6 +77,8 @@ def evaluate(ind, eval_func):
     ind['other_info'] = other_info
     ind['mapping_values'] = mapping_values
     ind['tree_depth'] = tree_depth
+    ind['key'] = dual_task_key(ind['phenotype'], params['CURRENT_GEN'])
+
 
 
 def setup(evaluation_function=None, parameters=None, logger=None):
@@ -236,8 +238,9 @@ def save_data_new_pop(logger, population, archive, it):
     logger.save_random_state(it)
 
 def update_archive_with_new_indiv(archive, counter, new_population, new_indiv):
-    if new_indiv['smart_phenotype'] in archive:
-        new_indiv['id'] = archive[new_indiv['smart_phenotype']]['id']
+    key = dual_task_key(new_indiv['phenotype'], params['CURRENT_GEN'])
+    if key in archive:
+        new_indiv['id'] = archive[key]['id']
     else:
         counter += 1
         new_indiv['id'] = counter
@@ -336,17 +339,11 @@ def update_best_fitness(population, archive):
 
 def update_archive(evaluation_function, archive, indiv, it):
     indiv['smart_phenotype'] = smart_phenotype(indiv['phenotype'])
-    task = ''
-    if it % 2 == 0:
-        task = 'FMNIST/VGG16: '
-    else:
-        task = 'CIFAR10/MOBILE: '
-    key = task + indiv['smart_phenotype']
+    key = dual_task_key(indiv['phenotype'], params['CURRENT_GEN'])
     if key in archive and 'fitness' not in archive[key]:
         raise Exception('Incomplete archive entry')
     if key not in archive:
         archive[key] = {'evaluations': []}
-        #ID IS TECHNICALLY WRONG FOR DUAL TASK TODO
         archive[key]['id'] = indiv['id']
                 # evaluate seems to be deterministic. 
                 # Btw., if not, the caching of key|fitness pairs wouldn't be 100% correct
