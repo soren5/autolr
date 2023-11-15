@@ -31,6 +31,7 @@ libclang==14.0.6
 Markdown==3.3.7
 numpy==1.19.5
 oauthlib==3.2.1
+opencv-python==4.8.1.78
 opt-einsum==3.3.0
 packaging==21.3
 Pillow==8.4.0
