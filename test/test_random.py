@@ -1,3 +1,4 @@
+import utils.utilities as ut
 def test_native_random():
     import random 
     random_state = random.getstate()
@@ -22,27 +23,7 @@ def test_engine_random():
         "ELITISM": 0,   
         "SEED": 0,                
         "PROB_CROSSOVER": 0.0,
-        "PROB_MUTATION": {
-        0: 0.0, 
-        1: 0.01, 
-        2: 0.01, 
-        3: 0.01, 
-        4: 0.05, 
-        5: 0.15, 
-        6: 0.01, 
-        7: 0.01, 
-        8: 0.01, 
-        9: 0.05, 
-        10: 0.15, 
-        11: 0.01, 
-        12: 0.01, 
-        13: 0.01, 
-        14: 0.05, 
-        15: 0.15, 
-        16: 0.01, 
-        17: 0.01, 
-        18: 0.05, 
-        19: 0.15},
+        "PROB_MUTATION": 0.1,
         "TSIZE": 3,
         "GRAMMAR": 'grammars/adaptive_autolr_grammar_mutate_level.txt',
         "EXPERIMENT_NAME": 'dumps/test_engine_random',
@@ -64,7 +45,9 @@ def test_engine_random():
     pop1 = sge.evolutionary_algorithm(parameters=params, evaluation_function=None)
     params["RUN"] = 2
     pop2 = sge.evolutionary_algorithm(parameters=params, evaluation_function=None)
+    ut.delete_directory(params['EXPERIMENT_NAME'], ['run_1', 'run_2'])
     assert pop1 == pop2
+
 
 def test_engine_resume():
     import sge
@@ -72,28 +55,8 @@ def test_engine_resume():
         "POPSIZE": 10,
         "GENERATIONS": 3,
         "ELITISM": 0,   
-        "PROB_CROSSOVER": 0.0,
-        "PROB_MUTATION": {
-        0: 0.0, 
-        1: 0.01, 
-        2: 0.01, 
-        3: 0.01, 
-        4: 0.05, 
-        5: 0.15, 
-        6: 0.01, 
-        7: 0.01, 
-        8: 0.01, 
-        9: 0.05, 
-        10: 0.15, 
-        11: 0.01, 
-        12: 0.01, 
-        13: 0.01, 
-        14: 0.05, 
-        15: 0.15, 
-        16: 0.01, 
-        17: 0.01, 
-        18: 0.05, 
-        19: 0.15},
+        "PROB_CROSSOVER": 0.8,
+        "PROB_MUTATION": 0.8,
         "TSIZE": 3,
         "GRAMMAR": 'grammars/adaptive_autolr_grammar_mutate_level.txt',
         "EXPERIMENT_NAME": 'dumps/test_engine_resume',
@@ -101,20 +64,19 @@ def test_engine_resume():
         "INCLUDE_GENOTYPE": True,
         "SAVE_STEP": 1,
         "VERBOSE": True,
-        "EPOCHS": 2,
-        "MODEL": 'models/mnist_model.h5',
-        "VALIDATION_SIZE": 10,
-        "FITNESS_SIZE": 59590,
-        "BATCH_SIZE": 5,
         "MIN_TREE_DEPTH": 6,
         "MAX_TREE_DEPTH": 17,
         "FITNESS_FLOOR": 0,
-        "PREPOPULATE": False,
         "FAKE_FITNESS": True,
+        "SEED": 0,
     }
     pop1 = sge.evolutionary_algorithm(parameters=params, evaluation_function=None)
     params['RESUME'] = 1
-    params['RUN'] = 2
+    params['LOAD_ARCHIVE'] = True
     pop2 = sge.evolutionary_algorithm(parameters=params, evaluation_function=None)
+    ut.delete_directory(params['EXPERIMENT_NAME'], 'run_1')
     assert pop1 == pop2    
+    
 
+if __name__ == "__main__":
+    test_engine_resume()
