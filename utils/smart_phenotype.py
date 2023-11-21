@@ -3,9 +3,8 @@ def trim_phenotype(phenotype):
         phenotype = phenotype.replace(", shape=shape, dtype=tf.float32", "")
         phenotype = phenotype.replace("tf.math.", "")
         phenotype = phenotype.replace("tf.", "")
-        functions = phenotype.split(r'lambda shape, alpha')
+        #functions = phenotype.split(r'lambda shape, alpha')
         functions = phenotype.split(r'lambda layer_count, layer_num, shape, alpha')
-
     elif "size" in phenotype:
         phenotype = phenotype.replace(", size=size, dtype=torch.float32", "")
         phenotype = phenotype.replace("torch.", "")        
@@ -18,6 +17,8 @@ def trim_phenotype(phenotype):
 
 def smart_phenotype(phenotype):
     functions = trim_phenotype(phenotype)
+    #print(functions)
+
     alpha_func_string = functions[1][8:-2]
     beta_func_string = functions[2][14:-2] 
     sigma_func_string =functions[3][21:-2] 
@@ -26,16 +27,15 @@ def smart_phenotype(phenotype):
     return grad_func_string
 
 def dual_task_key(phenotype, it):
-    smart_phenotype = smart_phenotype(phenotype)
+    s_phen = smart_phenotype(phenotype)
     if it % 2 == 0:
         task = 'FMNIST/VGG16: '
     else:
         task = 'CIFAR10/MOBILE: '
-    return task + smart_phenotype
+    return task + s_phen
 
 def readable_phenotype(phenotype):
     functions = trim_phenotype(phenotype)
-
     alpha_func_string = functions[1][8:-2]
     beta_func_string =functions[2][14:-2] 
     sigma_func_string =functions[3][21:-2] 

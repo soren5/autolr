@@ -25,12 +25,11 @@ PROB_MUTATION: {
 19: 0.01,
 20: 0.01,
 21: 0.05,
-22: 0.15,
-23: 0.15}
+22: 0.15}
 TSIZE: 2
-GRAMMAR: 'grammars/adaptive_autolr_grammar_mutate_level.txt'
-EXPERIMENT_NAME: 'dumps/mutation_level'
-RUN: 13
+GRAMMAR: 'grammars/adaptive_autolr_grammar_architecture.txt'
+EXPERIMENT_NAME: 'dumps/architecture'
+RUN: 1
 INCLUDE_GENOTYPE: True
 SAVE_STEP: 1
 VERBOSE: True
@@ -39,7 +38,7 @@ MAX_TREE_DEPTH: 17
 MODEL: 'models/mnist_model.h5'
 VALIDATION_SIZE: 3500
 FITNESS_SIZE: 55000
-BATCH_SIZE: 1000
+BATCH_SIZE: 32
 EPOCHS: 10000
 PREPOPULATE: False
 PROTECT: False

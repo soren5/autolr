@@ -19,7 +19,7 @@ if gpus:
 from keras.models import load_model
 from tensorflow import keras
 from tensorflow.keras import backend as K
-from optimizers.custom_optimizer import CustomOptimizerArch
+from optimizers.custom_optimizer import CustomOptimizer
 import datetime
 experiment_time = datetime.datetime.now()
 
@@ -71,41 +71,6 @@ def cache_model(params):
         globals()['cached_model'] = load_model(params['MODEL'], compile=False)
         globals()['cached_weights'] = globals()['cached_model'].get_weights()
 
-def create_train_model(model_, data, weights):
-    def custom_evaluate_model(phen, batch_size=32, epochs=100, patience=5):
-        dataset = data 
-        model = model_
-        model.set_weights(weights)
-        #for layer in model.layers:
-        #    for trainable_weight in layer._trainable_weights:
-        #        print(trainable_weight.name)
-        # optimizer is constant aslong as phen doesn't changed?
-        # -> opportunity to cache opt and compiled model
-        opt = CustomOptimizerArch(phen=phen, model=model)
-        model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
-        early_stop = keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=patience, restore_best_weights=True)
-        
-        score = model.fit(dataset['x_train'], dataset['y_train'],
-            batch_size=batch_size,
-            epochs=epochs,
-            verbose=2,
-            validation_data=(dataset['x_val'], dataset['y_val']),
-            validation_steps= len(dataset['x_val']) // batch_size,
-            callbacks=[
-                early_stop
-            ])
-
-        K.clear_session()
-        results = {}
-        for metric in score.history:
-            results[metric] = []
-            for n in score.history[metric]:
-                results[metric].append(n)
-        test_score = model.evaluate(x=dataset['x_test'],y=dataset["y_test"], verbose=0, callbacks=[keras.callbacks.History()])
-        return test_score[-1], results
-
-    return custom_evaluate_model
-
 def evaluate_model(phen, validation_size, batch_size, epochs, patience):
     dataset = globals()['cached_dataset'] 
     model = tf.keras.models.clone_model(globals()['cached_model'])
@@ -117,7 +82,7 @@ def evaluate_model(phen, validation_size, batch_size, epochs, patience):
     #    np.sum([K.count_params(p.ref()) for p in set(model.non_trainable_weights)]))
 
     #print('Total params: {:,}'.format(trainable_count + non_trainable_count))
-    print('Trainable params: {:,}'.format(np.sum(l)))
+    #print('Trainable params: {:,}'.format(np.sum(l)))
     #print('Non-trainable params: {:,}'.format(non_trainable_count))
     
     # optimizer is constant aslong as phen doesn't changed?

@@ -77,7 +77,7 @@ class CustomOptimizer(keras.optimizers.Optimizer):
     def _resource_apply_dense(self, grad, var, apply_state=None):
         #print("_resource_apply_dense")
         variable_name = var.name
-        print(f"#: {variable_name}")
+        #print(f"#: {variable_name}")
         if variable_name not in self._alpha_dict:
             self._alpha_dict[var.name] = tf.Variable(np.zeros(var.shape) , name="alpha" + var.name[:-2], shape=var.shape, dtype=tf.float32)
             self._beta_dict[var.name] = tf.Variable(np.zeros(var.shape) , name="beta" + var.name[:-2], shape=var.shape, dtype=tf.float32)
@@ -116,6 +116,7 @@ class CustomOptimizerArch(keras.optimizers.Optimizer):
                             **kwargs):
 
         super(CustomOptimizerArch, self).__init__(name, **kwargs)
+        self.phen = phen
         if phen == None:
             self._alpha_dict = alpha
             self._beta_dict = beta
@@ -131,16 +132,20 @@ class CustomOptimizerArch(keras.optimizers.Optimizer):
             self._beta_dict = {}
             self._sigma_dict = {}
             self.depth_dict = {}
+            self.layer_count = {}
             depth = 0
             for layer in model.layers:
                 for trainable_weight in layer._trainable_weights:
-                    print(trainable_weight.name)
+                    #print(trainable_weight.name)
                     self.depth_dict[trainable_weight.name] = tf.constant(depth, shape=trainable_weight.shape, dtype=tf.float32) 
                     self._alpha_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="alpha" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
                     self._beta_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="beta" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
                     self._sigma_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="sigma" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
                     depth += 1
-            self.layer_count = depth
+            for layer in model.layers:
+                for trainable_weight in layer._trainable_weights:
+                    #print(trainable_weight.name)
+                    self.layer_count[trainable_weight.name] = tf.constant(depth, shape=trainable_weight.shape, dtype=tf.float32)
             exec_env = {"tf": tf}
             exec(phen, exec_env)
             self._alpha_func = exec_env["alpha_func"]
@@ -178,6 +183,7 @@ class CustomOptimizerArch(keras.optimizers.Optimizer):
 
 
     def _resource_apply_dense(self, grad, var, apply_state=None):
+        #print(self.phen)
         #print("_resource_apply_dense")
         variable_name = var.name
         #print(variable_name)
@@ -195,7 +201,7 @@ class CustomOptimizerArch(keras.optimizers.Optimizer):
                 self._alpha_dict[variable_name].handle, 
                 tf.constant(1.0), 
                 self._alpha_func(
-                    tf.constant(self.layer_count, shape=var.shape, dtype=tf.float32),
+                    self.layer_count[variable_name],
                     self.depth_dict[variable_name],
                     var.shape, 
                     self._alpha_dict[variable_name], 
@@ -205,7 +211,7 @@ class CustomOptimizerArch(keras.optimizers.Optimizer):
                 self._beta_dict[variable_name].handle, 
                 tf.constant(1.0), 
                 self._beta_func(
-                    tf.constant(self.layer_count, shape=var.shape, dtype=tf.float32),
+                    self.layer_count[variable_name],
                     self.depth_dict[variable_name],
                     var.shape, 
                     self._alpha_dict[variable_name], 
@@ -216,7 +222,7 @@ class CustomOptimizerArch(keras.optimizers.Optimizer):
                 self._sigma_dict[variable_name].handle, 
                 tf.constant(1.0), 
                 self._sigma_func(
-                    tf.constant(self.layer_count, shape=var.shape, dtype=tf.float32),
+                    self.layer_count[variable_name],
                     self.depth_dict[variable_name],
                     var.shape, 
                     self._alpha_dict[variable_name], 
@@ -228,7 +234,7 @@ class CustomOptimizerArch(keras.optimizers.Optimizer):
                 var.handle, 
                 tf.constant(1.0), 
                 self._grad_func(
-                    tf.constant(self.layer_count, shape=var.shape, dtype=tf.float32),
+                    self.layer_count[variable_name],
                     self.depth_dict[variable_name],
                     var.shape, 
                     self._alpha_dict[variable_name], 
@@ -269,7 +275,7 @@ class CustomOptimizerTorch(torch.optim.Optimizer):
             self.grad_func = grad_func
         else:
             exec_env = {"torch": torch}
-            print(phen)
+            #print(phen)
             exec(phen, exec_env)
             self.alpha_func = exec_env["alpha_func"]
             self.beta_func = exec_env["beta_func"]

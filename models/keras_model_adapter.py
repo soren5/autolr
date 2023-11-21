@@ -569,7 +569,7 @@ def try_model(try_function):
 
   optimizer = Adam()
   dataset = load_cifar10_full()
-  print(model.summary())
+  #print(model.summary())
   model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
   early_stop = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=20, restore_best_weights=True)
 

@@ -144,7 +144,7 @@ class Optimizer_Evaluator_Torch:
         for param in self.net.parameters():
             param.grad = None
         torch.save(self.net.state_dict(), './cifar_net.pth')
-        print(sum(p.numel() for p in self.net.parameters() if p.requires_grad))
+        #print(sum(p.numel() for p in self.net.parameters() if p.requires_grad))
 
 
     def init_data(self, params):

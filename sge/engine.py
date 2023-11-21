@@ -203,7 +203,7 @@ def reproduction(logger, population, archive, counter, it, new_population):
     while len(new_population) < params['POPSIZE']:
         new_indiv = selection(population)
         new_indiv_2 = selection(population) 
-        print(new_indiv)
+        #print(new_indiv)
         new_indiv = crossover(new_indiv, new_indiv_2)
         new_indiv = mutation(new_indiv)
         new_indiv = map_phenotype(new_indiv)
@@ -292,13 +292,14 @@ def update_fitness_based_on_archive(archive, indiv, key):
     indiv['fitness'] = archive[key]['fitness']
 
 def update_key(indiv):
-    key = indiv['smart_phenotype']
+    key = dual_task_key(indiv['phenotype'], params['CURRENT_GEN'])
     return key
 
 def update_best_fitness(population, archive):
     best_fit = params['FITNESS_FLOOR'] + 1
     for indiv in population:
-        key = indiv['smart_phenotype']
+        key = dual_task_key(indiv['phenotype'], params['CURRENT_GEN'])
+        #key = indiv['smart_phenotype']
         if archive[key]['fitness'] < best_fit:
                 # best = archive[key]
             best_fit = archive[key]['fitness'] 
@@ -350,6 +351,7 @@ def update_archive(evaluation_function, archive, indiv, it):
         evaluate(indiv, evaluation_function)
         archive[key]['evaluations'].append(indiv['fitness'])
         archive[key]['fitness'] = statistics.mean(archive[key]['evaluations'])
+        print(f"Registered {key}")
     """
     # if in doubt (you should;), test:
     for _ in range(5):                     
