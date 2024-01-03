@@ -1,3 +1,5 @@
+import os
+os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 from sge.parameters import (
     params,
     set_parameters
@@ -30,6 +32,7 @@ class Optimizer_Evaluator_Dual_Task:
             fit = -foo[0]
             other_info = foo[1]
         elif params["CURRENT_GEN"] % 2 == 1:
+            print("Running CIFAR")
             foo = self.train_model_cifar(phen)
             fit = -foo[0]
             other_info = foo[1]
@@ -49,22 +52,33 @@ class Optimizer_Evaluator_Dual_Task:
 
         
     def init_data(self, params):
-        from models.keras_model_adapter import adapt_mobile
+        from models.keras_model_adapter import adapt_mobile, adapt_vgg16
         from utils.data_functions import load_fashion_mnist_training, load_cifar10_training, load_mnist_training, select_fashion_mnist_training
         training_size = params['TRAINING_SIZE']
         validation_size = params['VALIDATION_SIZE']
 
 
-        define_compile_model, preprocess_input = adapt_mobile()
+        define_compile_model, preprocess_input = adapt_vgg16()
 
         self.fmnist_data = {}
         data = load_fashion_mnist_training(training_size=training_size, validation_size=validation_size)
         for key in data:
-            self.fmnist_data[key] = preprocess_input(data[key])
+            print(key)
+            if 'x' in key:
+                print(len(data[key]))
+                self.fmnist_data[key] = preprocess_input(data[key])
+            else:
+                self.fmnist_data[key] = data[key]
+
+        define_compile_model, preprocess_input = adapt_mobile()
+
         self.cifar_data = {}
         data = load_cifar10_training(training_size=training_size, validation_size=validation_size)
         for key in data:
-            self.cifar_data[key] = preprocess_input(data[key])
+            if 'x' in key:
+                self.cifar_data[key] = preprocess_input(data[key])
+            else:
+                self.cifar_data[key] = data[key]
 
     def init_evaluation(self, params):
         from evaluators.adaptive_optimizer_evaluator_f_race import create_train_model
@@ -183,7 +197,6 @@ if __name__ == "__main__":
 
     if False:
         evaluation_function = Optimizer_Evaluator_Torch()
-    else:
         if 'MODEL' in params and params['MODEL'] == 'models/cifar_model.h5': 
             from evaluators.adaptive_optimizer_evaluator_f_race import train_model_tensorflow_cifar10
             evaluation_function = Optimizer_Evaluator_Tensorflow(train_model=train_model_tensorflow_cifar10)

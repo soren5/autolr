@@ -440,6 +440,7 @@ def load_fashion_mnist_training(n_classes=10, training_size=None, validation_siz
     x_val /= 255
     x_test /= 255
 
+    
     #subraction of the mean image
     x_mean = 0
     for x in x_train:

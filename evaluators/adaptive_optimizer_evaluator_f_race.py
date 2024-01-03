@@ -3,6 +3,7 @@ import csv
 from pickle import NONE
 from utils.data_functions import load_fashion_mnist_training, load_cifar10_training, load_mnist_training, select_fashion_mnist_training
 import tensorflow as tf
+from tensorflow.keras.optimizers import Adam, SGD, RMSprop
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
@@ -81,9 +82,14 @@ def create_train_model(model_, data, weights):
         #        print(trainable_weight.name)
         # optimizer is constant aslong as phen doesn't changed?
         # -> opportunity to cache opt and compiled model
+
+
+        print(f"Running custom: {phen}")
         opt = CustomOptimizerArch(phen=phen, model=model)
+        #opt = Adam()
+        #opt = SGD()
+        print("Running SGD")
         model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
-        early_stop = keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=patience, restore_best_weights=True)
         
         score = model.fit(dataset['x_train'], dataset['y_train'],
             batch_size=batch_size,
@@ -91,9 +97,7 @@ def create_train_model(model_, data, weights):
             verbose=2,
             validation_data=(dataset['x_val'], dataset['y_val']),
             validation_steps= len(dataset['x_val']) // batch_size,
-            callbacks=[
-                early_stop
-            ])
+            callbacks=[])
 
         K.clear_session()
         results = {}
