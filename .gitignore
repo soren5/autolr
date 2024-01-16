@@ -150,6 +150,7 @@ secret.py
 experiments*
 results/
 dumps/
+many_results/
 deprecated_custom_optimizer.tst
 .vscode/
 *.pdf
@@ -166,3 +167,6 @@ past_experiments/gecco_2022/adaptive_autolr_config_prepopulate_momentum.yml
 past_experiments/gecco_2022/adaptive_autolr_config_prepopulate_rmsprop_2.yml
 past_experiments/gecco_2022/adaptive_autolr_config_prepopulate_rmsprop.yml
 past_experiments/gecco_2022/adaptive_autolr_config_prepopulate.yml
+
+a.py
+cluster_scripts/

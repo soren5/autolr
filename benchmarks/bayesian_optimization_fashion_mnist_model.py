@@ -1,3 +1,6 @@
+from asyncio import constants
+from socket import NI_NUMERICHOST
+from tabnanny import verbose
 from deap import creator, base, tools
 from benchmarks.evaluate_fashion_mnist_model import evaluate_fashion_mnist_model
 from tensorflow.keras.optimizers import Adam, SGD, RMSprop
@@ -8,6 +11,7 @@ import os
 import pandas as pd
 from bayes_opt import BayesianOptimization
 import math
+from utils.bayesian_optimization import *
 
 cwd_path = os.getcwd()
 
@@ -107,8 +111,6 @@ def evaluate_sign(beta_1):
     data_frame.to_csv(os.path.join(cwd_path, 'results/' , "sign_bo_fashion_results.csv"), index=False)
 
     return max(result[1]['val_accuracy'])
-
-
 
 def optimize_adam(n_inter, init_points):
     pbounds = {
@@ -229,9 +231,54 @@ def optimize_sign(n_inter, init_points):
         n_iter=n_inter,
     )
 
+def optimize_generic(phenotype, n_iter, init_points):
+    constants, probes = get_constants_and_probe(phenotype)
+    pbounds = {}
+    pparams = {}
+    for constant, probe_value in zip(constants, probes):
+        param_key = 'param_' + str(i)
+        pbounds[param_key] = (0, 1)
+        pparams[param_key] = probe_value
+        phenotype.replace(constant, param_key, 1)
+        i += 1
+    f = create_evaluate_generic(phenotype)
+
+    bayesian_optimizer = BayesianOptimization(f=f, pbounds=pbounds, verbose=2)
+    bayesian_optimizer.probe(params=pparams)
+    bayesian_optimizer.maximize(init_points=init_points, n_iter=n_iter)
+
+def create_evaluate_generic(phenotype, name):
+    def evaluate_generic(**kwargs):
+        from tensorflow.keras.models import load_model
+        import tensorflow as tf
+        import numpy as np
+
+        for key, value in kwargs.items():
+            phenotype.replace(key, f"tf.constant({value}, shape=shape, dtype=tf.float32)")
+
+        model = load_model('models/mnist_model.h5', compile=False)
+        optimizer = CustomOptimizer(phen=phenotype)
+        result = evaluate_fashion_mnist_model(optimizer=optimizer, model=model, verbose=2, epochs=100, experiment_name=f'{name}_bo_fashion_results')
+
+        data_frame = pd.read_csv(os.path.join(cwd_path, 'results/' , f"{name}_bo_fashion_results.csv"))
+        if len(data_frame) > 1:
+            total_epochs = data_frame.loc[len(data_frame) - 2, "epochs"]
+        else:
+            total_epochs = 0
+
+        col_values = [total_epochs + 100]
+        col_names = ["epochs"] 
+        for key, value in kwargs.items():
+            col_names.append(key)
+            col_values.append(value)
+        
+        data_frame.loc[len(data_frame) - 1, col_names] = col_values
+        data_frame.to_csv(os.path.join(cwd_path, 'results/' , f"{name}_bo_fashion_results.csv"), index=False)
+
+        return max(result[1]['val_accuracy'])
 
 #optimize_adam(90,10)
 #optimize_rmsprop(90,10)
 #optimize_nesterov(90,10)
-optimize_ades(90, 10)
+#optimize_ades(90, 10)
 #optimize_sign(90, 10)

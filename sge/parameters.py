@@ -1,14 +1,16 @@
 import argparse
+
 import yaml
 
 """"Algorithm Parameters"""
 params = {
     'PARAMETERS': None,
-    'POPSIZE': 3,
+    'POPSIZE': 2,
     'GENERATIONS': 3,
-    'ELITISM': 1,
+    'ELITISM': 0,
     'PROB_CROSSOVER': 0.9,
     'PROB_MUTATION': 0.15,
+    'SELECTION_TYPE': 'tournament',
     'TSIZE': 2,
     'GRAMMAR': 'grammars/adaptive_autolr_grammar.txt',
     'EXPERIMENT_NAME': "dumps/example",
@@ -19,20 +21,23 @@ params = {
     'MIN_TREE_DEPTH': 6,
     'MAX_TREE_DEPTH': 17,
     'MODEL': 'models/mnist_model.h5',
-    'VALIDATION_SIZE': 10,
-    'FITNESS_SIZE': 59590,
+    'DATASET': 'fmnist',
+    'VALIDATION_SIZE': 100,
+    'FITNESS_SIZE': 59890,
     'BATCH_SIZE': 5,
     'EPOCHS': 5,
     'SEED': None,
     'PREPOPULATE': False,
     'PATIENCE': False,
     'FITNESS_FLOOR': 0,
+    'LOAD_ARCHIVE': True,
     }
 
 
-def load_parameters(file_name=None):
-    with open("parameters/adaptive_autolr.yml", 'r') as ymlfile:
+def load_parameters(file_name="parameters/adaptive_autolr.yml"):
+    with open(file_name, 'r') as ymlfile:
         cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
+    print("using ",file_name, "for parameters")
     params.update(cfg)
 
 
@@ -62,7 +67,7 @@ def set_parameters(arguments):
                         help='Specifies the total number of individuals that should survive in each generation.')
     parser.add_argument('--seed',
                         dest='SEED',
-                        type=float,
+                        type=int,
                         help='Specifies the seed to be used by the random number generator.')
     parser.add_argument('--prob_crossover',
                         dest='PROB_CROSSOVER',
@@ -72,6 +77,10 @@ def set_parameters(arguments):
                         dest='PROB_MUTATION',
                         type=float,
                         help='Specifies the probability of mutation usage. Float required')
+    parser.add_argument('--selection',
+                        dest='SELECTION_TYPE',
+                        type=int,
+                        help='Specifies the type of selection, either tournament selection or stochastic sampling.')
     parser.add_argument('--tsize',
                         dest='TSIZE',
                         type=int,
@@ -80,6 +89,10 @@ def set_parameters(arguments):
                         dest='MODEL',
                         type=str,
                         help='Specifies the path to the model file.')
+    parser.add_argument('--dataset',
+                        dest='DATASET',
+                        type=str,
+                        help='Specifies the dataset to load.')
     parser.add_argument('--grammar',
                         dest='GRAMMAR',
                         type=str,
@@ -106,7 +119,7 @@ def set_parameters(arguments):
                         help='Turns on the verbose output of the program')
     parser.add_argument('--resume',
                         dest="RESUME",
-                        type=int,
+                        type=str,
                         help="")
     parser.add_argument('--prepopulate',
                         dest="PREPOPULATE",
@@ -128,7 +141,7 @@ def set_parameters(arguments):
                 dest="VALIDATION_SIZE",
                 type=int,
                 help="")
-    parser.add_argument('--fitness_size',
+    parser.add_argument('--test_size',
                 dest="FITNESS_SIZE",
                 type=int,
                 help="")
@@ -146,8 +159,16 @@ def set_parameters(arguments):
                 help="")
     parser.add_argument('--fitness_floor',
             dest="FITNESS_FLOOR",
+            type=float,
+            help="")
+    parser.add_argument('--load_archive',
+            dest="LOAD_ARCHIVE",
             type=bool,
             help="")
+    parser.add_argument('--parent_experiment',
+            dest="PARENT_EXPERIMENT",
+            type=str,
+            help="specifies in whihc folder to look for the parent run population and state (same run number), to use seed the current run (which must not have started already)")
 
     
     
@@ -171,5 +192,9 @@ def set_parameters(arguments):
 
     if 'PARAMETERS' in cmd_args:
         load_parameters(cmd_args['PARAMETERS'])
+    else:
+       print("No parameter file found, using default parameters")
+
+
     params.update(cmd_args)
 

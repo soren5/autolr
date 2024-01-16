@@ -1,22 +1,6 @@
 # AutoLR: An evolutionary framework for learning rate optimizers
-AutoLR is a framework based on the [SGE](https://github.com/nunolourenco/sge3 "SGE") engine capable of evolving learning rate optimizers for specific neural network architectures and problems. This repository is part of a published work; if you end up using this framework it would be appreciated that you reference one of the following:
-```
-@inproceedings{carvalho2020,
-author = {Carvalho, Pedro and Louren\c{c}o, Nuno and Assun\c{c}\~{a}o, Filipe and Machado, Penousal},
-title = {AutoLR: An Evolutionary Approach to Learning Rate Policies},
-year = {2020},
-isbn = {9781450371285},
-publisher = {Association for Computing Machinery},
-address = {New York, NY, USA},
-url = {https://doi.org/10.1145/3377930.3390158},
-doi = {10.1145/3377930.3390158},
-pages = {672–680},
-numpages = {9},
-keywords = {learning rate schedulers, structured grammatical evolution},
-location = {Canc\'{u}n, Mexico},
-series = {GECCO '20}
-}
-```
+AutoLR is a framework based on the [SGE](https://github.com/nunolourenco/sge3 "SGE") engine capable of evolving learning rate optimizers for specific neural network architectures and problems. This repository is part of a published work; if you end up using this framework it would be appreciated that you reference the following:
+
 ```
 @inproceedings{carvalho2022, 
 author=“Carvalho, Pedro and Louren\c{c}o, Nuno and Machado, Penousal”, 
@@ -67,6 +51,9 @@ In order to run your own experiments you will need to change the configuration u
 > python -m main --parameters parameters/your_configuration_file.yml
 ```
 
+At the moment on this branch the parameter files used are
+
+```bash
+parameters/adaptive_autolr_mutate_level_1.yml
+```
 Additional guidelines on how to create custom evaluators coming soon.
-
-
