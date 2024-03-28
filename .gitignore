@@ -155,6 +155,7 @@ deprecated_custom_optimizer.tst
 .vscode/
 *.pdf
 *.png
+*.jpg
 log.txt
 data/
 *.pth
