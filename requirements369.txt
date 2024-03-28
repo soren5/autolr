@@ -34,6 +34,7 @@ oauthlib==3.2.1
 opencv-python==4.8.1.78
 opt-einsum==3.3.0
 packaging==21.3
+pandas==1.1.5
 Pillow==8.4.0
 pluggy==1.0.0
 protobuf==3.19.5
@@ -45,6 +46,8 @@ pycrypto==2.6.1
 PyGObject==3.26.1
 pyparsing==3.0.9
 pytest==7.0.1
+python-dateutil==2.8.2
+pytz==2024.1
 pyxdg==0.25
 PyYAML==6.0
 requests==2.27.1
@@ -53,7 +56,6 @@ rsa==4.9
 scikit-learn==0.24.2
 scipy==1.5.4
 SecretStorage==2.3.1
-setuptools==49.6.0
 six==1.15.0
 tensorboard==2.6.0
 tensorboard-data-server==0.6.1

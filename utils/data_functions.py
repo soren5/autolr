@@ -1,8 +1,8 @@
 import tensorflow as tf
 from tensorflow import keras
 from sklearn.model_selection import train_test_split
-from keras.datasets import fashion_mnist, cifar10, mnist
-from keras import backend as K
+from tensorflow.keras.datasets import fashion_mnist, cifar10, mnist
+from tensorflow.keras import backend as K
 import numpy as np
 
 def resize_data(args):
@@ -166,7 +166,7 @@ def load_cifar10_full(n_classes=10, validation_size=3500, test_size=3500):
 
     return dataset
 
-def load_cifar10_training(n_classes=10, training_size=None, validation_size=None, test_size=None):
+def load_cifar10_training(n_classes=10, training_size=None, validation_size=None, test_size=None, normalize=True, subtract_mean=True):
     if training_size != None and validation_size != None and test_size != None:
         assert training_size + validation_size + test_size == 50000
     if test_size == None:
@@ -190,20 +190,21 @@ def load_cifar10_training(n_classes=10, training_size=None, validation_size=None
     x_train = x_train.astype('float32')
     x_val = x_val.astype('float32')
     x_test = x_test.astype('float32')
-
-    x_train /= 255
-    x_val /= 255
-    x_test /= 255
+    
+    if normalize:    
+        x_train /= 255
+        x_val /= 255
+        x_test /= 255
 
     #subraction of the mean image
-    x_mean = 0
-    for x in x_train:
-        x_mean += x
-    x_mean /= len(x_train)
-    x_train -= x_mean
-    x_val -= x_mean
-    x_test -= x_mean
-
+    if subtract_mean:
+        x_mean = 0
+        for x in x_train:
+            x_mean += x
+        x_mean /= len(x_train)
+        x_train -= x_mean
+        x_val -= x_mean
+        x_test -= x_mean
 
     # input image dimensions
 
@@ -411,7 +412,7 @@ def select_fashion_mnist_training(fashion, n_classes=10, validation_size=3500, t
     return dataset
 
 
-def load_fashion_mnist_training(n_classes=10, training_size=None, validation_size=None, test_size=None):
+def load_fashion_mnist_training(n_classes=10, training_size=None, validation_size=None, test_size=None, normalize=True, subtract_mean=True):
 
     if training_size != None and validation_size != None and test_size != None:
         assert training_size + validation_size + test_size == 60000
@@ -432,27 +433,25 @@ def load_fashion_mnist_training(n_classes=10, training_size=None, validation_siz
 
     img_rows, img_cols, channels = 28, 28, 1
 
+
     x_train = x_train.astype('float32')
     x_val = x_val.astype('float32')
     x_test = x_test.astype('float32')
 
-    x_train /= 255
-    x_val /= 255
-    x_test /= 255
+    if normalize:    
+        x_train /= 255
+        x_val /= 255
+        x_test /= 255
 
-    
     #subraction of the mean image
-    x_mean = 0
-    for x in x_train:
-        x_mean += x
-    x_mean /= len(x_train)
-    x_train -= x_mean
-    x_val -= x_mean
-    x_test -= x_mean
-
-
-    # input image dimensions
-
+    if subtract_mean:
+        x_mean = 0
+        for x in x_train:
+            x_mean += x
+        x_mean /= len(x_train)
+        x_train -= x_mean
+        x_val -= x_mean
+        x_test -= x_mean
 
     if K.image_data_format() == 'channels_first':
         x_train = x_train.reshape(x_train.shape[0], channels, img_rows, img_cols)
@@ -597,4 +596,3 @@ def load_mnist_training(n_classes=10, validation_size=3500, test_size=3500):
             'y_test': y_test}
 
     return dataset
-

@@ -17,7 +17,7 @@ def trim_phenotype(phenotype):
 
 def smart_phenotype(phenotype):
     functions = trim_phenotype(phenotype)
-    #print(functions)
+    print(functions)
 
     alpha_func_string = functions[1][8:-2]
     beta_func_string = functions[2][14:-2] 

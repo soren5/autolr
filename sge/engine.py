@@ -63,7 +63,9 @@ def evaluate(ind, eval_func):
         phen = ind['phenotype']
         tree_depth = ind['tree_depth']
     other_info = {}
+    print(f"Registering {smart_phenotype(phen)}")
     if "FAKE_FITNESS" in params and params['FAKE_FITNESS']:
+        print(f"USING FAKE FITNESS")
         import numpy as np
         import tensorflow as tf
         quality = -(random.random() + np.random.random())/2
@@ -71,6 +73,7 @@ def evaluate(ind, eval_func):
         if 'grad' in smart_phenotype(phen):
             quality, other_info = eval_func.evaluate(phen, params)
         else:
+            print('\tSKIP xor check')
             quality = params['FITNESS_FLOOR']
     ind['phenotype'] = phen 
     ind['fitness'] = quality
@@ -351,7 +354,6 @@ def update_archive(evaluation_function, archive, indiv, it):
         evaluate(indiv, evaluation_function)
         archive[key]['evaluations'].append(indiv['fitness'])
         archive[key]['fitness'] = statistics.mean(archive[key]['evaluations'])
-        print(f"Registered {key}")
     """
     # if in doubt (you should;), test:
     for _ in range(5):                     

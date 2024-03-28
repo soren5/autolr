@@ -186,7 +186,8 @@ class CustomOptimizerArch(keras.optimizers.Optimizer):
         #print(self.phen)
         #print("_resource_apply_dense")
         variable_name = var.name
-        #print(variable_name)
+        #print(self.layer_count[variable_name])
+        #print(self.depth_dict[variable_name])
         if variable_name not in self._alpha_dict:
             self._alpha_dict[var.name] = tf.Variable(np.zeros(var.shape) , name="alpha" + var.name[:-2], shape=var.shape, dtype=tf.float32)
             self._beta_dict[var.name] = tf.Variable(np.zeros(var.shape) , name="beta" + var.name[:-2], shape=var.shape, dtype=tf.float32)

@@ -1,5 +1,5 @@
-POPSIZE: 13
-GENERATIONS: 27
+POPSIZE: 26
+GENERATIONS: 54
 ELITISM: 1                   # number of individuals that survive
 PROB_CROSSOVER: 0.0
 PROB_MUTATION: {
@@ -24,12 +24,15 @@ PROB_MUTATION: {
 18: 0.15,
 19: 0.01,
 20: 0.01,
-21: 0.05,
-22: 0.15}
+21: 0.01,
+22: 0.05,
+23: 0.15,
+24: 0.15,
+}
 TSIZE: 2
-GRAMMAR: 'grammars/adaptive_autolr_grammar_architecture.txt'
-EXPERIMENT_NAME: 'dumps/architecture'
-RUN: 1
+GRAMMAR: 'grammars/adaptive_autolr_grammar_architecture_easy_lr.txt'
+EXPERIMENT_NAME: 'dumps/fmnist_only_attempts'
+RUN: 12 
 INCLUDE_GENOTYPE: True
 SAVE_STEP: 1
 VERBOSE: True
@@ -38,7 +41,7 @@ MAX_TREE_DEPTH: 17
 MODEL: 'models/mnist_model.h5'
 VALIDATION_SIZE: 3500
 FITNESS_SIZE: 55000
-BATCH_SIZE: 32
+BATCH_SIZE: 16
 EPOCHS: 10000
 PREPOPULATE: False
 PROTECT: False
