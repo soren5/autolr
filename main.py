@@ -1,8 +1,10 @@
+import os
+os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 from sge.parameters import (
     params,
     set_parameters
 )
-import time
+from utils.xor_sanity_check import xor_check
 class Optimizer_Evaluator_Tensorflow:
     def __init__(self, train_model=None):  #should give a function 
         if train_model == None: 
@@ -25,48 +27,70 @@ class Optimizer_Evaluator_Dual_Task:
         pass
     
     def evaluate(self, phen, params):
-        foo = self.train_model_fmnist(phen)
-        fit = -foo[0]
-        other_info = {}
-        other_info['fmnist'] = foo[1]
-        foo = self.train_model_cifar(phen)
-        fit += -foo[0]
-        other_info['cifar'] = foo[1]
+        #print(params["CURRENT_GEN"])
+        """
+        if params["CURRENT_GEN"] % 2 == 0:
+            foo = self.train_model_fmnist(phen)
+            fit = -foo[0]
+            other_info = foo[1]
+            other_info['task'] = 'fmnist'
+        elif params["CURRENT_GEN"] % 2 == 1:
+            print("Running CIFAR")
+            foo = self.train_model_cifar(phen)
+            fit = -foo[0]
+            other_info = foo[1]
+            other_info['task'] = 'cifar'
+        else:
+            raise Exception("CURRENT GEN IN EVALUATE IS INVALID")
+        """
+        if xor_check(phen):
+            foo = self.train_model_fmnist(phen)
+            fit = -foo[0]
+            other_info = foo[1]
+        else:
+            fit = -0.1
+            other_info = {}
         return fit, other_info
 
     def init_net(self, params):
-        from models.keras_model_adapter import adapt_mobile
-        #TODO Continue from here
-        define_compile_model, preprocess_input = adapt_mobile()
-        self.fmnist_model = define_compile_model((28,28,1))
-        #print(self.fmnist_model.layers)
-        print(self.fmnist_model.summary())
-        self.cifar_model = define_compile_model((32,32,3))
+        from models.keras_model_adapter import VGG16_Interface, MobileNet_Interface
+        self.fmnist_model_interface = VGG16_Interface()
+        self.cifar_model_interface = MobileNet_Interface()
 
         
     def init_data(self, params):
-        from models.keras_model_adapter import adapt_mobile
         from utils.data_functions import load_fashion_mnist_training, load_cifar10_training, load_mnist_training, select_fashion_mnist_training
+        import tensorflow as tf
+        import numpy as np
         training_size = params['TRAINING_SIZE']
         validation_size = params['VALIDATION_SIZE']
 
 
-        define_compile_model, preprocess_input = adapt_mobile()
-
         self.fmnist_data = {}
-        data = load_fashion_mnist_training(training_size=training_size, validation_size=validation_size)
-        for key in data:
-            self.fmnist_data[key] = preprocess_input(data[key])
-        self.cifar_data = {}
-        data = load_cifar10_training(training_size=training_size, validation_size=validation_size)
-        for key in data:
-            self.cifar_data[key] = preprocess_input(data[key])
+
+        data = load_fashion_mnist_training(training_size=training_size, validation_size=validation_size, normalize=False, subtract_mean=False)
+        with tf.device('/cpu:0'):
+            for key in data:
+                if 'x' in key:
+                    self.fmnist_data[key] = tf.convert_to_tensor(self.fmnist_model_interface.prepare_input(data[key]), np.float32)
+                else:
+                    self.fmnist_data[key] = data[key]
+
+            self.cifar_data = {}
+            data = load_cifar10_training(training_size=training_size, validation_size=validation_size)
+            for key in data:
+                if 'x' in key:
+                    self.cifar_data[key] = tf.convert_to_tensor(self.cifar_model_interface.prepare_input(data[key]), np.float32)
+                else:
+                    self.cifar_data[key] = data[key]
 
     def init_evaluation(self, params):
         from evaluators.adaptive_optimizer_evaluator_f_race import create_train_model
+        fmnist_model = self.fmnist_model_interface.get_model()
+        cifar_model = self.cifar_model_interface.get_model()
 
-        self.train_model_fmnist = create_train_model(self.fmnist_model, self.fmnist_data, self.fmnist_model.get_weights())
-        self.train_model_cifar = create_train_model(self.cifar_model, self.cifar_data, self.cifar_model.get_weights())
+        self.train_model_fmnist = create_train_model(fmnist_model, self.fmnist_data, fmnist_model.get_weights())
+        self.train_model_cifar = create_train_model(cifar_model, self.cifar_data, cifar_model.get_weights())
 
 class Optimizer_Evaluator_Torch:
     def __init__(self, train_model=None): 
@@ -140,7 +164,7 @@ class Optimizer_Evaluator_Torch:
         for param in self.net.parameters():
             param.grad = None
         torch.save(self.net.state_dict(), './cifar_net.pth')
-        print(sum(p.numel() for p in self.net.parameters() if p.requires_grad))
+        #print(sum(p.numel() for p in self.net.parameters() if p.requires_grad))
 
 
     def init_data(self, params):
@@ -179,7 +203,6 @@ if __name__ == "__main__":
 
     if False:
         evaluation_function = Optimizer_Evaluator_Torch()
-    else:
         if 'MODEL' in params and params['MODEL'] == 'models/cifar_model.h5': 
             from evaluators.adaptive_optimizer_evaluator_f_race import train_model_tensorflow_cifar10
             evaluation_function = Optimizer_Evaluator_Tensorflow(train_model=train_model_tensorflow_cifar10)

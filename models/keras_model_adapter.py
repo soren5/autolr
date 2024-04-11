@@ -1,526 +1,181 @@
-
 from tensorflow.keras.preprocessing import image
-from tensorflow.keras.optimizers import Adam
-from utils.data_functions import load_cifar10_full
+from tensorflow.keras.optimizers import Adam, SGD
+from utils.data_functions import load_cifar10_full, load_cifar10_training, load_fashion_mnist_training
 import tensorflow as tf
 from tensorflow.keras import Sequential
 import cv2 
 from tensorflow.compat.v1 import ConfigProto
 from tensorflow.compat.v1 import InteractiveSession
-
+import numpy as np
 config = ConfigProto()
 config.gpu_options.allow_growth = True
 session = InteractiveSession(config=config)
 
-def adapt_mobile(input_shape=(32,32,3)):
-  from tensorflow.keras.applications.mobilenet import MobileNet
-  from tensorflow.keras.applications.mobilenet import preprocess_input, decode_predictions
-  '''
-  Feature Extraction is performed by ResNet50 pretrained on imagenet weights. 
-  Input size is 224 x 224.
-  '''
-  def feature_extractor(model):
+class MobileNet_Interface:
+  def __init__(self, incoming_data_shape=(32,32,3)):
+    self.incoming_data_shape = incoming_data_shape
+    self.model = None
+    self.input_layer_shape = (224,224,3)
+    self.initialize_model()
+    self.add_feature_extractor_to_model()
+    self.add_classifier_to_model()
+
+  def get_model(self):
+    return self.model
+  
+  def get_input_layer_shape(self):
+    return self.input_layer_shape
+  
+  def add_feature_extractor_to_model(self):
+    from tensorflow.keras.applications.mobilenet import MobileNet
 
     feature_extractor = MobileNet(input_shape=(224, 224, 3),
                                                 include_top=False,
                                                 weights='imagenet')
-    #(inputs)
     for layer in feature_extractor.layers:
-       model.add(layer)
-    return model
+       self.model.add(layer)
 
 
   '''
   Defines final dense layers and subsequent softmax layer for classification.
   '''
-  def classifier(model):
-      model.add(tf.keras.layers.GlobalAveragePooling2D())
-      model.add(tf.keras.layers.Flatten())
-      model.add(tf.keras.layers.Dense(1024, activation="relu"))
-      model.add(tf.keras.layers.Dense(512, activation="relu"))
-      model.add(tf.keras.layers.Dense(10, activation="softmax", name="classification"))
-      return model
-
-  '''
-  Since input image size is (32 x 32), first upsample the image by factor of (7x7) to transform it to (224 x 224)
-  Connect the feature extraction and "classifier" layers to build the model.
-  '''
-  def final_model(model, input_shape=(32,32,3)):
-      size = int(224/input_shape[0])
-      channels = int(3/input_shape[2])
-
-      resize = tf.keras.layers.UpSampling3D(size=(size,size,channels))
-      #if channels == 1:
-      #  resize = tf.concat([resize] * 3, axis=-1)
-      #elif channels == 3:
-      #  pass
-      #else:
-      #  raise Exception("Invalid channel number")
-      model.add(resize)
-      model = feature_extractor(model)
-      model = classifier(model)
-
-      return model
+  def add_classifier_to_model(self):
+      self.model.add(tf.keras.layers.GlobalAveragePooling2D())
+      self.model.add(tf.keras.layers.Flatten())
+      self.model.add(tf.keras.layers.Dense(1024, activation="relu"))
+      self.model.add(tf.keras.layers.Dense(512, activation="relu"))
+      self.model.add(tf.keras.layers.Dense(10, activation="softmax", name="classification"))
 
   '''
   Define the model and compile it.
   '''
-  def define_compile_model(input_shape=(32,32,3)):
-    model = Sequential()
-    model.add(tf.keras.layers.Input(shape=input_shape))
-    
-    model = final_model(model, input_shape)
-    
-    return model
-  return define_compile_model, preprocess_input
+  def initialize_model(self):
+    self.model = Sequential()
+    self.model.add(tf.keras.layers.Input(shape=self.input_layer_shape))
+  
+  def prepare_input(self, data):
+    from tensorflow.keras.applications.mobilenet import preprocess_input
+    from tensorflow.keras.preprocessing.image import img_to_array, array_to_img
+    print(f"Detected input shape {data.shape}")
 
-def try_mobile_none():
-  from tensorflow.keras.applications.mobilenet import MobileNet
-  from tensorflow.keras.applications.mobilenet import preprocess_input, decode_predictions
+    if len(data.shape) == 4 and data.shape[3] == 1:
+      data = data[:,:,:,0]
+
+    if len(data.shape) == 3:
+      data = np.stack([data] * 3, axis=-1)
+
+    data = np.asarray([img_to_array(array_to_img(im, scale=False).resize((224,224))) for im in data])
+
+    print(f"Changed to input shape {data.shape}")
+    return preprocess_input(data)
+
+class VGG16_Interface:
+  # For some reason this model seems to want data without the standard /= 255 operation
+  def __init__(self, incoming_data_shape=(28,28,1)):
+    self.incoming_data_shape = incoming_data_shape
+    self.model = None
+    self.input_layer_shape = (224,224,3)
+    self.initialize_model()
+    self.add_feature_extractor_to_model()
+    self.add_classifier_to_model()
+  
+  def get_model(self):
+    return self.model
+
+  def get_input_layer_shape(self):
+    return self.input_layer_shape
+  
   '''
   Feature Extraction is performed by ResNet50 pretrained on imagenet weights. 
   Input size is 224 x 224.
   '''
-  def feature_extractor(inputs):
+  def add_feature_extractor_to_model(self):
+    from tensorflow.keras.applications.vgg16 import VGG16
 
-    feature_extractor = MobileNet(input_shape=(224, 224, 3),
+    feature_extractor = VGG16(input_shape=self.input_layer_shape,
                                                 include_top=False,
-                                                weights=None)(inputs)
-    return feature_extractor
-
+                                                weights='imagenet')
+    for layer in feature_extractor.layers:
+       self.model.add(layer)
 
   '''
   Defines final dense layers and subsequent softmax layer for classification.
   '''
-  def classifier(inputs):
-      x = tf.keras.layers.GlobalAveragePooling2D()(inputs)
-      x = tf.keras.layers.Flatten()(x)
-      x = tf.keras.layers.Dense(1024, activation="relu")(x)
-      x = tf.keras.layers.Dense(512, activation="relu")(x)
-      x = tf.keras.layers.Dense(10, activation="softmax", name="classification")(x)
-      return x
-
-  '''
-  Since input image size is (32 x 32), first upsample the image by factor of (7x7) to transform it to (224 x 224)
-  Connect the feature extraction and "classifier" layers to build the model.
-  '''
-  def final_model(inputs):
-
-      resize = tf.keras.layers.UpSampling2D(size=(7,7))(inputs)
-
-      resnet_feature_extractor = feature_extractor(resize)
-      classification_output = classifier(resnet_feature_extractor)
-
-      return classification_output
-
-  '''
-  Define the model and compile it. 
-  Use Stochastic Gradient Descent as the optimizer.
-  Use Sparse Categorical CrossEntropy as the loss function.
-  '''
-  def define_compile_model():
-    inputs = tf.keras.layers.Input(shape=(32,32,3))
-    
-    classification_output = final_model(inputs) 
-    model = tf.keras.Model(inputs=inputs, outputs = classification_output)
-    
-    return model
-  return define_compile_model, preprocess_input
-
-
-def try_xception():
-  from tensorflow.keras.applications.xception import Xception, preprocess_input, decode_predictions
-  '''
-  Feature Extraction is performed by ResNet50 pretrained on imagenet weights. 
-  Input size is 224 x 224.
-  '''
-  def feature_extractor(inputs):
-
-    feature_extractor = Xception(input_shape=(224, 224, 3),
-                                                include_top=False,
-                                                weights='imagenet')(inputs)
-    return feature_extractor
-
-
-  '''
-  Defines final dense layers and subsequent softmax layer for classification.
-  '''
-  def classifier(inputs):
-      x = tf.keras.layers.GlobalAveragePooling2D()(inputs)
-      x = tf.keras.layers.Flatten()(x)
-      x = tf.keras.layers.Dense(1024, activation="relu")(x)
-      x = tf.keras.layers.Dense(512, activation="relu")(x)
-      x = tf.keras.layers.Dense(10, activation="softmax", name="classification")(x)
-      return x
-
-  '''
-  Since input image size is (32 x 32), first upsample the image by factor of (7x7) to transform it to (224 x 224)
-  Connect the feature extraction and "classifier" layers to build the model.
-  '''
-  def final_model(inputs):
-
-      resize = tf.keras.layers.UpSampling2D(size=(7,7))(inputs)
-
-      resnet_feature_extractor = feature_extractor(resize)
-      classification_output = classifier(resnet_feature_extractor)
-
-      return classification_output
-
-  '''
-  Define the model and compile it. 
-  Use Stochastic Gradient Descent as the optimizer.
-  Use Sparse Categorical CrossEntropy as the loss function.
-  '''
-  def define_compile_model():
-    inputs = tf.keras.layers.Input(shape=(32,32,3))
-    
-    classification_output = final_model(inputs) 
-    model = tf.keras.Model(inputs=inputs, outputs = classification_output)
-    
-    return model
-  return define_compile_model, preprocess_input
-
-def try_vgg16():
-  from tensorflow.keras.applications.vgg16 import VGG16 as net
-  from tensorflow.keras.applications.vgg16 import preprocess_input, decode_predictions
-  '''
-  Feature Extraction is performed by ResNet50 pretrained on imagenet weights. 
-  Input size is 224 x 224.
-  '''
-  def feature_extractor(inputs):
-
-    feature_extractor = net(input_shape=(224, 224, 3),
-                                                include_top=False,
-                                                weights='imagenet')(inputs)
-    return feature_extractor
-
-
-  '''
-  Defines final dense layers and subsequent softmax layer for classification.
-  '''
-  def classifier(inputs):
-      x = tf.keras.layers.GlobalAveragePooling2D()(inputs)
-      x = tf.keras.layers.Flatten()(x)
-      x = tf.keras.layers.Dense(1024, activation="relu")(x)
-      x = tf.keras.layers.Dense(512, activation="relu")(x)
-      x = tf.keras.layers.Dense(10, activation="softmax", name="classification")(x)
-      return x
-
-  '''
-  Since input image size is (32 x 32), first upsample the image by factor of (7x7) to transform it to (224 x 224)
-  Connect the feature extraction and "classifier" layers to build the model.
-  '''
-  def final_model(inputs):
-
-      resize = tf.keras.layers.UpSampling2D(size=(7,7))(inputs)
-
-      resnet_feature_extractor = feature_extractor(resize)
-      classification_output = classifier(resnet_feature_extractor)
-
-      return classification_output
-
-  '''
-  Define the model and compile it. 
-  Use Stochastic Gradient Descent as the optimizer.
-  Use Sparse Categorical CrossEntropy as the loss function.
-  '''
-  def define_compile_model():
-    inputs = tf.keras.layers.Input(shape=(32,32,3))
-    
-    classification_output = final_model(inputs) 
-    model = tf.keras.Model(inputs=inputs, outputs = classification_output)
-    
-    return model
-  return define_compile_model, preprocess_input
-
-def try_resnet():
-  from tensorflow.keras.applications.resnet50 import ResNet50 as net
-  from tensorflow.keras.applications.resnet50 import preprocess_input, decode_predictions
-  '''
-  Feature Extraction is performed by ResNet50 pretrained on imagenet weights. 
-  Input size is 224 x 224.
-  '''
-  def feature_extractor(inputs):
-
-    feature_extractor = net(input_shape=(224, 224, 3),
-                                                include_top=False,
-                                                weights='imagenet')(inputs)
-    return feature_extractor
-
-
-  '''
-  Defines final dense layers and subsequent softmax layer for classification.
-  '''
-  def classifier(inputs):
-      x = tf.keras.layers.GlobalAveragePooling2D()(inputs)
-      x = tf.keras.layers.Flatten()(x)
-      x = tf.keras.layers.Dense(1024, activation="relu")(x)
-      x = tf.keras.layers.Dense(512, activation="relu")(x)
-      x = tf.keras.layers.Dense(10, activation="softmax", name="classification")(x)
-      return x
-
-  '''
-  Since input image size is (32 x 32), first upsample the image by factor of (7x7) to transform it to (224 x 224)
-  Connect the feature extraction and "classifier" layers to build the model.
-  '''
-  def final_model(inputs):
-
-      resize = tf.keras.layers.UpSampling2D(size=(7,7))(inputs)
-
-      resnet_feature_extractor = feature_extractor(resize)
-      classification_output = classifier(resnet_feature_extractor)
-
-      return classification_output
-
-  '''
-  Define the model and compile it. 
-  Use Stochastic Gradient Descent as the optimizer.
-  Use Sparse Categorical CrossEntropy as the loss function.
-  '''
-  def define_compile_model():
-    inputs = tf.keras.layers.Input(shape=(32,32,3))
-    
-    classification_output = final_model(inputs) 
-    model = tf.keras.Model(inputs=inputs, outputs = classification_output)
-    
-    return model
-  return define_compile_model, preprocess_input
-
-def try_inception():
-  from tensorflow.keras.applications.inception_v3 import InceptionV3 as net
-  from tensorflow.keras.applications.inception_v3 import preprocess_input, decode_predictions
-  '''
-  Feature Extraction is performed by ResNet50 pretrained on imagenet weights. 
-  Input size is 224 x 224.
-  '''
-  def feature_extractor(inputs):
-
-    feature_extractor = net(input_shape=(224, 224, 3),
-                                                include_top=False,
-                                                weights='imagenet')(inputs)
-    return feature_extractor
-
-
-  '''
-  Defines final dense layers and subsequent softmax layer for classification.
-  '''
-  def classifier(inputs):
-      x = tf.keras.layers.GlobalAveragePooling2D()(inputs)
-      x = tf.keras.layers.Flatten()(x)
-      x = tf.keras.layers.Dense(1024, activation="relu")(x)
-      x = tf.keras.layers.Dense(512, activation="relu")(x)
-      x = tf.keras.layers.Dense(10, activation="softmax", name="classification")(x)
-      return x
-
-  '''
-  Since input image size is (32 x 32), first upsample the image by factor of (7x7) to transform it to (224 x 224)
-  Connect the feature extraction and "classifier" layers to build the model.
-  '''
-  def final_model(inputs):
-
-      resize = tf.keras.layers.UpSampling2D(size=(7,7))(inputs)
-
-      resnet_feature_extractor = feature_extractor(resize)
-      classification_output = classifier(resnet_feature_extractor)
-
-      return classification_output
-
-  '''
-  Define the model and compile it. 
-  Use Stochastic Gradient Descent as the optimizer.
-  Use Sparse Categorical CrossEntropy as the loss function.
-  '''
-  def define_compile_model():
-    inputs = tf.keras.layers.Input(shape=(32,32,3))
-    
-    classification_output = final_model(inputs) 
-    model = tf.keras.Model(inputs=inputs, outputs = classification_output)
-    
-    return model
-  return define_compile_model, preprocess_input
-
-def try_densenet():
-  from tensorflow.keras.applications.densenet import DenseNet121 as net
-  from tensorflow.keras.applications.densenet import preprocess_input, decode_predictions
-  '''
-  Feature Extraction is performed by ResNet50 pretrained on imagenet weights. 
-  Input size is 224 x 224.
-  '''
-  def feature_extractor(inputs):
-
-    feature_extractor = net(input_shape=(224, 224, 3),
-                                                include_top=False,
-                                                weights='imagenet')(inputs)
-    return feature_extractor
-
-
-  '''
-  Defines final dense layers and subsequent softmax layer for classification.
-  '''
-  def classifier(inputs):
-      x = tf.keras.layers.GlobalAveragePooling2D()(inputs)
-      x = tf.keras.layers.Flatten()(x)
-      x = tf.keras.layers.Dense(1024, activation="relu")(x)
-      x = tf.keras.layers.Dense(512, activation="relu")(x)
-      x = tf.keras.layers.Dense(10, activation="softmax", name="classification")(x)
-      return x
-
-  '''
-  Since input image size is (32 x 32), first upsample the image by factor of (7x7) to transform it to (224 x 224)
-  Connect the feature extraction and "classifier" layers to build the model.
-  '''
-  def final_model(inputs):
-
-      resize = tf.keras.layers.UpSampling2D(size=(7,7))(inputs)
-
-      resnet_feature_extractor = feature_extractor(resize)
-      classification_output = classifier(resnet_feature_extractor)
-
-      return classification_output
-
-  '''
-  Define the model and compile it. 
-  Use Stochastic Gradient Descent as the optimizer.
-  Use Sparse Categorical CrossEntropy as the loss function.
-  '''
-  def define_compile_model():
-    inputs = tf.keras.layers.Input(shape=(32,32,3))
-    
-    classification_output = final_model(inputs) 
-    model = tf.keras.Model(inputs=inputs, outputs = classification_output)
-    
-    return model
-  return define_compile_model, preprocess_input
-
-def try_nasnet():
-  from tensorflow.keras.applications.nasnet import NASNetMobile as net
-  from tensorflow.keras.applications.nasnet import preprocess_input, decode_predictions
-  '''
-  Feature Extraction is performed by ResNet50 pretrained on imagenet weights. 
-  Input size is 224 x 224.
-  '''
-  def feature_extractor(inputs):
-
-    feature_extractor = net(input_shape=(224, 224, 3),
-                                                include_top=False,
-                                                weights='imagenet')(inputs)
-    return feature_extractor
-
-
-  '''
-  Defines final dense layers and subsequent softmax layer for classification.
-  '''
-  def classifier(inputs):
-      x = tf.keras.layers.GlobalAveragePooling2D()(inputs)
-      x = tf.keras.layers.Flatten()(x)
-      x = tf.keras.layers.Dense(1024, activation="relu")(x)
-      x = tf.keras.layers.Dense(512, activation="relu")(x)
-      x = tf.keras.layers.Dense(10, activation="softmax", name="classification")(x)
-      return x
-
-  '''
-  Since input image size is (32 x 32), first upsample the image by factor of (7x7) to transform it to (224 x 224)
-  Connect the feature extraction and "classifier" layers to build the model.
-  '''
-  def final_model(inputs):
-
-      resize = tf.keras.layers.UpSampling2D(size=(7,7))(inputs)
-
-      resnet_feature_extractor = feature_extractor(resize)
-      classification_output = classifier(resnet_feature_extractor)
-
-      return classification_output
-
-  '''
-  Define the model and compile it. 
-  Use Stochastic Gradient Descent as the optimizer.
-  Use Sparse Categorical CrossEntropy as the loss function.
-  '''
-  def define_compile_model():
-    inputs = tf.keras.layers.Input(shape=(32,32,3))
-    
-    classification_output = final_model(inputs) 
-    model = tf.keras.Model(inputs=inputs, outputs = classification_output)
-    
-    return model
-  return define_compile_model, preprocess_input
-
-
-def try_efficient():
-  from tensorflow.keras.applications.efficientnet import EfficientNetB0 as net
-  from tensorflow.keras.applications.efficientnet import preprocess_input, decode_predictions
-  '''
-  Feature Extraction is performed by ResNet50 pretrained on imagenet weights. 
-  Input size is 224 x 224.
-  '''
-  def feature_extractor(inputs):
-
-    feature_extractor = net(input_shape=(224, 224, 3),
-                                                include_top=False,
-                                                weights='imagenet')(inputs)
-    return feature_extractor
-
-
-  '''
-  Defines final dense layers and subsequent softmax layer for classification.
-  '''
-  def classifier(inputs):
-      x = tf.keras.layers.GlobalAveragePooling2D()(inputs)
-      x = tf.keras.layers.Flatten()(x)
-      x = tf.keras.layers.Dense(1024, activation="relu")(x)
-      x = tf.keras.layers.Dense(512, activation="relu")(x)
-      x = tf.keras.layers.Dense(10, activation="softmax", name="classification")(x)
-      return x
-
-  '''
-  Since input image size is (32 x 32), first upsample the image by factor of (7x7) to transform it to (224 x 224)
-  Connect the feature extraction and "classifier" layers to build the model.
-  '''
-  def final_model(inputs):
-
-      resize = tf.keras.layers.UpSampling2D(size=(7,7))(inputs)
-
-      resnet_feature_extractor = feature_extractor(resize)
-      classification_output = classifier(resnet_feature_extractor)
-
-      return classification_output
-
-  '''
-  Define the model and compile it. 
-  Use Stochastic Gradient Descent as the optimizer.
-  Use Sparse Categorical CrossEntropy as the loss function.
-  '''
-  def define_compile_model():
-    inputs = tf.keras.layers.Input(shape=(32,32,3))
-    
-    classification_output = final_model(inputs) 
-    model = tf.keras.Model(inputs=inputs, outputs = classification_output)
-    
-    return model
-  return define_compile_model, preprocess_input
-
-
-def try_model(try_function):
-  define_compile_model, preprocess_input = try_function()
-  model = define_compile_model()
-
-  optimizer = Adam()
-  dataset = load_cifar10_full()
-  print(model.summary())
-  model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
-  early_stop = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=20, restore_best_weights=True)
-
-  score = model.fit(preprocess_input(dataset['x_train']), dataset['y_train'],
-      batch_size=32,
-      epochs=10,
-      verbose=2,
-      validation_data=(preprocess_input(dataset['x_val']), dataset['y_val']),
-      validation_steps= len(dataset['x_val']) // 32,
-      callbacks=[early_stop]
-      )
-
+  def add_classifier_to_model(self):
+      self.model.add(tf.keras.layers.GlobalAveragePooling2D())
+      self.model.add(tf.keras.layers.Flatten())
+      self.model.add(tf.keras.layers.Dense(1024, activation="relu"))
+      self.model.add(tf.keras.layers.Dense(512, activation="relu"))
+      self.model.add(tf.keras.layers.Dense(10, activation="softmax", name="classification"))
+
+  def initialize_model(self):
+    self.model = Sequential()
+    self.model.add(tf.keras.layers.Input(shape=self.input_layer_shape))
+  
+  def prepare_input(self, data):
+    from tensorflow.keras.applications.vgg16 import preprocess_input
+    from tensorflow.keras.preprocessing.image import img_to_array, array_to_img
+    print(f"Detected input shape {data.shape}")
+
+    if len(data.shape) == 4 and data.shape[3] == 1:
+      data = data[:,:,:,0]
+
+    if len(data.shape) == 3:
+      data = np.stack([data] * 3, axis=-1)
+
+    data = np.asarray([img_to_array(array_to_img(im, scale=False).resize((224,224))) for im in data])
+
+    print(f"Changed to input shape {data.shape}")
+    return preprocess_input(data)
+
+
+def try_model():
+  from tensorflow.keras.utils import to_categorical
+  from sklearn.model_selection import train_test_split    
+  from tensorflow.keras.applications.vgg16 import preprocess_input as preproc
+
+
+  vgg16 = VGG16_Interface()
+  model = vgg16.get_model()
+
+  #Despair
+  from utils.data_functions import load_fashion_mnist_training, load_cifar10_training, load_mnist_training, select_fashion_mnist_training
+  from tensorflow.keras.preprocessing.image import img_to_array, array_to_img
+  data = load_fashion_mnist_training(training_size=5000, validation_size=100, normalize=False, subtract_mean=False)
+  x_train = data['x_train'][:,:,:,0]
+  y_train = data['y_train']
+  #(x_train, y_train), (x_test, y_test) = fashion_mnist.load_data()
+  #x_train, x_val, y_train, y_val = train_test_split(x_train, y_train,
+  #                            test_size=55000,
+  #                            stratify=y_train)
+  print(x_train.shape)
+  x_train = np.stack([x_train] * 3, axis=-1)
+  print(x_train.shape)
+  x_train = np.asarray([img_to_array(array_to_img(im, scale=False).resize((224,224))) for im in x_train])
+  print(x_train.shape)
+
+  #y_train = to_categorical(y_train)
+
+  x_train = preproc(x_train)
+  model.save_weights('models/weights')
+  def create_baye_opt(model, x_train, y_train):
+    def baye_opt(lr):
+      model.load_weights('models/weights')
+      optimizer = SGD(lr)
+      model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+      score = model.fit(x_train, y_train,
+          batch_size=32,
+          epochs=10,
+          verbose=2,
+          )
+      return max(score.history['accuracy'])
+    return baye_opt
+  for x in range(30):
+    create_baye_opt(model, x_train, y_train)(0.01)
+
+if __name__ == "__main__":
+  try_model()
 """
-try_model(try_mobile)
 #try_model(try_mobile_none)
 try_model(try_xception)
 try_model(try_vgg16)

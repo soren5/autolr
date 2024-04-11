@@ -20,7 +20,7 @@ from sge.parameters import (
     set_parameters
 )
 from utils.genotypes import *
-from utils.smart_phenotype import smart_phenotype
+from utils.smart_phenotype import smart_phenotype, dual_task_key
 
 
 def generate_random_individual():
@@ -64,7 +64,9 @@ def evaluate(ind, eval_func):
         phen = ind['phenotype']
         tree_depth = ind['tree_depth']
     other_info = {}
+    print(f"Registering {smart_phenotype(phen)}")
     if "FAKE_FITNESS" in params and params['FAKE_FITNESS']:
+        print(f"USING FAKE FITNESS")
         import numpy as np
         import tensorflow as tf
         quality = -(random.random() + np.random.random())/2
@@ -73,6 +75,7 @@ def evaluate(ind, eval_func):
         if 'grad' in smart_phenotype(phen):
             quality, other_info = eval_func.evaluate(phen, params)
         else:
+            print('\tSKIP xor check')
             quality = params['FITNESS_FLOOR']
     end = time.time()
     duration = end - start
@@ -82,6 +85,8 @@ def evaluate(ind, eval_func):
     ind['other_info']['duration'] = duration
     ind['mapping_values'] = mapping_values
     ind['tree_depth'] = tree_depth
+    ind['key'] = dual_task_key(ind['phenotype'], params['CURRENT_GEN'])
+
 
 
 def setup(evaluation_function=None, parameters=None, logger=None):
@@ -139,7 +144,7 @@ def run_evolution(evaluation_function, logger, population, archive, counter, it)
     while simulation_is_running(it, start_time):
         
         print(f"{it}")
-        
+        params["CURRENT_GEN"] = it
         evaluation_function, population, archive, it = update_archive_and_fitness(evaluation_function, population, archive, it)
         
         save_data(logger, population, it)
@@ -151,7 +156,7 @@ def run_evolution(evaluation_function, logger, population, archive, counter, it)
 
 def update_archive_and_fitness(evaluation_function, population, archive, it):
     for indiv in population:
-        evaluation_function, archive, indiv = update_archive(evaluation_function, archive, indiv)
+        evaluation_function, archive, indiv = update_archive(evaluation_function, archive, indiv, it)
  
     population, archive = update_best_fitness(population, archive)
        
@@ -206,7 +211,7 @@ def reproduction(logger, population, archive, counter, it, new_population):
     while len(new_population) < params['POPSIZE']:
         new_indiv = selection(population)
         new_indiv_2 = selection(population) 
-        print(new_indiv)
+        #print(new_indiv)
         new_indiv = crossover(new_indiv, new_indiv_2)
         new_indiv = mutation(new_indiv)
         new_indiv = map_phenotype(new_indiv)
@@ -241,8 +246,9 @@ def save_data_new_pop(logger, population, archive, it):
     logger.save_random_state(it)
 
 def update_archive_with_new_indiv(archive, counter, new_population, new_indiv):
-    if new_indiv['smart_phenotype'] in archive:
-        new_indiv['id'] = archive[new_indiv['smart_phenotype']]['id']
+    key = dual_task_key(new_indiv['phenotype'], params['CURRENT_GEN'])
+    if key in archive:
+        new_indiv['id'] = archive[key]['id']
     else:
         counter += 1
         new_indiv['id'] = counter
@@ -294,13 +300,14 @@ def update_fitness_based_on_archive(archive, indiv, key):
     indiv['fitness'] = archive[key]['fitness']
 
 def update_key(indiv):
-    key = indiv['smart_phenotype']
+    key = dual_task_key(indiv['phenotype'], params['CURRENT_GEN'])
     return key
 
 def update_best_fitness(population, archive):
     best_fit = params['FITNESS_FLOOR'] + 1
     for indiv in population:
-        key = indiv['smart_phenotype']
+        key = dual_task_key(indiv['phenotype'], params['CURRENT_GEN'])
+        #key = indiv['smart_phenotype']
         if archive[key]['fitness'] < best_fit:
                 # best = archive[key]
             best_fit = archive[key]['fitness'] 
@@ -339,9 +346,9 @@ def update_best_fitness(population, archive):
         """
         return population, archive
 
-def update_archive(evaluation_function, archive, indiv):
+def update_archive(evaluation_function, archive, indiv, it):
     indiv['smart_phenotype'] = smart_phenotype(indiv['phenotype'])
-    key = indiv['smart_phenotype']
+    key = dual_task_key(indiv['phenotype'], params['CURRENT_GEN'])
     if key in archive and 'fitness' not in archive[key]:
         raise Exception('Incomplete archive entry')
     if key not in archive:
