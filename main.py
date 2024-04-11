@@ -2,6 +2,7 @@ from sge.parameters import (
     params,
     set_parameters
 )
+import time
 class Optimizer_Evaluator_Tensorflow:
     def __init__(self, train_model=None):  #should give a function 
         if train_model == None: 
@@ -26,11 +27,11 @@ class Optimizer_Evaluator_Dual_Task:
     def evaluate(self, phen, params):
         foo = self.train_model_fmnist(phen)
         fit = -foo[0]
-        other_info = []
-        other_info.append(foo[1])
+        other_info = {}
+        other_info['fmnist'] = foo[1]
         foo = self.train_model_cifar(phen)
         fit += -foo[0]
-        other_info.append(foo[1])
+        other_info['cifar'] = foo[1]
         return fit, other_info
 
     def init_net(self, params):
