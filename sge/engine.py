@@ -55,6 +55,7 @@ def start_population_from_scratch():
     return population, archive, counter, it 
 
 def evaluate(ind, eval_func):
+    start = time.time()
     if 'phenotype' not in ind:
         mapping_values = [0 for i in ind['genotype']]
         phen, tree_depth = grammar.mapping(ind['genotype'], mapping_values)
@@ -67,14 +68,18 @@ def evaluate(ind, eval_func):
         import numpy as np
         import tensorflow as tf
         quality = -(random.random() + np.random.random())/2
+        time.sleep(random.random())
     else:
         if 'grad' in smart_phenotype(phen):
             quality, other_info = eval_func.evaluate(phen, params)
         else:
             quality = params['FITNESS_FLOOR']
+    end = time.time()
+    duration = end - start
     ind['phenotype'] = phen 
     ind['fitness'] = quality
     ind['other_info'] = other_info
+    ind['other_info']['duration'] = duration
     ind['mapping_values'] = mapping_values
     ind['tree_depth'] = tree_depth
 
