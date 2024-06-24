@@ -47,9 +47,10 @@ class Optimizer_Evaluator_Dual_Task:
             foo = self.train_model_fmnist(phen)
             fit = -foo[0]
             other_info = foo[1]
+            other_info['source'] = 'evaluation'
         else:
             fit = -0.1
-            other_info = {}
+            other_info = {'source': 'sanity check'}
         return fit, other_info
 
     def init_net(self, params):
