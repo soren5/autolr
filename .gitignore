@@ -176,3 +176,4 @@ lib64
 benchmark1.py
 pyvenv.cfg
 ttx.1
+*.sh
