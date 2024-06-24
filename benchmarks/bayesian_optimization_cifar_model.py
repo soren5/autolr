@@ -248,18 +248,30 @@ def optimize_generic(phenotype, name, n_iter, init_points):
     bayesian_optimizer.maximize(init_points=init_points, n_iter=n_iter)
 
 def create_evaluate_generic(phenotype, name):
+
     def evaluate_generic(**kwargs):
         from tensorflow.keras.models import load_model
         import tensorflow as tf
         import numpy as np
+        from os.path import exists
+        if not exists(os.path.join(cwd_path, 'results/' , f"{name}_bo_cifar_results.csv")):
+            with open(os.path.join(cwd_path, 'results/' , f"{name}_bo_cifar_results.csv"), 'a') as f:
+                header = "epochs,max_val_accuracy,min_val_loss,test_accuracy"
+                i=0
+                for key, value in kwargs.items():
+                    phenotype.replace(key, f"tf.constant({value}, shape=shape, dtype=tf.float32)")
+                    header += f',param_{i}'
+                    i += 1
+                f.write(header) 
+        else:
+            for key, value in kwargs.items():
+                phenotype.replace(key, f"tf.constant({value}, shape=shape, dtype=tf.float32)")
 
-        for key, value in kwargs.items():
-            phenotype.replace(key, f"tf.constant({value}, shape=shape, dtype=tf.float32)")
 
         model = load_model('models/cifar_model.h5', compile=False)
         optimizer = CustomOptimizerArch(phen=phenotype, model=model)
         print("Going to evaluate")
-        result = evaluate_cifar_model(optimizer=optimizer, model=model, verbose=0, epochs=100, experiment_name=f'{name}_bo_cifar_results')
+        result = evaluate_cifar_model(optimizer=optimizer, model=model, verbose=0, epochs=1000, experiment_name=f'{name}_bo_cifar_results')
 
 
 
@@ -290,12 +302,15 @@ def create_evaluate_generic(phenotype, name):
 
 #phenotype = "alpha_func, beta_func, sigma_func, grad_func = lambda shape,  alpha, grad: tf.math.add(alpha, grad), lambda shape,  alpha, beta, grad: beta, lambda shape,  alpha, beta, sigma, grad: tf.constant(3.14881358e-03, shape=shape, dtype=tf.float32), lambda shape,  alpha, beta, sigma, grad: tf.math.multiply(sigma, alpha)"
 #optimize_generic(phenotype, "1.3_epoch35_id742", 10, 1)
-phenotype = "alpha_func, beta_func, sigma_func, grad_func = lambda layer_count, layer_num, shape, alpha, grad: tf.math.add(alpha, tf.constant(4.70911357e-03, shape=shape, dtype=tf.float32)), lambda layer_count, layer_num, shape, alpha, beta, grad: tf.math.multiply(tf.math.add(tf.math.add(grad, grad), tf.math.add(tf.constant(9.99847452e-01, shape=shape, dtype=tf.float32), tf.math.sqrt(tf.math.square(tf.math.negative(tf.math.multiply(grad, tf.constant(9.99944439e-01, shape=shape, dtype=tf.float32))))))), grad), lambda layer_count, layer_num, shape, alpha, beta, sigma, grad: beta, lambda layer_count, layer_num, shape, alpha, beta, sigma, grad: tf.math.multiply(beta, alpha)"
-optimize_generic(phenotype, "fmnist_only_attempts_run_0_population38_id274_millions", 10, 1)
+#phenotype = "alpha_func, beta_func, sigma_func, grad_func = lambda layer_count, layer_num, shape, alpha, grad: tf.math.add(alpha, tf.constant(4.70911357e-03, shape=shape, dtype=tf.float32)), lambda layer_count, layer_num, shape, alpha, beta, grad: tf.math.multiply(tf.math.add(tf.math.add(grad, grad), tf.math.add(tf.constant(9.99847452e-01, shape=shape, dtype=tf.float32), tf.math.sqrt(tf.math.square(tf.math.negative(tf.math.multiply(grad, tf.constant(9.99944439e-01, shape=shape, dtype=tf.float32))))))), grad), lambda layer_count, layer_num, shape, alpha, beta, sigma, grad: beta, lambda layer_count, layer_num, shape, alpha, beta, sigma, grad: tf.math.multiply(beta, alpha)"
+#optimize_generic(phenotype, "fmnist_only_attempts_run_0_population38_id274_millions", 10, 1)
 
-phenotype = "alpha_func, beta_func, sigma_func, grad_func = lambda layer_count, layer_num, shape, alpha, grad: tf.math.negative(grad), lambda layer_count, layer_num, shape, alpha, beta, grad: tf.math.divide_no_nan(tf.math.divide_no_nan(layer_count, tf.math.multiply(grad, tf.math.multiply(layer_num, tf.math.square(tf.math.pow(grad, tf.constant(1.0, shape=shape, dtype=tf.float32)))))), beta), lambda layer_count, layer_num, shape, alpha, beta, sigma, grad: tf.constant(1.0, shape=shape, dtype=tf.float32), lambda layer_count, layer_num, shape, alpha, beta, sigma, grad: tf.math.divide_no_nan(alpha, tf.math.divide_no_nan(tf.math.multiply(tf.math.square(tf.constant(0.1, shape=shape, dtype=tf.float32)), tf.math.square(tf.math.square(tf.constant(0.01, shape=shape, dtype=tf.float32)))), tf.math.sqrt(tf.math.add(tf.math.pow(tf.constant(1.0, shape=shape, dtype=tf.float32), tf.constant(0.0, shape=shape, dtype=tf.float32)), tf.math.subtract(tf.constant(0.1, shape=shape, dtype=tf.float32), alpha)))))"
-optimize_generic(phenotype, "fmnist_only_attempts_run_0_population30_id367_arch", 10, 1)
+#phenotype = "alpha_func, beta_func, sigma_func, grad_func = lambda layer_count, layer_num, shape, alpha, grad: tf.math.negative(grad), lambda layer_count, layer_num, shape, alpha, beta, grad: tf.math.divide_no_nan(tf.math.divide_no_nan(layer_count, tf.math.multiply(grad, tf.math.multiply(layer_num, tf.math.square(tf.math.pow(grad, tf.constant(1.0, shape=shape, dtype=tf.float32)))))), beta), lambda layer_count, layer_num, shape, alpha, beta, sigma, grad: tf.constant(1.0, shape=shape, dtype=tf.float32), lambda layer_count, layer_num, shape, alpha, beta, sigma, grad: tf.math.divide_no_nan(alpha, tf.math.divide_no_nan(tf.math.multiply(tf.math.square(tf.constant(0.1, shape=shape, dtype=tf.float32)), tf.math.square(tf.math.square(tf.constant(0.01, shape=shape, dtype=tf.float32)))), tf.math.sqrt(tf.math.add(tf.math.pow(tf.constant(1.0, shape=shape, dtype=tf.float32), tf.constant(0.0, shape=shape, dtype=tf.float32)), tf.math.subtract(tf.constant(0.1, shape=shape, dtype=tf.float32), alpha)))))"
+#optimize_generic(phenotype, "fmnist_only_attempts_run_0_population30_id367_arch", 10, 1)
 
+phenotype = "alpha_func, beta_func, sigma_func, grad_func = lambda layer_count, layer_num, shape, alpha, grad: layer_count, lambda layer_count, layer_num, shape, alpha, beta, grad: tf.constant(0.01, shape=shape, dtype=tf.float32), lambda layer_count, layer_num, shape, alpha, beta, sigma, grad: tf.math.divide_no_nan(grad, layer_count), lambda layer_count, layer_num, shape, alpha, beta, sigma, grad: tf.math.multiply(grad, tf.math.divide_no_nan(tf.math.divide_no_nan(grad, tf.math.negative(tf.math.multiply(grad, tf.math.subtract(layer_count, layer_num)))), tf.math.negative(layer_num)))"
+for i in range(29):
+    create_evaluate_generic(phenotype, "basin_learning_rate_optimizer")()
 """
 phenotype = "alpha_func, beta_func, sigma_func, grad_func = lambda layer_count, layer_num, shape, alpha, grad: tf.math.add(alpha, tf.math.subtract(grad, tf.constant(1.90885420e-02, shape=shape, dtype=tf.float32))), lambda shape,  alpha, beta, grad: tf.math.multiply(tf.math.add(tf.math.add(grad, grad), grad), tf.math.subtract(tf.math.negative(tf.constant(1.52547986e-04, shape=shape, dtype=tf.float32)), tf.constant(3.85103236e-03, shape=shape, dtype=tf.float32))), lambda shape,  alpha, beta, sigma, grad: grad, lambda shape,  alpha, beta, sigma, grad: beta"
 optimize_generic(phenotype, "1.3_epoch42_id999", 10, 1)
@@ -315,8 +330,8 @@ optimize_generic(phenotype, "1.3_epoch55_id1522", 10, 1)
 phenotype = "alpha_func, beta_func, sigma_func, grad_func = lambda shape,  alpha, grad: tf.math.add(alpha, tf.constant(4.70911357e-03, shape=shape, dtype=tf.float32)), lambda shape,  alpha, beta, grad: tf.math.multiply(tf.math.add(tf.math.add(grad, grad), tf.math.add(tf.constant(9.98279874e-01, shape=shape, dtype=tf.float32), tf.math.sqrt(tf.math.square(tf.math.negative(tf.math.multiply(tf.constant(9.94242714e-01, shape=shape, dtype=tf.float32), tf.math.divide_no_nan(grad, grad))))))), grad), lambda shape,  alpha, beta, sigma, grad: tf.constant(9.99720385e-01, shape=shape, dtype=tf.float32), lambda shape,  alpha, beta, sigma, grad: tf.math.multiply(beta, alpha)"
 optimize_generic(phenotype, "1.3_epoch75_id2458", 10, 1)
 """
-phen = "alpha_func, beta_func, sigma_func, grad_func = lambda layer_count, layer_num, shape, alpha, grad: layer_count, lambda layer_count, layer_num, shape, alpha, beta, grad: tf.constant(0.01, shape=shape, dtype=tf.float32), lambda layer_count, layer_num, shape, alpha, beta, sigma, grad: tf.math.divide_no_nan(grad, layer_count), lambda layer_count, layer_num, shape, alpha, beta, sigma, grad: tf.math.multiply(grad, tf.math.divide_no_nan(tf.math.divide_no_nan(grad, tf.math.negative(tf.math.multiply(grad, tf.math.subtract(layer_count, layer_num)))), tf.math.negative(layer_num)))"
-arch_learning_rate_opt_eval = evaluate_generic(phen=phen, name='arch_learning_rate_opt')
+#phen = "alpha_func, beta_func, sigma_func, grad_func = lambda layer_count, layer_num, shape, alpha, grad: layer_count, lambda layer_count, layer_num, shape, alpha, beta, grad: tf.constant(0.01, shape=shape, dtype=tf.float32), lambda layer_count, layer_num, shape, alpha, beta, sigma, grad: tf.math.divide_no_nan(grad, layer_count), lambda layer_count, layer_num, shape, alpha, beta, sigma, grad: tf.math.multiply(grad, tf.math.divide_no_nan(tf.math.divide_no_nan(grad, tf.math.negative(tf.math.multiply(grad, tf.math.subtract(layer_count, layer_num)))), tf.math.negative(layer_num)))"
+#arch_learning_rate_opt_eval = evaluate_generic(phen=phen, name='arch_learning_rate_opt')
 #phen = "alpha_func, beta_func, sigma_func, grad_func = lambda layer_count, layer_num, shape, alpha, grad: layer_count, lambda layer_count, layer_num, shape, alpha, beta, grad: tf.constant(0.01, shape=shape, dtype=tf.float32), lambda layer_count, layer_num, shape, alpha, beta, sigma, grad: tf.math.divide_no_nan(grad, layer_count), lambda layer_count, layer_num, shape, alpha, beta, sigma, grad: tf.math.multiply(grad, tf.math.divide_no_nan(tf.math.divide_no_nan(grad, tf.math.negative(tf.math.multiply(grad, tf.math.subtract(layer_count, layer_num)))), tf.math.negative(layer_num)))"
 #arch_learning_rate_opt_eval = evaluate_generic(phen=phen, name='arch_learning_rate_opt')
 

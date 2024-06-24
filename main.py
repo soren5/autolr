@@ -33,11 +33,13 @@ class Optimizer_Evaluator_Dual_Task:
             foo = self.train_model_fmnist(phen)
             fit = -foo[0]
             other_info = foo[1]
+            other_info['task'] = 'fmnist'
         elif params["CURRENT_GEN"] % 2 == 1:
             print("Running CIFAR")
             foo = self.train_model_cifar(phen)
             fit = -foo[0]
             other_info = foo[1]
+            other_info['task'] = 'cifar'
         else:
             raise Exception("CURRENT GEN IN EVALUATE IS INVALID")
         """
@@ -45,9 +47,10 @@ class Optimizer_Evaluator_Dual_Task:
             foo = self.train_model_fmnist(phen)
             fit = -foo[0]
             other_info = foo[1]
+            other_info['source'] = 'evaluation'
         else:
             fit = -0.1
-            other_info = {}
+            other_info = {'source': 'sanity check'}
         return fit, other_info
 
     def init_net(self, params):
