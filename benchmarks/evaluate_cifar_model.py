@@ -113,8 +113,7 @@ def evaluate_cifar_model(dataset=None, model=None, optimizer=None, batch_size=10
         data_frame = pd.read_csv(os.path.join(cwd_path, 'results/' , experiment_name + ".csv"))
         col_values = [epoch_progress, max(result[1]['val_accuracy']), min(result[1]['val_loss']), result[0]]
         col_names = ["epochs", "max_val_accuracy", "min_val_loss", "test_accuracy"] 
-
-        data_frame = data_frame.concat(pd.DataFrame([col_values], columns=col_names), ignore_index=True)
+        data_frame = pd.concat([data_frame, pd.DataFrame([col_values], columns=col_names)], ignore_index=True)
         data_frame.to_csv(os.path.join(cwd_path, 'results/' , experiment_name + ".csv"), index=False)
  
     return result

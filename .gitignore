@@ -176,3 +176,5 @@ lib64
 benchmark1.py
 pyvenv.cfg
 ttx.1
+n_results/
+local_data/

@@ -119,6 +119,7 @@ class CustomOptimizerArch(keras.optimizers.Optimizer):
         super().__init__(name, **kwargs)
         self.phen = phen
         self._learning_rate = 1.0
+        self._name = name
 
         if phen == None:
             self._alpha_func = alpha_func
