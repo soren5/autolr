@@ -55,6 +55,7 @@ def start_population_from_scratch():
     return population, archive, counter, it 
 
 def evaluate(ind, eval_func):
+    start = time.time()
     if 'phenotype' not in ind:
         mapping_values = [0 for i in ind['genotype']]
         phen, tree_depth = grammar.mapping(ind['genotype'], mapping_values)
@@ -64,20 +65,30 @@ def evaluate(ind, eval_func):
         tree_depth = ind['tree_depth']
     other_info = {}
     print(f"Registering {smart_phenotype(phen)}")
-    if "FAKE_FITNESS" in params and params['FAKE_FITNESS']:
-        print(f"USING FAKE FITNESS")
-        import numpy as np
-        import tensorflow as tf
-        quality = -(random.random() + np.random.random())/2
-    else:
-        if 'grad' in smart_phenotype(phen):
-            quality, other_info = eval_func.evaluate(phen, params)
+    if 'grad' in smart_phenotype(phen):
+        if "FAKE_FITNESS" in params and params['FAKE_FITNESS']:
+            print(f"USING FAKE FITNESS")
+            import numpy as np
+            import tensorflow as tf
+            quality = -(random.random() + np.random.random())/2
+            other_info = {'source': 'evaluation'}
         else:
-            print('\tSKIP xor check')
-            quality = params['FITNESS_FLOOR']
+            quality, other_info = eval_func.evaluate(phen, params)
+    else:
+        print('\tSKIP xor check')
+        quality = params['FITNESS_FLOOR']
+        other_info = {'source': 'invalid detection'}
+
+
+    end = time.time()
+    if "FAKE_FITNESS" in params and params['FAKE_FITNESS']:
+        duration = random.random()
+    else:
+        duration = end - start
     ind['phenotype'] = phen 
     ind['fitness'] = quality
     ind['other_info'] = other_info
+    ind['other_info']['duration'] = duration
     ind['mapping_values'] = mapping_values
     ind['tree_depth'] = tree_depth
     ind['key'] = dual_task_key(ind['phenotype'], params['CURRENT_GEN'])
@@ -109,7 +120,7 @@ def setup(evaluation_function=None, parameters=None, logger=None):
     grammar.set_max_tree_depth(params['MAX_TREE_DEPTH'])
     grammar.set_min_init_tree_depth(params['MIN_TREE_DEPTH'])
     
-    if evaluation_function != None:
+    if evaluation_function != None and not ("FAKE_FITNESS" in params and params['FAKE_FITNESS']):
         evaluation_function.init_net(params)
         evaluation_function.init_data(params)
         evaluation_function.init_evaluation(params)
@@ -280,6 +291,7 @@ def reproduce_via_elitism(population):
     new_population = population[:params['ELITISM']]
     for indiv in new_population:
         indiv['operation'] = 'elitism'
+        indiv['other_info']['source'] = 'elitism'
     return new_population, population
 
 def sort_pop_based_on_fitness(population):
@@ -293,6 +305,10 @@ def update_key_and_fitness_based_on_archive(archive, indiv):
 
 def update_fitness_based_on_archive(archive, indiv, key):
     indiv['fitness'] = archive[key]['fitness']
+    if 'other_info' not in indiv:
+        indiv['other_info'] = {}
+    if 'source' not in indiv['other_info']:
+        indiv['other_info']['source'] = 'archive'
 
 def update_key(indiv):
     key = dual_task_key(indiv['phenotype'], params['CURRENT_GEN'])
@@ -306,39 +322,6 @@ def update_best_fitness(population, archive):
         if archive[key]['fitness'] < best_fit:
                 # best = archive[key]
             best_fit = archive[key]['fitness'] 
-        """    
-            to_remove = []
-            for eval_index in evaluation_indices:
-                eval_count = 0
-                # Iterate all the individuals, if they are statiscally different from the best, remove them from the next iteration of the cycle.
-                # If they are similar to best, re-evaluate
-                indiv = population[eval_index]
-                key = indiv['smart_phenotype']
-
-                if indiv['id'] != best['id']:
-                    try:
-                        stat, p_value = stats.mannwhitneyu(best['evaluations'], archive[indiv['smart_phenotype']]['evaluations'])
-                    except ValueError as e:
-                        p_value = 1
-                    if p_value < 0.05:
-                        to_remove.append(eval_index)
-                    else:
-                        # There is no statistical difference, re-evaluate
-                        key = indiv['smart_phenotype']  
-                        os.system("clear")    
-                        print(f"[{it}]-Reval: indiv {eval_count}/{len(evaluation_indices)} eval #{len(archive[key]['evaluations']) + 1}  {key}")
-                        evaluate(indiv, evaluation_function)
-                        archive[key]['evaluations'].append(indiv['fitness'])
-                        archive[key]['fitness'] = statistics.mean(archive[key]['evaluations']) 
-            for remove_index in to_remove:
-                evaluation_indices.remove(remove_index)
-            #ids_left = [population[x]["id"] for x in evaluation_indices]
-            if len(evaluation_indices) > 1:
-                try:
-                    stat, p_value_kruskal = stats.kruskal(*[archive[population[x]['smart_phenotype']]['evaluations'] for x in evaluation_indices])
-                except ValueError as e:
-                    p_value_kruskal = 1
-        """
         return population, archive
 
 def update_archive(evaluation_function, archive, indiv, it):
@@ -349,29 +332,10 @@ def update_archive(evaluation_function, archive, indiv, it):
     if key not in archive:
         archive[key] = {'evaluations': []}
         archive[key]['id'] = indiv['id']
-                # evaluate seems to be deterministic. 
-                # Btw., if not, the caching of key|fitness pairs wouldn't be 100% correct
         evaluate(indiv, evaluation_function)
         archive[key]['evaluations'].append(indiv['fitness'])
         archive[key]['fitness'] = statistics.mean(archive[key]['evaluations'])
-    """
-    # if in doubt (you should;), test:
-    for _ in range(5):                     
-        evaluate(indiv, evaluation_function)
-        archive[key]['evaluations'].append(indiv['fitness'])
-        archive[key]['fitness'] = statistics.mean(archive[key]['evaluations'])
-    deterministic = archive[key]['evaluations'][0]
-    for x in archive[key]['evaluations']:
-        if not isclose(x, deterministic):
-            raise "wrong assumption!"
-                
-    # `works` without:
-    try:
-        stat, p_value_kruskal = stats.kruskal(*[archive[population[x]['smart_phenotype']]['evaluations'] for x in evaluation_indices])
-    except ValueError as e:
-        p_value_kruskal = 1
-    while p_value_kruskal < 0.05 and len(evaluation_indices) > 1:
-    """
+
     return evaluation_function, archive, indiv
 
 def initialize_pop(logger):

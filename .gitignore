@@ -178,3 +178,4 @@ pyvenv.cfg
 ttx.1
 n_results/
 local_data/
+*.sh
