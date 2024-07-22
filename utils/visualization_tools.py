@@ -103,6 +103,18 @@ def load_results(root_dir):
                     data = json.load(file)
                     for x in data:
                         if type(x) == dict:
+                            #print(x)
+                            if 'duration' not in x:
+                                if 'duration' in x['other_info']:
+                                    x['duration'] = x['other_info']['duration']
+                                else:
+                                    x['duration'] = 0.0
+                            if 'source' not in x:
+                                #print(x)
+                                if 'source' in x['other_info']:
+                                    x['source'] = x['other_info']['source']
+                                else:
+                                    x['source'] = 'Unknown'
                             indiv_data = {
                                 'Experiment name': experiment_name,
                                 'Run number': run_number,
@@ -110,7 +122,9 @@ def load_results(root_dir):
                                 'Generation': extract_number(json_file_path),
                                 'Phenotype': x['phenotype'],
                                 'Smart Phenotype': x['smart_phenotype'],
-                                'Fitness': x['fitness']
+                                'Fitness': x['fitness'],
+                                'Duration': x['duration'],
+                                'Source': x['source']
                             }
                             processed_data.append(indiv_data)
         except Exception as e:
