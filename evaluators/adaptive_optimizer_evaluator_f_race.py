@@ -136,7 +136,7 @@ def evaluate_model(phen, validation_size, batch_size, epochs, patience):
     
     # optimizer is constant aslong as phen doesn't changed?
     # -> opportunity to cache opt and compiled model
-    opt = CustomOptimizer(phen=phen, model=model)
+    opt = CustomOptimizerArch(phen=phen, model=model)
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
     early_stop = keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=patience, restore_best_weights=True)
     

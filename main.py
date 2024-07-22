@@ -12,8 +12,15 @@ class Optimizer_Evaluator_Tensorflow:
         self.train_model = train_model
     
     def evaluate(self, phen, params):
-        foo = self.train_model([phen, params])
-        return -foo[0], foo[1]
+        if xor_check(phen):
+            foo = self.train_model([phen, params])
+            fit = -foo[0]
+            other_info = foo[1]
+            other_info['source'] = 'evaluation'
+        else:
+            fit = -0.1
+            other_info = {'source': 'sanity check'}
+        return fit, other_info
 
     def init_net(self, params):
         pass
@@ -214,6 +221,6 @@ if __name__ == "__main__":
             from evaluators.adaptive_optimizer_evaluator_f_race import train_model_tensorflow_mnist 
             evaluation_function = Optimizer_Evaluator_Tensorflow(train_model_tensorflow_mnist)
 
-    sge.evolutionary_algorithm(evaluation_function=Optimizer_Evaluator_Dual_Task())
-        
+    #sge.evolutionary_algorithm(evaluation_function=Optimizer_Evaluator_Dual_Task())
+    sge.evolutionary_algorithm(evaluation_function=Optimizer_Evaluator_Tensorflow())  
 

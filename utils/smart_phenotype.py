@@ -4,7 +4,7 @@ def trim_phenotype(phenotype):
         phenotype = phenotype.replace("tf.math.", "")
         phenotype = phenotype.replace("tf.", "")
         #functions = phenotype.split(r'lambda shape, alpha')
-        functions = phenotype.split(r'lambda layer_count, layer_num, shape, alpha, ')
+        functions = phenotype.split(r'lambda layer_count, layer_num, shape, alpha')
     elif "size" in phenotype:
         phenotype = phenotype.replace(", size=size, dtype=torch.float32", "")
         phenotype = phenotype.replace("torch.", "")        
@@ -33,6 +33,10 @@ def dual_task_key(phenotype, it):
     else:
         task = 'CIFAR10/MOBILE: '
     return task + s_phen
+
+def single_task_key(phenotype, it):
+    s_phen = smart_phenotype(phenotype)
+    return s_phen
 
 def readable_phenotype(phenotype):
     functions = trim_phenotype(phenotype)
