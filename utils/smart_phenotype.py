@@ -37,11 +37,16 @@ def dual_task_key(phenotype, it):
     task = ''
     return task + s_phen
 
+def single_task_key(phenotype, it):
+    s_phen = smart_phenotype(phenotype)
+    return s_phen
+
 def readable_phenotype(phenotype):
     functions = trim_phenotype(phenotype)
+    print(f'Readable Phenotype Functions: {functions[0]}\n{functions[1]}\n{functions[2]}\n{functions[3]}\n')
     alpha_func_string = functions[1][8:-2]
-    beta_func_string =functions[2][14:-2] 
-    sigma_func_string =functions[3][21:-2] 
+    beta_func_string = functions[2][14:-2] 
+    sigma_func_string = functions[3][21:-2] 
     grad_func_string = functions[-1][21:]
     readable_phenotype_string = f"{alpha_func_string}\n{beta_func_string}\n{sigma_func_string}\n{grad_func_string}\n"
 
