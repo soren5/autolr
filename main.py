@@ -12,7 +12,8 @@ class Optimizer_Evaluator_Tensorflow:
         self.train_model = train_model
     
     def evaluate(self, phen, params):
-        if xor_check(phen):
+        #if xor_check(phen):
+        if True:
             foo = self.train_model([phen, params])
             fit = -foo[0]
             other_info = foo[1]
