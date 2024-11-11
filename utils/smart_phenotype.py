@@ -28,10 +28,13 @@ def smart_phenotype(phenotype):
 
 def dual_task_key(phenotype, it):
     s_phen = smart_phenotype(phenotype)
+    """
     if it % 2 == 0:
         task = 'FMNIST/VGG16: '
     else:
         task = 'CIFAR10/MOBILE: '
+    """
+    task = ''
     return task + s_phen
 
 def single_task_key(phenotype, it):
