@@ -1,10 +1,19 @@
+from sge.parameters import params
+
 def trim_phenotype(phenotype):
+    print(params)
     if "shape" in phenotype:
         phenotype = phenotype.replace(", shape=shape, dtype=tf.float32", "")
         phenotype = phenotype.replace("tf.math.", "")
         phenotype = phenotype.replace("tf.", "")
-        #functions = phenotype.split(r'lambda shape, alpha')
-        functions = phenotype.split(r'lambda layer_count, layer_num, shape, alpha')
+        print(params['GRAMMAR'])
+        if 'architecture' in params['GRAMMAR']:
+            print("THIS IS AN ARCHITECTURAL GRAMMAR")
+            functions = phenotype.split(r'lambda layer_count, layer_num, shape, alpha')
+        else:
+            print("THIS IS NOT AN ARCHITECTURAL GRAMMAR")
+            functions = phenotype.split(r'lambda shape, alpha')
+
     elif "size" in phenotype:
         phenotype = phenotype.replace(", size=size, dtype=torch.float32", "")
         phenotype = phenotype.replace("torch.", "")        

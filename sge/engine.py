@@ -17,7 +17,8 @@ from scipy import stats
 import numpy as np
 from sge.parameters import (
     params,
-    set_parameters
+    set_parameters,
+    manual_load_parameters
 )
 from utils.genotypes import *
 from utils.smart_phenotype import smart_phenotype, single_task_key
@@ -96,11 +97,12 @@ def evaluate(ind, eval_func):
 
 
 def setup(evaluation_function=None, parameters=None, logger=None):
-    global params
     if parameters is None:
         set_parameters(sys.argv[1:])
     else:
-        params = parameters
+        manual_load_parameters(parameters)
+    print(params)
+
     #print(params)
     if 'SEED' not in params:
         params['SEED'] = int(datetime.now().microsecond)

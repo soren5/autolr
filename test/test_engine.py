@@ -1,4 +1,5 @@
 import utils.utilities as ut
+
 class TensorflowFitnessGenerator:
     def __init__(self) -> None:
         self.fitness ={}
@@ -56,7 +57,7 @@ def test_engine():
         18: 0.05, 
         19: 0.15},
         "TSIZE": 2,
-        "GRAMMAR": 'grammars/adaptive_autolr_grammar_mutate_level.txt',
+        "GRAMMAR": 'grammars/adaptive_autolr_grammar_architecture_mutate_level.txt',
         "EXPERIMENT_NAME": 'dumps/test_engine',
         "RUN": 1,
         "INCLUDE_GENOTYPE": True,
@@ -70,7 +71,6 @@ def test_engine():
     sge.evolutionary_algorithm(parameters=parameters)
     ut.delete_directory(parameters['EXPERIMENT_NAME'], "run_1")
 
-
 def test_default_parameters():
     import sge.grammar as grammar
     import sge    
@@ -80,7 +80,6 @@ def test_default_parameters():
     evaluation_function = Optimizer_Evaluator_Tensorflow()
 
     sge.evolutionary_algorithm(evaluation_function=evaluation_function)
-
 
 def test_mutation_errors():
     import sge.grammar as grammar
@@ -111,7 +110,6 @@ def test_mutation_errors():
         raise AssertionError("Failed to catch invalid Mutation Type Error successfully")
     ut.delete_directory(parameters['EXPERIMENT_NAME'], "run_1")
 
-
 def test_parameters():
     import sge, os
     parameters = {
@@ -122,7 +120,7 @@ def test_parameters():
         "PROB_CROSSOVER": 0.0,
         "PROB_MUTATION": 0.1,
         "TSIZE": 3,
-        "GRAMMAR": 'grammars/adaptive_autolr_grammar_mutate_level.txt',
+        "GRAMMAR": 'grammars/adaptive_autolr_grammar_architecture_mutate_level.txt',
         "EXPERIMENT_NAME": 'test_parameter',
         "RUN": 1,
         "INCLUDE_GENOTYPE": True,
@@ -157,7 +155,7 @@ def test_archive():
         "PROB_CROSSOVER": 0.0,
         "PROB_MUTATION": 0.9,
         "TSIZE": 3,
-        "GRAMMAR": 'grammars/adaptive_autolr_grammar_mutate_level.txt',
+        "GRAMMAR": 'grammars/adaptive_autolr_grammar_architecture_mutate_level.txt',
         "EXPERIMENT_NAME": 'dumps/test_archive',
         "RUN": 1,
         "INCLUDE_GENOTYPE": True,
@@ -187,6 +185,7 @@ def test_archive():
 def test_archive_id():
     import sge
     import tensorflow as tf
+    from sge.parameters import manual_load_parameters
     parameters = {
         "SELECTION_TYPE": "tournament",
         "POPSIZE": 10,
@@ -195,7 +194,7 @@ def test_archive_id():
         "PROB_CROSSOVER": 0.0,
         "PROB_MUTATION": 0.001,
         "TSIZE": 3,
-        "GRAMMAR": 'grammars/adaptive_autolr_grammar_mutate_level.txt',
+        "GRAMMAR": 'grammars/adaptive_autolr_grammar_architecture_mutate_level.txt',
         "EXPERIMENT_NAME": 'dumps/test_archive',
         "RUN": 1,
         "INCLUDE_GENOTYPE": True,
@@ -208,26 +207,58 @@ def test_archive_id():
     }
 
     fitness = TensorflowFitnessGenerator()
+
+    manual_load_parameters(parameters, reset=True)
     pop1 = sge.evolutionary_algorithm(parameters=parameters, evaluation_function=fitness)
+
     parameters['RESUME'] = 1
     parameters['LOAD_ARCHIVE'] = True
+    parameters['PARENT_EXPERIMENT'] = parameters['EXPERIMENT_NAME']
+    #manual_load_parameters(parameters)
+
     pop2 = sge.evolutionary_algorithm(parameters=parameters, evaluation_function=fitness)
     ut.delete_directory(parameters['EXPERIMENT_NAME'], "run_1")
+    pop1 = ut.prune_population(pop1)
+    pop2 = ut.prune_population(pop2)
+
+    with open("log.log", 'w') as f:
+        print(ut._unidiff_output(str(pop1), str(pop2)), file=f)
+    with open("log1.log", 'w') as f:
+        print(str(pop1), file=f)   
+    with open("log2.log", 'w') as f:
+        print(str(pop2), file=f)
+    #print(f"\n\n\n{len(pop1)}, {len(pop2)}")
+
     assert pop1 == pop2
 
+
 def test_reevaluation():
-    from sge.engine import evaluate 
-    
-    import copy 
+    import yaml
+    from sge.parameters import load_parameters
+    import copy
+
     class FitnessEvaluator:
         def __init__(self) -> None:
             pass
         def evaluate(self, phen, parameters):
             return 1, {}
-    indiv = {'genotype': [[0], [1], [], [0], [1], [], [1], [], [0], [0], [8], [0, 1, 1], [6], [0, 1], [1], [], [0, 1, 0, 1, 0, 1, 0], [1, 4, 4, 9], [1, 1, 2], [43]], 'fitness': 1, 'tree_depth': 9, 'operation': 'initialization', 'id': 0, 'phenotype': 'alpha_func, beta_func, sigma_func, grad_func = lambda shape,  alpha, grad: alpha, lambda shape,  alpha, beta, grad: tf.constant(2.28478855e-04, shape=shape, dtype=tf.float32), lambda shape,  alpha, beta, sigma, grad: tf.math.divide_no_nan(alpha, grad), lambda shape,  alpha, beta, sigma, grad: grad', 'mapping_values': [1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 3, 1, 2, 1, 0, 7, 4, 3, 1], 'smart_phenotype': 'subtract(alpha, pow(alpha, pow(constant(2.28478855e-04), constant(2.11963334e-01))))', 'other_info': {}}
+    
+    evaluator = FitnessEvaluator()
+    load_parameters("parameters/adaptive_autolr.yml")
+    #params['CURRENT_GEN'] = 0
+    indiv = {'key': 'grad', 'genotype': [[0], [1], [], [0], [1], [], [1], [], [0], [0], [8], [0, 1, 1], [6], [0, 1], [1], [], [0, 1, 0, 1, 0, 1, 0], [1, 4, 4, 9], [1, 1, 2], [43]], 'fitness': 1, 'tree_depth': 9, 'operation': 'initialization', 'id': 0, 'phenotype': 'alpha_func, beta_func, sigma_func, grad_func = lambda shape, alpha, grad: alpha, lambda shape, alpha, beta, grad: tf.constant(2.28478855e-04, shape=shape, dtype=tf.float32), lambda shape, alpha, beta, sigma, grad: tf.math.divide_no_nan(alpha, grad), lambda shape, alpha, beta, sigma, grad: grad', 'mapping_values': [1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 3, 1, 2, 1, 0, 7, 4, 3, 1], 'smart_phenotype': 'subtract(alpha, pow(alpha, pow(constant(2.28478855e-04), constant(2.11963334e-01))))', 'other_info': {}}
     indiv_2 = copy.deepcopy(indiv)
-    evaluate(indiv_2, FitnessEvaluator())
+    evaluator.evaluate(indiv_2, FitnessEvaluator())
+
+    indiv.pop('other_info')
+    indiv_2.pop('other_info')
+
+    print(indiv)
+    print(indiv_2)
+    
+    print(indiv == indiv_2)
     assert indiv == indiv_2
 
-if __name__ == "__main__":
-    test_engine()
+
+#if __name__ == "__main__":
+#    test_archive_id()

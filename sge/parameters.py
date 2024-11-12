@@ -32,6 +32,7 @@ params = {
     'PATIENCE': False,
     'FITNESS_FLOOR': 0,
     'LOAD_ARCHIVE': True,
+    'CURRENT_GEN': -1,
     }
 
 
@@ -41,7 +42,11 @@ def load_parameters(file_name="parameters/adaptive_autolr.yml"):
     print("using ",file_name, "for parameters")
     params.update(cfg)
 
-
+def manual_load_parameters(parameters, reset=False):
+    if reset:
+        params.clear()
+    params.update(parameters)
+    
 def set_parameters(arguments):
     # Initialise parser
     parser = argparse.ArgumentParser(
