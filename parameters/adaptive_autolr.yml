@@ -6,7 +6,7 @@ SEED: 0
 PROB_CROSSOVER: 0.0
 PROB_MUTATION: 0.15
 TSIZE: 2
-GRAMMAR: 'grammars/adaptive_autolr_grammar.txt'
+GRAMMAR: 'grammars/adaptive_autolr_grammar_architecture_mutate_level.txt'
 EXPERIMENT_NAME: 'dumps/test_engine'
 RUN: 1
 INCLUDE_GENOTYPE: True

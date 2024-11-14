@@ -72,7 +72,7 @@ def train_model_torch(phen, params, net, train_loader, validation_loader, fitnes
             patience_counter = 0
         else:
             patience_counter += 1
-        print(f'[{epoch + 1}][{patience_counter}/{params["PATIENCE"]}] loss: {training_loss} val_loss:{validation_loss}')
+        #print(f'[{epoch + 1}][{patience_counter}/{params["PATIENCE"]}] loss: {training_loss} val_loss:{validation_loss}')
 
         if loss.isnan() or patience_counter == params["PATIENCE"]:
             break
@@ -111,10 +111,10 @@ def train_model_torch(phen, params, net, train_loader, validation_loader, fitnes
     for classname, correct_count in correct_pred.items():
         accuracy = 100 * float(correct_count) / total_pred[classname]
         total_accuracy += accuracy
-        print("Accuracy for class {:5s} is: {:.1f} %".format(classname, accuracy))
+        #print("Accuracy for class {:5s} is: {:.1f} %".format(classname, accuracy))
     total_accuracy /= len(classes)
     #print(f"Total Accuracy {total_accuracy}")
-    return total_accuracy / 100, 0
+    return total_accuracy / 100, {}
 
 if __name__ == "__main__":
     params = {

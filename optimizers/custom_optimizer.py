@@ -394,3 +394,222 @@ class CustomOptimizerTorch(torch.optim.Optimizer):
                         p.add_(self.grad_func(p.size(), p.grad, alpha, beta, sigma, self.device), alpha=1.0)
             return loss
             
+class CustomOptimizerArchV2(keras.optimizers.Optimizer):
+    def __init__(self,
+                            name="CustomOptimizerArchV2",
+                            phen=None,
+                            model=None,
+                            grad_func=None,
+                            alpha=None,
+                            alpha_func=None,
+                            beta=None,
+                            beta_func=None,
+                            sigma=None,
+                            sigma_func=None,
+                            vars=None,
+                            **kwargs):
+
+        super().__init__(name, **kwargs)
+        self.phen = phen
+        self._learning_rate = 1.0
+        self._name = name
+
+        if phen == None:
+            self._alpha_func = alpha_func
+            self._beta_func = beta_func
+            self._sigma_func = sigma_func
+            self._grad_func = grad_func
+        else:
+            exec_env = {"tf": tf}
+            exec(phen, exec_env)
+            self._alpha_func = exec_env["alpha_func"]
+            self._beta_func = exec_env["beta_func"]
+            self._sigma_func = exec_env["sigma_func"]
+            self._grad_func = exec_env["grad_func"]
+
+        if alpha != None:
+            print("Loading Alpha ", alpha)
+            self._alpha_dict = alpha
+            self._beta_dict = beta
+            self._sigma_dict = sigma
+        else:
+            self._alpha_dict = {}
+            self._beta_dict = {}
+            self._sigma_dict = {}
+            self._depth_dict = {}
+            self._layer_count = {}
+            depth = 0
+
+            if model != None:
+                    for layer in model.layers:
+                        for trainable_weight in layer._trainable_weights:
+                            #print(trainable_weight.name)
+                            self._depth_dict[trainable_weight.name] = tf.constant(depth, shape=trainable_weight.shape, dtype=tf.float32)
+                            self._alpha_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="alpha" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
+                            self._beta_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="beta" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
+                            self._sigma_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="sigma" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
+                            depth += 1
+                    for layer in model.layers:
+                        for trainable_weight in layer._trainable_weights:
+                            #print(trainable_weight.name)
+                            self._layer_count[trainable_weight.name] = tf.constant(depth, shape=trainable_weight.shape, dtype=tf.float32)
+            elif vars != None:
+                for var in vars:
+                    self._depth_dict[var.name] = tf.constant(depth, shape=var.shape, dtype=tf.float32)
+                    self._alpha_dict[var.name] = tf.Variable(np.zeros(var.shape) , name="alpha" + var.name[:-2], shape=var.shape, dtype=tf.float32)
+                    self._beta_dict[var.name] = tf.Variable(np.zeros(var.shape) , name="beta" + var.name[:-2], shape=var.shape, dtype=tf.float32)
+                    self._sigma_dict[var.name] = tf.Variable(np.zeros(var.shape) , name="sigma" + var.name[:-2], shape=var.shape, dtype=tf.float32)
+                    depth += 1
+                for var in vars:
+                    #print(trainable_weight.name)
+                    self._layer_count[var.name] = tf.constant(depth, shape=var.shape, dtype=tf.float32)
+            else:
+                raise Exception("Nothing to optimize")
+
+    def check_slots(self):
+        return self._alpha_dict == None and self._beta_dict == None and self._sigma_dict == None
+
+    def init_variables(self, var_list):
+        import numpy as np
+        create_alpha_flag = self._alpha_dict == None
+        create_beta_flag = self._beta_dict == None
+        create_sigma_flag = self._sigma_dict == None
+
+        #If var dict has not been created create and empty dict
+        self._alpha_dict = {} if create_alpha_flag else self._alpha_dict
+        self._beta_dict = {} if create_beta_flag else self._beta_dict
+        self._sigma_dict = {} if create_sigma_flag else self._sigma_dict
+
+        for var in var_list:
+            if create_alpha_flag:
+                self._alpha_dict[var.name] = tf.Variable(np.zeros(var.shape), name="alpha" + var.name[:-2], shape=var.shape, dtype=tf.float32)
+            if create_beta_flag:
+                self._beta_dict[var.name] = tf.Variable(np.zeros(var.shape), name="beta" + var.name[:-2], shape=var.shape, dtype=tf.float32)
+            if create_sigma_flag:
+                self._sigma_dict[var.name] = tf.Variable(np.zeros(var.shape), name="sigma" + var.name[:-2], shape=var.shape, dtype=tf.float32)
+                
+    def _create_slots(self, var_list):
+        pass
+
+    def _prepare_local(self, var_device, var_dtype, apply_state):
+        super(CustomOptimizerArch, self)._prepare_local(var_device, var_dtype, apply_state)
+
+
+    def _resource_apply_dense(self, grad, var, apply_state=None):
+        #print(self.phen)
+        #print("_resource_apply_dense")
+        variable_name = var.name
+        #print(self.layer_count[variable_name])
+        #print(self.depth_dict[variable_name])
+        if variable_name not in self._alpha_dict:
+            self._alpha_dict[var.name] = tf.Variable(np.zeros(var.shape) , name="alpha" + var.name[:-2], shape=var.shape, dtype=tf.float32)
+            self._beta_dict[var.name] = tf.Variable(np.zeros(var.shape) , name="beta" + var.name[:-2], shape=var.shape, dtype=tf.float32)
+            self._sigma_dict[var.name] = tf.Variable(np.zeros(var.shape) , name="sigma" + var.name[:-2], shape=var.shape, dtype=tf.float32)
+            
+        var_device, var_dtype = var.device, var.dtype.base_dtype
+        coefficients = ((apply_state or {}).get((var_device, var_dtype))
+                                        or self._fallback_apply_state(var_device, var_dtype))
+        
+        if self._alpha_func != None:
+            training_ops.resource_apply_gradient_descent(
+                self._alpha_dict[variable_name].handle, 
+                tf.constant(1.0), 
+                self._alpha_func(
+                    self.layer_count[variable_name],
+                    self.depth_dict[variable_name],
+                    var.shape, 
+                    self._alpha_dict[variable_name], 
+                    grad), use_locking=self._use_locking)
+        if self._beta_func != None:
+            training_ops.resource_apply_gradient_descent(
+                self._beta_dict[variable_name].handle, 
+                tf.constant(1.0), 
+                self._beta_func(
+                    self.layer_count[variable_name],
+                    self.depth_dict[variable_name],
+                    var.shape, 
+                    self._alpha_dict[variable_name], 
+                    self._beta_dict[variable_name], 
+                    grad), use_locking=self._use_locking)
+        if self._sigma_func!= None:
+            training_ops.resource_apply_gradient_descent(
+                self._sigma_dict[variable_name].handle, 
+                tf.constant(1.0), 
+                self._sigma_func(
+                    self.layer_count[variable_name],
+                    self.depth_dict[variable_name],
+                    var.shape, 
+                    self._alpha_dict[variable_name], 
+                    self._beta_dict[variable_name], 
+                    self._sigma_dict[variable_name], 
+                    grad), use_locking=self._use_locking)
+            
+        foo = training_ops.resource_apply_gradient_descent(
+                var.handle, 
+                tf.constant(1.0), 
+                self._grad_func(
+                    self.layer_count[variable_name],
+                    self.depth_dict[variable_name],
+                    var.shape, 
+                    self._alpha_dict[variable_name], 
+                    self._beta_dict[variable_name], 
+                    self._sigma_dict[variable_name], 
+                    grad), use_locking=self._use_locking)
+        return foo
+
+    def update_step(self, grad, var):
+        #print(self.phen)
+        #print("_resource_apply_dense")
+        variable_name = var.name
+        #print(variable_name)
+        if variable_name not in self._alpha_dict:
+            self._alpha_dict[var.name] = tf.Variable(np.zeros(var.shape) , name="alpha" + var.name[:-2], shape=var.shape, dtype=tf.float32)
+            self._beta_dict[var.name] = tf.Variable(np.zeros(var.shape) , name="beta" + var.name[:-2], shape=var.shape, dtype=tf.float32)
+            self._sigma_dict[var.name] = tf.Variable(np.zeros(var.shape) , name="sigma" + var.name[:-2], shape=var.shape, dtype=tf.float32)
+
+        if self._alpha_func != None:
+            training_ops.resource_apply_gradient_descent(
+                self._alpha_dict[variable_name].handle,
+                tf.constant(1.0),
+                self._alpha_func(
+                    self.layer_count[variable_name],
+                    self.depth_dict[variable_name],
+                    var.shape,
+                    self._alpha_dict[variable_name],
+                    grad))
+        if self._beta_func != None:
+            training_ops.resource_apply_gradient_descent(
+                self._beta_dict[variable_name].handle,
+                tf.constant(1.0),
+                self._beta_func(
+                    self.layer_count[variable_name],
+                    self.depth_dict[variable_name],
+                    var.shape,
+                    self._alpha_dict[variable_name],
+                    self._beta_dict[variable_name],
+                    grad))
+        if self._sigma_func!= None:
+            training_ops.resource_apply_gradient_descent(
+                self._sigma_dict[variable_name].handle,
+                tf.constant(1.0),
+                self._sigma_func(
+                    self.layer_count[variable_name],
+                    self.depth_dict[variable_name],
+                    var.shape,
+                    self._alpha_dict[variable_name],
+                    self._beta_dict[variable_name],
+                    self._sigma_dict[variable_name],
+                    grad))
+
+        foo = training_ops.resource_apply_gradient_descent(
+                var.handle,
+                tf.constant(1.0),
+                self._grad_func(
+                    self.layer_count[variable_name],
+                    self.depth_dict[variable_name],
+                    var.shape,
+                    self._alpha_dict[variable_name],
+                    self._beta_dict[variable_name],
+                    self._sigma_dict[variable_name],
+                    grad))
+        return foo
