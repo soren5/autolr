@@ -259,6 +259,82 @@ def test_reevaluation():
     print(indiv == indiv_2)
     assert indiv == indiv_2
 
+if __name__ == "__main__":
+    import sge.grammar as grammar
+    import sge
+    from main import Optimizer_Evaluator_Tensorflow
+    from utils import create_models
+    class Optimizer_Evaluator_Tensorflow:
+        def __init__(self, train_model=None):  #should give a function 
+            if train_model == None: 
+                from evaluators.adaptive_optimizer_evaluator_f_race_architecturev2 import train_model_tensorflow_fmnist as train_model
+            self.train_model = train_model
+        
+        def evaluate(self, phen, params):
+            #if xor_check(phen):
+            if True:
+                foo = self.train_model([phen, params])
+                fit = -foo[0]
+                other_info = foo[1]
+                other_info['source'] = 'evaluation'
+            else:
+                fit = -0.1
+                other_info = {'source': 'sanity check'}
+            return fit, other_info
 
-#if __name__ == "__main__":
-#    test_archive_id()
+        def init_net(self, params):
+            pass
+        def init_data(self, params):
+            pass
+        def init_evaluation(self, params):
+            pass
+
+    create_models.create_models()
+    parameters = {
+        "SELECTION_TYPE": "tournament",
+        "POPSIZE": 2,
+        "GENERATIONS": 2,
+        "ELITISM": 0,   
+        "SEED": 0,                
+        "PROB_CROSSOVER": 0.0,
+        "PROB_MUTATION": {
+        0: 0.0, 
+        1: 0.01, 
+        2: 0.01, 
+        3: 0.01, 
+        4: 0.05, 
+        5: 0.15, 
+        6: 0.01, 
+        7: 0.01, 
+        8: 0.01, 
+        9: 0.05, 
+        10: 0.15, 
+        11: 0.01, 
+        12: 0.01, 
+        13: 0.01, 
+        14: 0.05, 
+        15: 0.15, 
+        16: 0.01, 
+        17: 0.01, 
+        18: 0.05, 
+        19: 0.15},
+        "TSIZE": 2,
+        "GRAMMAR": 'grammars/adaptive_autolr_grammar_architecture_mutate_level.txt',
+        "MODEL": 'models/mnist_model.h5',
+        "EXPERIMENT_NAME": 'dumps/test_engine',
+        "RUN": 1,
+        "INCLUDE_GENOTYPE": True,
+        "SAVE_STEP": 1,
+        "VERBOSE": True,
+        "EPOCHS": 2,
+        "VALIDATION_SIZE": 10,
+        "FITNESS_SIZE": 59980,
+        "BATCH_SIZE": 5,
+        "MIN_TREE_DEPTH": 6,
+        "MAX_TREE_DEPTH": 17,
+        "FITNESS_FLOOR": 0,
+        "PREPOPULATE": False,
+        "PATIENCE": 0,
+    }
+    evaluation_function = Optimizer_Evaluator_Tensorflow()
+    sge.evolutionary_algorithm(parameters=parameters, evaluation_function=evaluation_function)
