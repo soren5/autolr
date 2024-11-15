@@ -259,7 +259,7 @@ def test_reevaluation():
     print(indiv == indiv_2)
     assert indiv == indiv_2
 
-if __name__ == "__main__":
+def test_layer_type_architecture():
     import sge.grammar as grammar
     import sge
     from main import Optimizer_Evaluator_Tensorflow
@@ -296,30 +296,10 @@ if __name__ == "__main__":
         "GENERATIONS": 2,
         "ELITISM": 0,   
         "SEED": 0,                
-        "PROB_CROSSOVER": 0.0,
-        "PROB_MUTATION": {
-        0: 0.0, 
-        1: 0.01, 
-        2: 0.01, 
-        3: 0.01, 
-        4: 0.05, 
-        5: 0.15, 
-        6: 0.01, 
-        7: 0.01, 
-        8: 0.01, 
-        9: 0.05, 
-        10: 0.15, 
-        11: 0.01, 
-        12: 0.01, 
-        13: 0.01, 
-        14: 0.05, 
-        15: 0.15, 
-        16: 0.01, 
-        17: 0.01, 
-        18: 0.05, 
-        19: 0.15},
+        "PROB_CROSSOVER": 0.9,
+        "PROB_MUTATION": 0.9,
         "TSIZE": 2,
-        "GRAMMAR": 'grammars/adaptive_autolr_grammar_architecture_mutate_level.txt',
+        "GRAMMAR": 'grammars/architecture_layer_type_grammar.txt',
         "MODEL": 'models/mnist_model.h5',
         "EXPERIMENT_NAME": 'dumps/test_engine',
         "RUN": 1,
@@ -338,3 +318,6 @@ if __name__ == "__main__":
     }
     evaluation_function = Optimizer_Evaluator_Tensorflow()
     sge.evolutionary_algorithm(parameters=parameters, evaluation_function=evaluation_function)
+
+if __name__ == "__main__":
+    pass

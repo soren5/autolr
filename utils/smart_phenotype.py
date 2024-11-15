@@ -7,7 +7,10 @@ def trim_phenotype(phenotype):
         phenotype = phenotype.replace("tf.math.", "")
         phenotype = phenotype.replace("tf.", "")
         print(params['GRAMMAR'])
-        if 'architecture' in params['GRAMMAR']:
+        if 'architecture_layer_type' in params['GRAMMAR']:
+            print("THIS IS A LAYER TYPE GRAMMAR")
+            functions = phenotype.split(r'lambda is_dense, units, is_pool, pool_size, is_conv, kernel_size, filters, stride, layer_count, layer_num, shape, alpha')
+        elif 'architecture' in params['GRAMMAR']:
             print("THIS IS AN ARCHITECTURAL GRAMMAR")
             functions = phenotype.split(r'lambda layer_count, layer_num, shape, alpha')
         else:
@@ -27,12 +30,13 @@ def trim_phenotype(phenotype):
 def smart_phenotype(phenotype):
     functions = trim_phenotype(phenotype)
     print(functions)
-
-    alpha_func_string = functions[1][8:-2]
-    beta_func_string = functions[2][14:-2] 
-    sigma_func_string =functions[3][21:-2] 
-    grad_func_string = functions[-1][21:].replace('alpha', alpha_func_string).replace('beta', beta_func_string).replace('sigma', sigma_func_string)
-
+    try:
+        alpha_func_string = functions[1][8:-2]
+        beta_func_string = functions[2][14:-2] 
+        sigma_func_string =functions[3][21:-2] 
+        grad_func_string = functions[-1][21:].replace('alpha', alpha_func_string).replace('beta', beta_func_string).replace('sigma', sigma_func_string)
+    except IndexError:
+        raise Exception("Error splitting genotype. Check that grammar name matches type of optimizer.")
     return grad_func_string
 
 def dual_task_key(phenotype, it):
