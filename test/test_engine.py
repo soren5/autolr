@@ -260,10 +260,11 @@ def test_reevaluation():
     assert indiv == indiv_2
 
 def test_layer_type_architecture():
-    import sge.grammar as grammar
+    from sge.parameters import manual_load_parameters
     import sge
     from main import Optimizer_Evaluator_Tensorflow
     from utils import create_models
+    from parameters import manual_load
     class Optimizer_Evaluator_Tensorflow:
         def __init__(self, train_model=None):  #should give a function 
             if train_model == None: 
@@ -301,7 +302,7 @@ def test_layer_type_architecture():
         "TSIZE": 2,
         "GRAMMAR": 'grammars/architecture_layer_type_grammar.txt',
         "MODEL": 'models/mnist_model.h5',
-        "EXPERIMENT_NAME": 'dumps/test_engine',
+        "EXPERIMENT_NAME": 'dumps/test_layer_type_architecture',
         "RUN": 1,
         "INCLUDE_GENOTYPE": True,
         "SAVE_STEP": 1,
@@ -316,6 +317,8 @@ def test_layer_type_architecture():
         "PREPOPULATE": False,
         "PATIENCE": 0,
     }
+    manual_load_parameters(parameters, reset=True)
+
     evaluation_function = Optimizer_Evaluator_Tensorflow()
     sge.evolutionary_algorithm(parameters=parameters, evaluation_function=evaluation_function)
 
