@@ -264,7 +264,7 @@ def test_layer_type_architecture():
     import sge
     from main import Optimizer_Evaluator_Tensorflow
     from utils import create_models
-    from parameters import manual_load
+    from sge.parameters import manual_load_parameters
     class Optimizer_Evaluator_Tensorflow:
         def __init__(self, train_model=None):  #should give a function 
             if train_model == None: 
@@ -323,4 +323,4 @@ def test_layer_type_architecture():
     sge.evolutionary_algorithm(parameters=parameters, evaluation_function=evaluation_function)
 
 if __name__ == "__main__":
-    pass
+    test_layer_type_architecture()
