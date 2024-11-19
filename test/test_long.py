@@ -1,6 +1,6 @@
 import utils.utilities as ut
 def test_short_run():
-    import sge.grammar as grammar
+    from sge.grammar import grammar
     import sge
     from main import Optimizer_Evaluator_Tensorflow
     from utils import create_models
@@ -36,7 +36,7 @@ def test_short_run():
     ut.delete_directory(parameters['EXPERIMENT_NAME'], "run_1")
 
 def test_short_run_cifar10():
-    import sge.grammar as grammar
+    from sge.grammar import grammar
     import sge
     from main import Optimizer_Evaluator_Tensorflow
     from utils import create_models
@@ -92,7 +92,7 @@ def test_short_run_cifar10():
     sge.evolutionary_algorithm(parameters=parameters, evaluation_function=evaluation_function)
 
 def test_short_run_mnist():
-    import sge.grammar as grammar
+    from sge.grammar import grammar
     import sge
     from main import Optimizer_Evaluator_Tensorflow
     from utils import create_models
