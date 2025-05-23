@@ -9,16 +9,14 @@ class CustomOptimizer(keras.optimizers.Optimizer):
                             phen=None,
                             model=None,
                             grad_func=None,
-                            alpha=None,
                             alpha_func=None,
-                            beta=None,
                             beta_func=None,
-                            sigma=None,
                             sigma_func=None,
                             **kwargs):
 
         super(CustomOptimizer, self).__init__(name, **kwargs)
         if phen == None:
+            raise Exception("DEPRECATED: Initialized Optimizer without Phenotype")
             self._alpha_dict = alpha
             self._beta_dict = beta
             self._sigma_dict = sigma
@@ -29,6 +27,8 @@ class CustomOptimizer(keras.optimizers.Optimizer):
             self._grad_func = grad_func
         else:
             import numpy as np
+            self._variance = {}
+            self._mean = {}
             self._alpha_dict = {}
             self._beta_dict = {}
             self._sigma_dict = {}
@@ -37,12 +37,16 @@ class CustomOptimizer(keras.optimizers.Optimizer):
                     self._alpha_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="alpha" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
                     self._beta_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="beta" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
                     self._sigma_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="sigma" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
+                    self._variance[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="alpha" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
+                    self._mean[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="alpha" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
             exec_env = {"tf": tf}
             exec(phen, exec_env)
             self._alpha_func = exec_env["alpha_func"]
             self._beta_func = exec_env["beta_func"]
             self._sigma_func = exec_env["sigma_func"]
             self._grad_func = exec_env["grad_func"]
+            self._mean_func = exec_env["mean_func"]
+            self._variance_func = exec_env["variance_func"]
 
     def check_slots(self):
         return self._alpha_dict == None and self._beta_dict == None and self._sigma_dict == None
@@ -80,7 +84,13 @@ class CustomOptimizer(keras.optimizers.Optimizer):
         var_device, var_dtype = var.device, var.dtype.base_dtype
         coefficients = ((apply_state or {}).get((var_device, var_dtype))
                                         or self._fallback_apply_state(var_device, var_dtype))
-        
+        if self._mean_func != None:
+            training_ops.resource_apply_gradient_descent(
+                        self._mean[variable_name].handle, tf.constant(1.0), self._mean_func(var.shape, self._mean[variable_name], grad), use_locking=self._use_locking)
+        if self._variance_func != None:
+            training_ops.resource_apply_gradient_descent(
+                        self._variance[variable_name].handle, tf.constant(1.0), self._variance_func(var.shape, self._variance[variable_name], grad), use_locking=self._use_locking)
+
         if self._alpha_func != None:
             training_ops.resource_apply_gradient_descent(
                         self._alpha_dict[variable_name].handle, tf.constant(1.0), self._alpha_func(var.shape, self._alpha_dict[variable_name], grad), use_locking=self._use_locking)
