@@ -1,6 +1,7 @@
 
 import csv
 import tensorflow as tf
+"""
 gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
   # Restrict TensorFlow to only allocate 4GB of memory on the first GPU
@@ -13,6 +14,7 @@ if gpus:
   except RuntimeError as e:
     # Virtual devices must be set before GPUs have been initialized
     print(e)
+"""
 from tensorflow import keras
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from sklearn.model_selection import train_test_split
@@ -37,7 +39,8 @@ from tensorflow.keras.layers import Dense
 from utils.data_functions import load_cifar10_full
 import os
 import pandas as pd
-
+import os
+os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 cwd_path = os.getcwd()
 
 
@@ -60,18 +63,19 @@ def evaluate_cifar_model(dataset=None, model=None, optimizer=None, batch_size=10
 
     if dataset is None:
         dataset = load_cifar10_full()
-
+    """
     from tensorflow.compat.v1 import ConfigProto
     from tensorflow.compat.v1 import InteractiveSession
 
     config = ConfigProto()
     config.gpu_options.allow_growth = True
     session = InteractiveSession(config=config)
-
+    """
     validation_size = len(dataset['x_val'])
 
     if model == None:
         n_model = load_model('models/cifar_model.h5', compile=False)
+        print(n_model.summary())
         model = n_model
 
     model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
@@ -98,6 +102,7 @@ def evaluate_cifar_model(dataset=None, model=None, optimizer=None, batch_size=10
             callbacks=[model_checkpoint_callback])
         K.clear_session()
 
+        epoch_progress += run_epochs
 
         metric_dictionary = get_metric_dictionary(score)
         if save_best_only:
@@ -106,16 +111,11 @@ def evaluate_cifar_model(dataset=None, model=None, optimizer=None, batch_size=10
         result = [test_score[-1], metric_dictionary]
 
         data_frame = pd.read_csv(os.path.join(cwd_path, 'results/' , experiment_name + ".csv"))
-        col_values = [max(result[1]['val_accuracy']), min(result[1]['val_loss']), result[0]]
-        col_names = ["max_val_accuracy", "min_val_loss", "test_accuracy"] 
-
-        data_frame = data_frame.append(pd.DataFrame([col_values], columns=col_names), ignore_index=True)
+        col_values = [epoch_progress, max(result[1]['val_accuracy']), min(result[1]['val_loss']), result[0]]
+        col_names = ["epochs", "max_val_accuracy", "min_val_loss", "test_accuracy"] 
+        data_frame = pd.concat([data_frame, pd.DataFrame([col_values], columns=col_names)], ignore_index=True)
         data_frame.to_csv(os.path.join(cwd_path, 'results/' , experiment_name + ".csv"), index=False)
-
-        epoch_progress += run_epochs
-
-
-     
+ 
     return result
 
 def resume_cifar_model(dataset=None, optimizer=None, batch_size=1000, epochs=100, verbose=0):  
@@ -134,11 +134,12 @@ def resume_cifar_model(dataset=None, optimizer=None, batch_size=1000, epochs=100
 
 
 if __name__ == "__main__":
-    resume = True
+    resume = False
     if resume:
         resume_cifar_model(optimizer=Adam(), epochs=100000, verbose=2)
     else:
-        col_names = ["epochs", "max_val_accuracy", "min_val_loss", "test_accuracy"] 
-        data_frame = pd.DataFrame(columns=col_names)
-        data_frame.to_csv(os.path.join(cwd_path, 'results/' , "development_results.csv"), index=False)
-        evaluate_cifar_model(optimizer=Adam(), epochs=100000, verbose=2)
+        for _ in range(30):
+            col_names = ["epochs", "max_val_accuracy", "min_val_loss", "test_accuracy"] 
+            data_frame = pd.DataFrame(columns=col_names)
+            data_frame.to_csv(os.path.join(cwd_path, 'results/' , "one_over_weights_learning_rate.csv"), index=False)
+            evaluate_cifar_model(optimizer=SGD(learning_rate=1/1250858), epochs=1000, verbose=2, experiment_name="one_over_weights_learning_rate")

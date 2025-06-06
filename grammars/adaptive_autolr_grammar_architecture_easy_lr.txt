@@ -1,0 +1,25 @@
+<start> ::= alpha_func, beta_func, sigma_func, grad_func = lambda layer_count, layer_num, shape, alpha, grad: <alpha_expr>, lambda layer_count, layer_num, shape, alpha, beta, grad: <beta_expr>, lambda layer_count, layer_num, shape, alpha, beta, sigma, grad: <sigma_expr>, lambda layer_count, layer_num, shape, alpha, beta, sigma, grad: <grad_expr>
+<alpha_expr> ::= <alpha_func> | <alpha_terminal>
+<alpha_func> ::= tf.math.negative(<alpha_expr>) | tf.math.subtract(<alpha_expr>, <alpha_expr>) | tf.math.add(<alpha_expr>, <alpha_expr>) | tf.math.multiply(<alpha_expr>, <alpha_expr>)  | tf.math.pow(<alpha_expr>, <alpha_expr>) | tf.math.square(<alpha_expr>) | tf.math.divide_no_nan(<alpha_expr>, <alpha_expr>) | tf.math.sqrt(<alpha_expr>) | tf.constant(<alpha_const>, shape=shape, dtype=tf.float32) 
+<alpha_terminal> ::=  <alpha_var_const> | <alpha_arch> | grad | tf.math.multiply(grad, <alpha_expr>)
+<alpha_var_const> ::= tf.constant(<alpha_const>, shape=shape, dtype=tf.float32) | alpha
+<alpha_arch> ::=  layer_count | layer_num
+<alpha_const> ::=  0.01 | 0.1 | 1.0
+<beta_expr> ::= <beta_func> | <beta_terminal>
+<beta_func> ::= tf.math.negative(<beta_expr>) | tf.math.subtract(<beta_expr>, <beta_expr>) | tf.math.add(<beta_expr>, <beta_expr>) | tf.math.multiply(<beta_expr>, <beta_expr>)  | tf.math.pow(<beta_expr>, <beta_expr>) | tf.math.square(<beta_expr>) | tf.math.divide_no_nan(<beta_expr>, <beta_expr>) | tf.math.sqrt(<beta_expr>) | tf.constant(<beta_const>, shape=shape, dtype=tf.float32) 
+<beta_terminal> ::=  <beta_var_const> | <beta_arch> | grad | tf.math.multiply(grad, <beta_expr>)
+<beta_var_const> ::= tf.constant(<beta_const>, shape=shape, dtype=tf.float32) | alpha | beta
+<beta_arch> ::=  layer_count | layer_num
+<beta_const> ::=  0.01 | 0.1 | 1.0
+<sigma_expr> ::= <sigma_func> | <sigma_terminal>
+<sigma_func> ::= tf.math.negative(<sigma_expr>) | tf.math.subtract(<sigma_expr>, <sigma_expr>) | tf.math.add(<sigma_expr>, <sigma_expr>) | tf.math.multiply(<sigma_expr>, <sigma_expr>)  | tf.math.pow(<sigma_expr>, <sigma_expr>) | tf.math.square(<sigma_expr>) | tf.math.divide_no_nan(<sigma_expr>, <sigma_expr>) | tf.math.sqrt(<sigma_expr>) | tf.constant(<sigma_const>, shape=shape, dtype=tf.float32) 
+<sigma_terminal> ::=  <sigma_var_const> | <sigma_arch> | grad | tf.math.multiply(grad, <sigma_expr>)
+<sigma_var_const> ::= tf.constant(<sigma_const>, shape=shape, dtype=tf.float32) | alpha | beta | sigma 
+<sigma_arch> ::=  layer_count | layer_num
+<sigma_const> ::=  0.01 | 0.1 | 1.0
+<grad_expr> ::= <grad_func> | <grad_terminal> 
+<grad_func> ::= tf.math.negative(<grad_expr>) | tf.math.subtract(<grad_expr>, <grad_expr>) | tf.math.add(<grad_expr>, <grad_expr>) | tf.math.multiply(<grad_expr>, <grad_expr>)  | tf.math.pow(<grad_expr>, <grad_expr>) | tf.math.square(<grad_expr>) | tf.math.divide_no_nan(<grad_expr>, <grad_expr>) | tf.math.sqrt(<grad_expr>) | tf.constant(<grad_const>, shape=shape, dtype=tf.float32) 
+<grad_terminal> ::=  <grad_var_const> | <grad_arch> | grad | tf.math.multiply(grad, <grad_expr>)
+<grad_var_const> ::= tf.constant(<grad_const>, shape=shape, dtype=tf.float32) | alpha | beta | sigma 
+<grad_arch> ::= layer_count | layer_num
+<grad_const> ::=  0.01 | 0.1 | 1.0

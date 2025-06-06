@@ -155,6 +155,7 @@ deprecated_custom_optimizer.tst
 .vscode/
 *.pdf
 *.png
+*.jpg
 log.txt
 data/
 *.pth
@@ -170,3 +171,11 @@ past_experiments/gecco_2022/adaptive_autolr_config_prepopulate.yml
 
 a.py
 cluster_scripts/
+bin/
+lib64
+benchmark1.py
+pyvenv.cfg
+ttx.1
+n_results/
+local_data/
+*.sh

@@ -28,3 +28,6 @@ def test_pytorch():
         "PATIENCE": 0,
     }
     sge.evolutionary_algorithm(parameters=parameters, evaluation_function=evaluation_function)
+
+if __name__ == "__main__":
+    test_pytorch()

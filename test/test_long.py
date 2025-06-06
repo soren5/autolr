@@ -1,6 +1,6 @@
 import utils.utilities as ut
 def test_short_run():
-    import sge.grammar as grammar
+    from sge.grammar import grammar
     import sge
     from main import Optimizer_Evaluator_Tensorflow
     from utils import create_models
@@ -14,7 +14,7 @@ def test_short_run():
         "PROB_CROSSOVER": 0.0,
         "PROB_MUTATION": 0.15,
         "TSIZE": 2,
-        "GRAMMAR": 'grammars/adaptive_autolr_grammar_mutate_level.txt',
+        "GRAMMAR": 'grammars/adaptive_autolr_grammar_architecture_mutate_level.txt',
         "EXPERIMENT_NAME": 'dumps/test_engine',
         "RUN": 1,
         "INCLUDE_GENOTYPE": True,
@@ -36,7 +36,7 @@ def test_short_run():
     ut.delete_directory(parameters['EXPERIMENT_NAME'], "run_1")
 
 def test_short_run_cifar10():
-    import sge.grammar as grammar
+    from sge.grammar import grammar
     import sge
     from main import Optimizer_Evaluator_Tensorflow
     from utils import create_models
@@ -70,7 +70,7 @@ def test_short_run_cifar10():
         18: 0.05, 
         19: 0.15},
         "TSIZE": 2,
-        "GRAMMAR": 'grammars/adaptive_autolr_grammar_mutate_level.txt',
+        "GRAMMAR": 'grammars/adaptive_autolr_grammar_architecture_mutate_level.txt',
         "EXPERIMENT_NAME": 'dumps/test_engine',
         "MODEL": 'models/cifar_model.h5',
         "RUN": 1,
@@ -92,7 +92,7 @@ def test_short_run_cifar10():
     sge.evolutionary_algorithm(parameters=parameters, evaluation_function=evaluation_function)
 
 def test_short_run_mnist():
-    import sge.grammar as grammar
+    from sge.grammar import grammar
     import sge
     from main import Optimizer_Evaluator_Tensorflow
     from utils import create_models
@@ -126,7 +126,7 @@ def test_short_run_mnist():
         18: 0.05, 
         19: 0.15},
         "TSIZE": 2,
-        "GRAMMAR": 'grammars/adaptive_autolr_grammar_mutate_level.txt',
+        "GRAMMAR": 'grammars/adaptive_autolr_grammar_architecture_mutate_level.txt',
         "MODEL": 'models/mnist_model.h5',
         "EXPERIMENT_NAME": 'dumps/test_engine',
         "RUN": 1,

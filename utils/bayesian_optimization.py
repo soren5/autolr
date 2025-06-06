@@ -6,8 +6,8 @@ import pickle
 from bayes_opt import BayesianOptimization
 import os
 import sys
-import re
 import utils.smart_phenotype as s_phenotype
+import re
 module_path = os.path.abspath(os.path.join('..'))
 if module_path not in sys.path:
     sys.path.append(module_path)
@@ -289,20 +289,21 @@ cifar_params = {
 #phenotype = "alpha_func, beta_func, sigma_func, grad_func = lambda shape,  alpha, grad: tf.math.add(alpha, grad), lambda shape,  alpha, beta, grad: beta, lambda shape,  alpha, beta, sigma, grad: tf.constant(3.14881358e-03, shape=shape, dtype=tf.float32), lambda shape,  alpha, beta, sigma, grad: tf.math.multiply(sigma, alpha)"
 #tune_optimizer(90, 10, phenotype, cifar_params)
 #print(get_constants_and_probe(phenotype))
-for x in range(15):
-    phenotype = "alpha_func, beta_func, sigma_func, grad_func = lambda shape,  alpha, grad: tf.math.divide_no_nan(grad, tf.constant(1.72012560e-03, shape=shape, dtype=tf.float32)), lambda shape,  alpha, beta, grad: tf.constant(8.59898661e-03, shape=shape, dtype=tf.float32), lambda shape,  alpha, beta, sigma, grad: tf.math.multiply(tf.math.add(tf.math.add(sigma, grad), grad), tf.constant(1.56514861e-02, shape=shape, dtype=tf.float32)), lambda shape,  alpha, beta, sigma, grad: tf.math.negative(sigma)"
-    with open("log.txt", 'a') as f:
-        val, test = get_test_score_fminst((phenotype, mnist_params))
-        print(f"FM,{val},{test}", file=f)
-    phenotype = "alpha_func, beta_func, sigma_func, grad_func = lambda shape,  alpha, grad: tf.math.pow(grad, tf.constant(9.99372875e-01, shape=shape, dtype=tf.float32)), lambda shape,  alpha, beta, grad: tf.math.add(grad, grad), lambda shape,  alpha, beta, sigma, grad: tf.math.subtract(tf.math.multiply(tf.math.add(sigma, grad), tf.constant(8.92170603e-02, shape=shape, dtype=tf.float32)), tf.math.square(tf.constant(8.32200197e-05, shape=shape, dtype=tf.float32))), lambda shape,  alpha, beta, sigma, grad: tf.math.negative(sigma)"
-    with open("log.txt", 'a') as f:
-        val, test = get_test_score_fminst((phenotype, mnist_params))
-        print(f"FMX,{val},{test}", file=f)
-    phenotype = "alpha_func, beta_func, sigma_func, grad_func = lambda shape,  alpha, grad: tf.math.negative(alpha), lambda shape,  alpha, beta, grad: tf.math.subtract(tf.math.multiply(tf.math.subtract(tf.math.add(tf.constant(1.07052146e-01, shape=shape, dtype=tf.float32), grad), tf.constant(5.75728612e-03, shape=shape, dtype=tf.float32)), beta), grad), lambda shape,  alpha, beta, sigma, grad: grad, lambda shape,  alpha, beta, sigma, grad: tf.math.multiply(beta, tf.math.add(tf.math.subtract(tf.constant(1.28252101e-02, shape=shape, dtype=tf.float32), alpha), tf.constant(2.11963334e-01, shape=shape, dtype=tf.float32)))"
-    with open("log.txt", 'a') as f:
-        val, test = get_test_score_fminst((phenotype, mnist_params))
-        print(f"OM,{val},{test}", file=f)
-    phenotype = "alpha_func, beta_func, sigma_func, grad_func = lambda shape,  alpha, grad: tf.math.multiply(tf.math.subtract(alpha, grad), tf.constant(7.03711536e-03, shape=shape, dtype=tf.float32)), lambda shape,  alpha, beta, grad: beta, lambda shape,  alpha, beta, sigma, grad: sigma, lambda shape,  alpha, beta, sigma, grad: tf.math.add(tf.math.subtract(alpha, tf.math.divide_no_nan(beta, tf.math.add(alpha, beta))), alpha)"
-    with open("log.txt", 'a') as f:
-        val, test = get_test_score_fminst((phenotype, mnist_params))
-        print(f"OMX,{val},{test}", file=f)
+if __name__ == "__main__":
+    for x in range(15):
+        phenotype = "alpha_func, beta_func, sigma_func, grad_func = lambda shape,  alpha, grad: tf.math.divide_no_nan(grad, tf.constant(1.72012560e-03, shape=shape, dtype=tf.float32)), lambda shape,  alpha, beta, grad: tf.constant(8.59898661e-03, shape=shape, dtype=tf.float32), lambda shape,  alpha, beta, sigma, grad: tf.math.multiply(tf.math.add(tf.math.add(sigma, grad), grad), tf.constant(1.56514861e-02, shape=shape, dtype=tf.float32)), lambda shape,  alpha, beta, sigma, grad: tf.math.negative(sigma)"
+        with open("log.txt", 'a') as f:
+            val, test = get_test_score_fminst((phenotype, mnist_params))
+            print(f"FM,{val},{test}", file=f)
+        phenotype = "alpha_func, beta_func, sigma_func, grad_func = lambda shape,  alpha, grad: tf.math.pow(grad, tf.constant(9.99372875e-01, shape=shape, dtype=tf.float32)), lambda shape,  alpha, beta, grad: tf.math.add(grad, grad), lambda shape,  alpha, beta, sigma, grad: tf.math.subtract(tf.math.multiply(tf.math.add(sigma, grad), tf.constant(8.92170603e-02, shape=shape, dtype=tf.float32)), tf.math.square(tf.constant(8.32200197e-05, shape=shape, dtype=tf.float32))), lambda shape,  alpha, beta, sigma, grad: tf.math.negative(sigma)"
+        with open("log.txt", 'a') as f:
+            val, test = get_test_score_fminst((phenotype, mnist_params))
+            print(f"FMX,{val},{test}", file=f)
+        phenotype = "alpha_func, beta_func, sigma_func, grad_func = lambda shape,  alpha, grad: tf.math.negative(alpha), lambda shape,  alpha, beta, grad: tf.math.subtract(tf.math.multiply(tf.math.subtract(tf.math.add(tf.constant(1.07052146e-01, shape=shape, dtype=tf.float32), grad), tf.constant(5.75728612e-03, shape=shape, dtype=tf.float32)), beta), grad), lambda shape,  alpha, beta, sigma, grad: grad, lambda shape,  alpha, beta, sigma, grad: tf.math.multiply(beta, tf.math.add(tf.math.subtract(tf.constant(1.28252101e-02, shape=shape, dtype=tf.float32), alpha), tf.constant(2.11963334e-01, shape=shape, dtype=tf.float32)))"
+        with open("log.txt", 'a') as f:
+            val, test = get_test_score_fminst((phenotype, mnist_params))
+            print(f"OM,{val},{test}", file=f)
+        phenotype = "alpha_func, beta_func, sigma_func, grad_func = lambda shape,  alpha, grad: tf.math.multiply(tf.math.subtract(alpha, grad), tf.constant(7.03711536e-03, shape=shape, dtype=tf.float32)), lambda shape,  alpha, beta, grad: beta, lambda shape,  alpha, beta, sigma, grad: sigma, lambda shape,  alpha, beta, sigma, grad: tf.math.add(tf.math.subtract(alpha, tf.math.divide_no_nan(beta, tf.math.add(alpha, beta))), alpha)"
+        with open("log.txt", 'a') as f:
+            val, test = get_test_score_fminst((phenotype, mnist_params))
+            print(f"OMX,{val},{test}", file=f)

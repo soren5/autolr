@@ -214,12 +214,28 @@ class Grammar:
             text += "\n"
         return text
 
+    def _reset_grammar(self):
+        """This function resets the Grammar Object to its initial state. 
+        This only exists for testing purposes."""
+        self.grammar_file = None
+        self.grammar = {}
+        self.productions_labels = {}
+        self.non_terminals, self.terminals = set(), set()
+        self.ordered_non_terminals = ordered_set.OrderedSet()
+        self.non_recursive_options = {}
+        self.number_of_options_by_non_terminal = None
+        self.start_rule = None
+        self.max_depth = None
+        self.max_init_depth = None
+
+
 # Create one instance and export its methods as module-level functions.
 # The functions share state across all uses
 # (both in the user's code and in the Python libraries), but that's fine
 # for most programs and is easier for the casual user
 
-
+grammar = Grammar()
+"""
 _inst = Grammar()
 set_path = _inst.set_path
 read_grammar = _inst.read_grammar
@@ -234,6 +250,8 @@ set_max_tree_depth = _inst.set_max_tree_depth
 set_min_init_tree_depth = _inst.set_min_init_tree_depth
 get_max_depth = _inst.get_max_depth
 get_non_recursive_options = _inst.get_non_recursive_options
+"""
+
 
 if __name__ == "__main__":
     random.seed(42)

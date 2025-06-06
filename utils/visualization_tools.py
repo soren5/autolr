@@ -112,6 +112,9 @@ def load_results(root_dir):
                                 'Smart Phenotype': x['smart_phenotype'],
                                 'Fitness': x['fitness']
                             }
+                            if 'other_info' in x:
+                                for extra in x['other_info']:
+                                    indiv_data[extra] = x['other_info'][extra]
                             processed_data.append(indiv_data)
         except Exception as e:
             # code to handle the exception

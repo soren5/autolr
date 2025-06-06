@@ -1,4 +1,4 @@
-<start> ::= alpha_func, beta_func, sigma_func, grad_func = lambda shape,  alpha, grad: <alpha_expr>, lambda shape,  alpha, beta, grad: <beta_expr>, lambda shape,  alpha, beta, sigma, grad: <sigma_expr>, lambda shape,  alpha, beta, sigma, grad: <grad_expr>
+<start> ::= alpha_func, beta_func, sigma_func, grad_func = lambda shape, alpha, grad: <alpha_expr>, lambda shape, alpha, beta, grad: <beta_expr>, lambda shape, alpha, beta, sigma, grad: <sigma_expr>, lambda shape, alpha, beta, sigma, grad: <grad_expr>
 <alpha_expr> ::= <alpha_func> | <alpha_terminal>
 <alpha_func> ::= tf.math.negative(<alpha_expr>) | tf.math.subtract(<alpha_expr>, <alpha_expr>) | tf.math.add(<alpha_expr>, <alpha_expr>) | tf.math.multiply(<alpha_expr>, <alpha_expr>)  | tf.math.pow(<alpha_expr>, <alpha_expr>) | tf.math.square(<alpha_expr>) | tf.math.divide_no_nan(<alpha_expr>, <alpha_expr>) | tf.math.add(<alpha_expr>, <alpha_expr>) | tf.math.sqrt(<alpha_expr>) | tf.constant(<alpha_const>, shape=shape, dtype=tf.float32) 
 <alpha_terminal> ::= tf.constant(<alpha_const>, shape=shape, dtype=tf.float32) | alpha | grad | grad

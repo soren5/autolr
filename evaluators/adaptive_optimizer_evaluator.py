@@ -43,6 +43,8 @@ def train_model(phen):
 
     dataset = load_data_evolution(validation_size=validation_size, test_size=fitness_size, split=True, img_size=(28,28))
     model = load_model(params['MODEL'], compile=False)
+
+
     weights = model.get_weights()
     
     final_score = 1
