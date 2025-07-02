@@ -411,7 +411,6 @@ def select_fashion_mnist_training(fashion, n_classes=10, validation_size=3500, t
 
     return dataset
 
-
 def load_fashion_mnist_training(n_classes=10, training_size=None, validation_size=None, test_size=None, normalize=True, subtract_mean=True):
 
     if training_size != None and validation_size != None and test_size != None:
@@ -596,3 +595,54 @@ def load_mnist_training(n_classes=10, validation_size=3500, test_size=3500):
             'y_test': y_test}
 
     return dataset
+
+def load_imagenet_training(n_classes=1000, validation_size=5000, test_size=0, normalize=True, subtract_mean=True):
+
+    data = keras.preprocessing.image_dataset_from_directory(
+        'imagenet/',
+        labels='inferred',
+        label_mode='categorical',
+        image_size=(224, 224),
+        batch_size=64,
+        validation_split=(validation_size + test_size),
+        subset='both',
+        shuffle=True)
+    train_data, validation_data = data
+
+    return train_data, validation_data
+
+def load_imagenet_from_dirs(train_dir, val_dir, test_dir, img_size=(224, 224), batch_size=64, n_classes=1000, normalize=True):
+    keras.preprocessing.image_dataset_from_directory
+
+    datagen = ImageDataGenerator(
+        rescale=1./255 if normalize else None,
+        horizontal_flip=True,
+        rotation_range=20,
+        width_shift_range=0.2,
+        height_shift_range=0.2,
+        zoom_range=0.2
+    )
+
+    train_generator = datagen.flow_from_directory(
+        train_dir,
+        target_size=img_size,
+        batch_size=batch_size,
+        class_mode='categorical'
+    )
+
+    val_generator = datagen.flow_from_directory(
+        val_dir,
+        target_size=img_size,
+        batch_size=batch_size,
+        class_mode='categorical'
+    )
+
+    test_generator = datagen.flow_from_directory(
+        test_dir,
+        target_size=img_size,
+        batch_size=batch_size,
+        class_mode='categorical',
+        shuffle=False
+    )
+
+    return train_generator, val_generator, test_generator
