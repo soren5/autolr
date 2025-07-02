@@ -225,5 +225,5 @@ if __name__ == "__main__":
     evaluator = Optimizer_Evaluator_Tensorflow(train_model_tensorflow_imagenet)
 
     #sge.evolutionary_algorithm(evaluation_function=Optimizer_Evaluator_Dual_Task())
-    sge.evolutionary_algorithm(evaluation_function=Optimizer_Evaluator_Tensorflow())  
+    sge.evolutionary_algorithm(evaluation_function=evaluator)  
 

@@ -5,7 +5,7 @@ from utils.data_functions import load_fashion_mnist_training, load_cifar10_train
 import tensorflow as tf
 from tensorflow.keras.optimizers import Adam, SGD, RMSprop
 from utils.smart_phenotype import readable_phenotype, smart_phenotype
-from optimizers.custom_optimizer import CustomOptimizerArchV2
+from optimizers.custom_optimizer import CustomOptimizerArchV2, CustomOptimizerArch
 import datetime
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
@@ -35,7 +35,7 @@ def train_model_tensorflow_imagenet(phen_params):
     
     cache_resnet_model(params)
         
-    return evaluate_model(phen, validation_size, batch_size, epochs, patience)
+    return evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience)
 
 def evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience):
     dataset = globals()['cached_dataset'] 
@@ -48,7 +48,7 @@ def evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience)
     
     # optimizer is constant aslong as phen doesn't changed?
     # -> opportunity to cache opt and compiled model
-    opt = CustomOptimizerArchV2(phen=phen, model=model)
+    opt = CustomOptimizerArch(phen=phen, model=model)
     train_data = dataset[0]
     validation_data = dataset[1]
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
@@ -80,7 +80,7 @@ def cache_model(params):
 
 def cache_resnet_model(params):
     if globals()['cached_model'] == None:
-        globals()['cached_model'] = tf.keras.applications.ResNet50(weights='None', include_top=True)
+        globals()['cached_model'] = tf.keras.applications.ResNet50(weights=None, include_top=True)
         globals()['cached_weights'] = globals()['cached_model'].get_weights()
 
 def create_train_model(model_, data, weights):
