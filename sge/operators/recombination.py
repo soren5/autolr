@@ -1,5 +1,5 @@
 import random
-import sge.grammar as grammar
+from sge.grammar import grammar
 
 
 def crossover(p1, p2):

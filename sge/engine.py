@@ -4,7 +4,7 @@ from operator import inv
 import random
 import sys
 from xml.etree.ElementTree import tostring
-import sge.grammar as grammar
+from sge.grammar import grammar
 import copy
 from datetime import datetime
 from sge.logger import find_last_generation_to_load
@@ -26,7 +26,7 @@ from utils.smart_phenotype import smart_phenotype, single_task_key
 
 def generate_random_individual():
     genotype = [[] for key in grammar.get_non_terminals()]
-    tree_depth = grammar.recursive_individual_creation(genotype, grammar.start_rule()[0], 0)
+    tree_depth = grammar.recursive_individual_creation(genotype, grammar.get_start_rule()[0], 0)
     return {'genotype': genotype, 'fitness': None, 'tree_depth' : tree_depth, 'operation': "initialization"}
 
 def make_initial_population():

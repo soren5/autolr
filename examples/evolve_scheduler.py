@@ -20,7 +20,7 @@ class LRScheduler:
 
    
 if __name__ == "__main__":
-    import sge.grammar as grammar
+    from sge.grammar import grammar
     import sge
     evaluation_function = LRScheduler()
     sge.evolutionary_algorithm(evaluation_function=evaluation_function)

@@ -1,4 +1,5 @@
 import utils.utilities as ut
+import pytest
 
 class TensorflowFitnessGenerator:
     def __init__(self) -> None:
@@ -24,9 +25,27 @@ class TensorflowFitnessGenerator:
     def init_evaluation(self, parameters):
         pass
 
-def test_engine():
+@pytest.fixture
+def base_fixture():
+    from sge.parameters import reset_parameters
+    from sge.grammar import grammar 
 
-    import sge.grammar as grammar
+    reset_parameters()
+    grammar._reset_grammar()
+
+def test_default_parameters(base_fixture):
+    """There is no good way to recover default parameters after the ensuing tests alter them so this test must be the first to run. 
+    This is not ideal but I have not found a good solution to this yet."""
+    from sge.grammar import grammar
+    import sge    
+    from main import Optimizer_Evaluator_Tensorflow
+    from utils import create_models
+    create_models.create_models()
+    evaluation_function = Optimizer_Evaluator_Tensorflow()
+
+    sge.evolutionary_algorithm(evaluation_function=evaluation_function)
+
+def test_engine(base_fixture):
     import sge
     parameters = {
         "SELECTION_TYPE": "tournament",       
@@ -68,21 +87,13 @@ def test_engine():
         "FAKE_FITNESS": True,
         "FITNESS_FLOOR": 0,
     }
+    from sge.parameters import manual_load_parameters
+    manual_load_parameters(parameters=parameters)
     sge.evolutionary_algorithm(parameters=parameters)
     ut.delete_directory(parameters['EXPERIMENT_NAME'], "run_1")
 
-def test_default_parameters():
-    import sge.grammar as grammar
-    import sge    
-    from main import Optimizer_Evaluator_Tensorflow
-    from utils import create_models
-    create_models.create_models()
-    evaluation_function = Optimizer_Evaluator_Tensorflow()
-
-    sge.evolutionary_algorithm(evaluation_function=evaluation_function)
-
-def test_mutation_errors():
-    import sge.grammar as grammar
+def test_mutation_errors(base_fixture):
+    from sge.grammar import grammar
     import sge
     import yaml
     from main import Optimizer_Evaluator_Tensorflow
@@ -95,6 +106,10 @@ def test_mutation_errors():
         parameters = yaml.load(ymlfile, Loader=yaml.FullLoader)
     parameters['PROB_MUTATION'] = {0: 0.2, 1:0.2}
     parameters['FAKE_FITNESS'] = True
+
+    from sge.parameters import manual_load_parameters
+    manual_load_parameters(parameters=parameters)
+
     try:
         sge.evolutionary_algorithm(parameters=parameters, evaluation_function=evaluation_function)
     except AssertionError:
@@ -110,8 +125,9 @@ def test_mutation_errors():
         raise AssertionError("Failed to catch invalid Mutation Type Error successfully")
     ut.delete_directory(parameters['EXPERIMENT_NAME'], "run_1")
 
-def test_parameters():
+def test_parameters(base_fixture):
     import sge, os
+    from sge.parameters import manual_load_parameters
     parameters = {
         "SELECTION_TYPE": "tournament",
         "POPSIZE": 10,
@@ -137,16 +153,17 @@ def test_parameters():
         "PREPOPULATE": False,
         "FAKE_FITNESS": True,
     }
+    manual_load_parameters(parameters=parameters)
     sge.evolutionary_algorithm(parameters=parameters, evaluation_function=None)
     ut.delete_directory(parameters['EXPERIMENT_NAME'], "run_1")
     
-
-def test_archive():
+def test_archive(base_fixture):
     """I devised this test to discover if there are reproducility problems with the archive.
     The only problem is if we take an archive from the future and use it in an earlier generation.
     This will not yield the same result as fitness evaluation burns random seed numbers (to map the genotype)."""
     import sge
     import tensorflow as tf
+    from sge.parameters import manual_load_parameters
     parameters = {
         "SELECTION_TYPE": "tournament",
         "POPSIZE": 10,
@@ -168,6 +185,7 @@ def test_archive():
     }
     from utils.smart_phenotype import smart_phenotype
 
+    #manual_load_parameters(parameters=parameters)
     fitness = TensorflowFitnessGenerator()
     pop1 = sge.evolutionary_algorithm(parameters=parameters, evaluation_function=fitness)
     parameters['RESUME'] = 1
@@ -182,7 +200,7 @@ def test_archive():
     ut.delete_directory(parameters['EXPERIMENT_NAME'], "run_1")
     assert pop3 == pop2    
 
-def test_archive_id():
+def test_archive_id(base_fixture):
     import sge
     import tensorflow as tf
     from sge.parameters import manual_load_parameters
@@ -208,7 +226,7 @@ def test_archive_id():
 
     fitness = TensorflowFitnessGenerator()
 
-    manual_load_parameters(parameters, reset=True)
+    manual_load_parameters(parameters)
     pop1 = sge.evolutionary_algorithm(parameters=parameters, evaluation_function=fitness)
 
     parameters['RESUME'] = 1
@@ -231,8 +249,7 @@ def test_archive_id():
 
     assert pop1 == pop2
 
-
-def test_reevaluation():
+def test_reevaluation(base_fixture):
     import yaml
     from sge.parameters import load_parameters
     import copy
@@ -259,11 +276,12 @@ def test_reevaluation():
     print(indiv == indiv_2)
     assert indiv == indiv_2
 
-if __name__ == "__main__":
-    import sge.grammar as grammar
+def test_layer_type_architecture(base_fixture):
+    from sge.parameters import manual_load_parameters
     import sge
     from main import Optimizer_Evaluator_Tensorflow
     from utils import create_models
+    from sge.parameters import manual_load_parameters
     class Optimizer_Evaluator_Tensorflow:
         def __init__(self, train_model=None):  #should give a function 
             if train_model == None: 
@@ -296,32 +314,12 @@ if __name__ == "__main__":
         "GENERATIONS": 2,
         "ELITISM": 0,   
         "SEED": 0,                
-        "PROB_CROSSOVER": 0.0,
-        "PROB_MUTATION": {
-        0: 0.0, 
-        1: 0.01, 
-        2: 0.01, 
-        3: 0.01, 
-        4: 0.05, 
-        5: 0.15, 
-        6: 0.01, 
-        7: 0.01, 
-        8: 0.01, 
-        9: 0.05, 
-        10: 0.15, 
-        11: 0.01, 
-        12: 0.01, 
-        13: 0.01, 
-        14: 0.05, 
-        15: 0.15, 
-        16: 0.01, 
-        17: 0.01, 
-        18: 0.05, 
-        19: 0.15},
+        "PROB_CROSSOVER": 0.9,
+        "PROB_MUTATION": 0.9,
         "TSIZE": 2,
-        "GRAMMAR": 'grammars/adaptive_autolr_grammar_architecture_mutate_level.txt',
+        "GRAMMAR": 'grammars/architecture_layer_type_grammar.txt',
         "MODEL": 'models/mnist_model.h5',
-        "EXPERIMENT_NAME": 'dumps/test_engine',
+        "EXPERIMENT_NAME": 'dumps/test_layer_type_architecture',
         "RUN": 1,
         "INCLUDE_GENOTYPE": True,
         "SAVE_STEP": 1,
@@ -336,5 +334,17 @@ if __name__ == "__main__":
         "PREPOPULATE": False,
         "PATIENCE": 0,
     }
+    manual_load_parameters(parameters)
+
     evaluation_function = Optimizer_Evaluator_Tensorflow()
     sge.evolutionary_algorithm(parameters=parameters, evaluation_function=evaluation_function)
+
+if __name__ == "__main__":
+    test_default_parameters(base_fixture)
+    test_reevaluation(base_fixture)
+    test_archive_id(base_fixture)
+    test_archive(base_fixture)
+    test_parameters(base_fixture)
+    test_mutation_errors(base_fixture)
+    test_engine(base_fixture)
+    test_layer_type_architecture(base_fixture)

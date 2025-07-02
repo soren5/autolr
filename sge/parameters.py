@@ -1,9 +1,8 @@
 import argparse
-
 import yaml
 
 """"Algorithm Parameters"""
-params = {
+default_params = {
     'PARAMETERS': None,
     'POPSIZE': 2,
     'GENERATIONS': 3,
@@ -12,7 +11,7 @@ params = {
     'PROB_MUTATION': 0.15,
     'SELECTION_TYPE': 'tournament',
     'TSIZE': 2,
-    'GRAMMAR': 'grammars/adaptive_autolr_grammar.txt',
+    'GRAMMAR': 'grammars/adaptive_autolr_grammar_architecture.txt',
     'EXPERIMENT_NAME': "dumps/example",
     'RUN': 1,
     'INCLUDE_GENOTYPE': True,
@@ -24,17 +23,17 @@ params = {
     'DATASET': 'fmnist',
     'TRAINING_SIZE': 3500,
     'VALIDATION_SIZE': 3500,
-    #'FITNESS_SIZE': 59890,
+    'FITNESS_SIZE': 53000,
     'BATCH_SIZE': 5,
     'EPOCHS': 5,
     'SEED': None,
     'PREPOPULATE': False,
     'PATIENCE': False,
     'FITNESS_FLOOR': 0,
-    'LOAD_ARCHIVE': True,
+    'LOAD_ARCHIVE': False,
     'CURRENT_GEN': -1,
     }
-
+params = default_params.copy()
 
 def load_parameters(file_name="parameters/adaptive_autolr.yml"):
     with open(file_name, 'r') as ymlfile:
@@ -42,9 +41,11 @@ def load_parameters(file_name="parameters/adaptive_autolr.yml"):
     print("using ",file_name, "for parameters")
     params.update(cfg)
 
-def manual_load_parameters(parameters, reset=False):
-    if reset:
-        params.clear()
+def reset_parameters():
+    params.clear()
+    params.update(default_params.copy())
+
+def manual_load_parameters(parameters):
     params.update(parameters)
     
 def set_parameters(arguments):
