@@ -596,15 +596,15 @@ def load_mnist_training(n_classes=10, validation_size=3500, test_size=3500):
 
     return dataset
 
-def load_imagenet_training(n_classes=1000, validation_size=5000, test_size=0, normalize=True, subtract_mean=True):
+def load_imagenet_training(n_classes=1000, validation_size=5000, test_size=0, batch_size=64, data_length=50000, normalize=True, subtract_mean=True):
     test_size = 0
     train_data = keras.preprocessing.image_dataset_from_directory(
         'imagenet/',
         labels='inferred',
         label_mode='categorical',
         image_size=(224, 224),
-        batch_size=64,
-        validation_split=(validation_size + test_size) / 50000,
+        batch_size=batch_size,
+        validation_split=(validation_size + test_size) / data_length,
         subset='training',
         shuffle=True,
         seed=42)
@@ -613,7 +613,7 @@ def load_imagenet_training(n_classes=1000, validation_size=5000, test_size=0, no
         labels='inferred',
         label_mode='categorical',
         image_size=(224, 224),
-        batch_size=64,
+        batch_size=batch_size,
         validation_split=(validation_size + test_size) / 50000,
         subset='validation',
         shuffle=True,

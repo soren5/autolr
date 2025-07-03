@@ -31,7 +31,7 @@ def train_model_tensorflow_imagenet(phen_params):
     phen, params, validation_size, fitness_size, batch_size, epochs, patience = find_params(phen_params)
 
     if globals()['cached_dataset'] == None:
-        globals()['cached_dataset'] = load_imagenet_training(validation_size=validation_size, test_size=fitness_size)
+        globals()['cached_dataset'] = load_imagenet_training(validation_size=validation_size, test_size=fitness_size, batch_size=batch_size)
     
     cache_resnet_model(params)
         
@@ -56,10 +56,11 @@ def evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience)
     
     score = model.fit(train_data,
         batch_size=batch_size,
+        steps_per_epoch= len(train_data) // batch_size,
         epochs=epochs,
         verbose=2,
         validation_data= validation_data,
-        validation_steps= validation_size // batch_size,
+        validation_steps= len(validation_data) // batch_size,
         callbacks=[
             early_stop
         ])
