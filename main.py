@@ -221,7 +221,9 @@ if __name__ == "__main__":
         elif 'MODEL' in params and params['MODEL'] == 'models/mnist_model.h5' and params['DATASET'] == 'mnist':    
             from evaluators.adaptive_optimizer_evaluator_f_race import train_model_tensorflow_mnist 
             evaluation_function = Optimizer_Evaluator_Tensorflow(train_model_tensorflow_mnist)
+    from evaluators.adaptive_optimizer_evaluator_imagenet import train_model_tensorflow_imagenet
+    evaluator = Optimizer_Evaluator_Tensorflow(train_model_tensorflow_imagenet)
 
     #sge.evolutionary_algorithm(evaluation_function=Optimizer_Evaluator_Dual_Task())
-    sge.evolutionary_algorithm(evaluation_function=Optimizer_Evaluator_Tensorflow())  
+    sge.evolutionary_algorithm(evaluation_function=evaluator)  
 

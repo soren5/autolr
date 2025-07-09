@@ -4,6 +4,7 @@ from sklearn.model_selection import train_test_split
 from tensorflow.keras.datasets import fashion_mnist, cifar10, mnist
 from tensorflow.keras import backend as K
 import numpy as np
+from datasets import load_dataset
 
 def resize_data(args):
     """
@@ -411,7 +412,6 @@ def select_fashion_mnist_training(fashion, n_classes=10, validation_size=3500, t
 
     return dataset
 
-
 def load_fashion_mnist_training(n_classes=10, training_size=None, validation_size=None, test_size=None, normalize=True, subtract_mean=True):
 
     if training_size != None and validation_size != None and test_size != None:
@@ -595,4 +595,93 @@ def load_mnist_training(n_classes=10, validation_size=3500, test_size=3500):
             'x_test': x_test,
             'y_test': y_test}
 
+    return dataset
+
+def load_imagenet_training(n_classes=1000, validation_size=5000, test_size=0, batch_size=64, data_length=50000, normalize=True, subtract_mean=True):
+    test_size = 0
+    train_data = keras.preprocessing.image_dataset_from_directory(
+        'imagenet/',
+        labels='inferred',
+        label_mode='categorical',
+        image_size=(224, 224),
+        batch_size=batch_size,
+        validation_split=(validation_size + test_size) / data_length,
+        subset='training',
+        shuffle=True,
+        seed=42)
+    validation_data = keras.preprocessing.image_dataset_from_directory(
+        'imagenet/',
+        labels='inferred',
+        label_mode='categorical',
+        image_size=(224, 224),
+        batch_size=batch_size,
+        validation_split=(validation_size + test_size) / 50000,
+        subset='validation',
+        shuffle=True,
+        seed=42)
+
+    return train_data, validation_data
+
+def load_tiny_imagenet(n_classes=200, validation_size=5000, test_size=0, batch_size=64, data_length=100000, normalize=True, subtract_mean=True):
+    train_dataset = load_dataset("zh-plus/tiny-imagenet", split='train').with_format("numpy")
+    validation_dataset = load_dataset("zh-plus/tiny-imagenet", split='valid').with_format("numpy")
+
+    def resize_image(examples):
+        examples["label"]
+        return examples
+    #train_data = train_data.map(resize_image, remove_columns=["image"], batched=True)
+    #validation_data = validation_data.map(resize_image, remove_columns=["image"], batched=True)
+
+    #train_data['label'] = keras.utils.to_categorical(train_data['label'], n_classes)
+    #validation_data['label'] = keras.utils.to_categorical(validation_data['label'], n_classes)
+
+    x_train = train_dataset['image']
+    x_train = np.stack([x if x.shape == (64, 64, 3) else np.stack([x]*3, axis=-1) for x in x_train])
+    y_train = keras.utils.to_categorical(train_dataset['label'], n_classes)
+    x_val = validation_dataset['image']
+    x_val = np.stack([x if x.shape == (64, 64, 3) else np.stack([x]*3, axis=-1) for x in x_val])
+
+    y_val = keras.utils.to_categorical(validation_dataset['label'], n_classes)
+
+    x_train = x_train.astype('float32')
+    x_val = x_val.astype('float32')
+
+    img_rows, img_cols, channels = 64, 64, 3
+
+    if False:    
+        x_train /= 255
+        x_val /= 255
+
+    #subraction of the mean image
+    if False:
+        x_mean = 0
+        for x in x_train:
+            x_mean += x
+        x_mean /= len(x_train)
+        x_train -= x_mean
+        x_val -= x_mean
+        x_test -= x_mean
+
+    if K.image_data_format() == 'channels_first':
+        x_train = x_train.reshape(x_train.shape[0], channels, img_rows, img_cols)
+        x_val = x_val.reshape(x_val.shape[0], channels, img_rows, img_cols)
+        input_shape = (channels, img_rows, img_cols)
+    else:
+        x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, channels)
+        x_val = x_val.reshape(x_val.shape[0], img_rows, img_cols, channels)
+        input_shape = (img_rows, img_cols, channels)
+
+    #train_data = train_data.to_tf_dataset(columns='image', label_cols='label', shuffle=True, batch_size=batch_size)
+    #validation_data = validation_data.to_tf_dataset(columns='image', label_cols='label', shuffle=True, batch_size=batch_size)
+    """
+    # Get an example from train_data
+    for batch in train_data.take(1):
+        example_images, example_labels = batch
+        break
+    """
+    dataset = { 
+        'x_train': x_train,
+        'y_train': y_train,
+        'x_val': x_val,
+        'y_val': y_val}
     return dataset

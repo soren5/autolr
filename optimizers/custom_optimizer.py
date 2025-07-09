@@ -456,7 +456,7 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
                             print(f"#####\n{layer.name}\n strides {layer.strides}\n kernel size {layer.kernel_size}\n kernel shape {layer.kernel.shape}\n filters {layer.filters}\n bias size{layer.bias.shape}\n\n\n")
                         elif 'dense' in layer.name: 
                             print(f"#####\n{layer.name}\n units {layer.units}\n\n\n")
-                        elif 'pool' in layer.name: 
+                        elif 'pool' in layer.name and 'pad' not in layer.name and 'avg' not in layer.name: 
                             print(f"#####\n{layer.name}\n pool size {layer.pool_size}\n\n\n")
                         else:
                             print(f"#####\n{layer.name}\n\n\n")
