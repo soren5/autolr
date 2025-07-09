@@ -3,7 +3,6 @@ from tensorflow.keras.optimizers import Adam, SGD
 from utils.data_functions import load_cifar10_full, load_cifar10_training, load_fashion_mnist_training
 import tensorflow as tf
 from tensorflow.keras import Sequential
-import cv2 
 from tensorflow.compat.v1 import ConfigProto
 from tensorflow.compat.v1 import InteractiveSession
 import numpy as np
@@ -75,9 +74,9 @@ class VGG16_Interface:
     self.incoming_data_shape = incoming_data_shape
     self.model = None
     self.input_layer_shape = (224,224,3)
-    self.initialize_model()
+    #self.initialize_model()
     self.add_feature_extractor_to_model()
-    self.add_classifier_to_model()
+    #self.add_classifier_to_model()
   
   def get_model(self):
     return self.model
@@ -92,11 +91,16 @@ class VGG16_Interface:
   def add_feature_extractor_to_model(self):
     from tensorflow.keras.applications.vgg16 import VGG16
 
-    feature_extractor = VGG16(input_shape=self.input_layer_shape,
-                                                include_top=False,
-                                                weights='imagenet')
-    for layer in feature_extractor.layers:
-       self.model.add(layer)
+    feature_extractor = VGG16(input_shape=self.incoming_data_shape,
+                                                include_top=True,
+                                                weights=None, classes=200)
+    self.model = feature_extractor
+    self.model.trainable = True
+    
+    for layer in self.model.layers:
+      print(f"Adding layer {layer.name} to model, with input shape {layer.input_shape} and output shape {layer.output_shape}")
+      #self.model.add(layer)
+    return
 
   '''
   Defines final dense layers and subsequent softmax layer for classification.
@@ -110,7 +114,6 @@ class VGG16_Interface:
 
   def initialize_model(self):
     self.model = Sequential()
-    self.model.add(tf.keras.layers.Input(shape=self.input_layer_shape))
   
   def prepare_input(self, data):
     from tensorflow.keras.applications.vgg16 import preprocess_input

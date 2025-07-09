@@ -1,12 +1,13 @@
 from copy import deepcopy
 import csv
 from pickle import NONE
-from utils.data_functions import load_fashion_mnist_training, load_cifar10_training, load_mnist_training, select_fashion_mnist_training, load_imagenet_training
+from utils.data_functions import load_fashion_mnist_training, load_cifar10_training, load_mnist_training, select_fashion_mnist_training, load_imagenet_training, load_tiny_imagenet
 import tensorflow as tf
 from tensorflow.keras.optimizers import Adam, SGD, RMSprop
 from utils.smart_phenotype import readable_phenotype, smart_phenotype
 from optimizers.custom_optimizer import CustomOptimizerArchV2, CustomOptimizerArch
 import datetime
+from models.keras_model_adapter import VGG16_Interface
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
@@ -29,16 +30,17 @@ cached_weights = None
 
 def train_model_tensorflow_imagenet(phen_params):
     phen, params, validation_size, fitness_size, batch_size, epochs, patience = find_params(phen_params)
-
     if globals()['cached_dataset'] == None:
-        globals()['cached_dataset'] = load_imagenet_training(validation_size=validation_size, test_size=fitness_size, batch_size=batch_size)
-    
-    cache_resnet_model(params)
+        globals()['cached_dataset'] = load_tiny_imagenet(validation_size=validation_size, test_size=fitness_size, batch_size=batch_size)
+
+    #cache_resnet_model(params)
+    cache_vgg16_model(params)
         
     return evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience)
 
 def evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience):
     dataset = globals()['cached_dataset'] 
+    dataset_2 = load_fashion_mnist_training(training_size=5000, validation_size=100, normalize=False, subtract_mean=False)
     model = tf.keras.models.clone_model(globals()['cached_model'])
     import numpy as np
     l = []
@@ -48,22 +50,21 @@ def evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience)
     
     # optimizer is constant aslong as phen doesn't changed?
     # -> opportunity to cache opt and compiled model
-    opt = CustomOptimizerArch(phen=phen, model=model)
-    train_data = dataset[0]
-    validation_data = dataset[1]
+    #opt = CustomOptimizerArch(phen=phen, model=model)
+    opt = SGD(learning_rate=0.01, momentum=0.9, nesterov=True)
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
     early_stop = keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=patience, restore_best_weights=True)
     
-    score = model.fit(train_data,
-        batch_size=batch_size,
-        steps_per_epoch= len(train_data) // batch_size,
-        epochs=epochs,
+    score = model.fit(dataset['x_train'], dataset['y_train'],
+        batch_size=100,
+        epochs=100,
         verbose=2,
-        validation_data= validation_data,
-        validation_steps= len(validation_data) // batch_size,
+        validation_data=(dataset['x_val'], dataset['y_val']),
+        validation_steps= validation_size // batch_size,
         callbacks=[
-            early_stop
+            #early_stop
         ])
+
 
     K.clear_session()
     results = {}
@@ -71,7 +72,7 @@ def evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience)
         results[metric] = []
         for n in score.history[metric]:
             results[metric].append(n)
-    test_score = model.evaluate(validation_data, verbose=0, callbacks=[keras.callbacks.History()])
+    test_score = model.evaluate(dataset['x_val'], verbose=0, callbacks=[keras.callbacks.History()])
     return test_score[-1], results
 
 def cache_model(params):
@@ -82,6 +83,12 @@ def cache_model(params):
 def cache_resnet_model(params):
     if globals()['cached_model'] == None:
         globals()['cached_model'] = tf.keras.applications.ResNet50(weights=None, include_top=True)
+        globals()['cached_weights'] = globals()['cached_model'].get_weights()
+
+def cache_vgg16_model(params):
+    if globals()['cached_model'] == None:
+        vgg16 = VGG16_Interface(incoming_data_shape=(64,64,3))
+        globals()['cached_model'] = vgg16.get_model()
         globals()['cached_weights'] = globals()['cached_model'].get_weights()
 
 def create_train_model(model_, data, weights):
@@ -144,7 +151,8 @@ def evaluate_model(phen, validation_size, batch_size, epochs, patience):
     
     # optimizer is constant aslong as phen doesn't changed?
     # -> opportunity to cache opt and compiled model
-    opt = CustomOptimizerArchV2(phen=phen, model=model)
+    #opt = CustomOptimizerArchV2(phen=phen, model=model)
+    opt = SGD(learning_rate=0.01, momentum=0.9, nesterov=True)
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
     early_stop = keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=patience, restore_best_weights=True)
     
