@@ -5,7 +5,10 @@ from keras.models import load_model
 from tensorflow import keras
 from tensorflow.keras import backend as K
 from utils.data_functions import load_tiny_imagenet
-from models.vgg16_interface import VGG16_Interface
+from models.keras_model_adapters.vgg16_interface import VGG16_Interface
+from models.keras_model_adapters.inceptionv3_interface import InceptionV3_Interface
+from models.keras_model_adapters.resnet_interface import ResNet_Interface
+from optimizers.custom_optimizer import CustomOptimizerArch, CustomOptimizerArchV2
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
@@ -31,21 +34,16 @@ def train_model_tensorflow_imagenet(phen_params, optimizer):
     #cache_resnet_model(params)
     cache_vgg16_model(params)
         
-    return evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience)
+    return evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience, optimizer=optimizer)
 
-def evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience):
+def evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience, optimizer=None):
     dataset = globals()['cached_dataset'] 
     model = tf.keras.models.clone_model(globals()['cached_model'])
-    import numpy as np
-    l = []
-    for p in model.trainable_weights:
-        l.append(K.count_params(p))
-    print('Trainable params: {:,}'.format(np.sum(l)))
-    
-    # optimizer is constant aslong as phen doesn't changed?
-    # -> opportunity to cache opt and compiled model
-    #opt = CustomOptimizerArch(phen=phen, model=model)
-    opt = SGD(learning_rate=0.01, momentum=0.9, nesterov=True)
+
+    if phen == None:
+        opt = optimizer
+    else:
+        opt = CustomOptimizerArch(phen=phen, model=model)
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
     early_stop = keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=patience, restore_best_weights=True)
     
@@ -76,20 +74,28 @@ def cache_model(params):
 
 def cache_resnet_model(params):
     if globals()['cached_model'] == None:
-        globals()['cached_model'] = tf.keras.applications.ResNet50(weights=None, include_top=True)
+        model = ResNet_Interface(incoming_data_shape=(64,64,3))
+        globals()['cached_model'] = model.get_model()
         globals()['cached_weights'] = globals()['cached_model'].get_weights()
 
 def cache_vgg16_model(params):
     if globals()['cached_model'] == None:
-        vgg16 = VGG16_Interface(incoming_data_shape=(64,64,3))
-        globals()['cached_model'] = vgg16.get_model()
+        model = VGG16_Interface(incoming_data_shape=(64,64,3))
+        globals()['cached_model'] = model.get_model()
+        globals()['cached_weights'] = globals()['cached_model'].get_weights()
+
+def cache_inceptionv3_model(params):
+    if globals()['cached_model'] == None:
+        model = InceptionV3_Interface(incoming_data_shape=(64,64,3))
+        globals()['cached_model'] = model.get_model()
         globals()['cached_weights'] = globals()['cached_model'].get_weights()
 
 parameter_file = ''
 optimizer = tf.keras.optimizers.SGD(learning_rate=0.01, momentum=0.9, nesterov=True)
 from sge.parameters import load_parameters, params
+phen_params = (None, params)
 load_parameters(parameter_file)
-train_model_tensorflow_imagenet(params, optimizer)
+train_model_tensorflow_imagenet(phen_params, optimizer)
 
 def find_params(phen_params):
     phen, params = phen_params
