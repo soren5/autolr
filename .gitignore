@@ -182,3 +182,4 @@ local_data/
 imagenet/*
 *.zip
 *.jpeg
+.hugging_face_token
