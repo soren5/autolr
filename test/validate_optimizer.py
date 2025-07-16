@@ -53,9 +53,13 @@ def evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience,
         opt = ADES(model=model)
     elif params['OPTIMIZER'] == 'SGD':
         opt = SGD()
+    elif params['OPTIMIZER'] == 'RMSprop':
+        opt = RMSprop()
+    elif params['OPTIMIZER'] == 'Adam':
+        opt = Adam()
     opt.__name__ = params['OPTIMIZER']
 
-    experiment_name = params['MODEL'] + opt.__name__ + str(time.time())
+    experiment_name = params['MODEL'] + '_' + opt.__name__ + '_' + str(time.time())
 
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
     early_stop = keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=patience, restore_best_weights=True)
@@ -121,7 +125,7 @@ phen_params = (None, params)
 load_parameters(parameter_file)
 
 for _ in range(30):
-    params['OPTIMIZER'] = 'SGD'
+    params['OPTIMIZER'] = 'Adam'
     params['MODEL'] = 'resnet'
     train_model_tensorflow_imagenet(phen_params, None)
     params['MODEL'] = 'vgg16'
