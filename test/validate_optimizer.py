@@ -87,28 +87,26 @@ def evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience,
         json.dump(results, f)
     return test_score[-1], results
 
+
 def cache_model(params):
     if globals()['cached_model'] == None:
         globals()['cached_model'] = load_model(params['MODEL'], compile=False)
         globals()['cached_weights'] = globals()['cached_model'].get_weights()
 
 def cache_resnet_model(params):
-    if globals()['cached_model'] == None:
-        model = ResNet_Interface(incoming_data_shape=(64,64,3))
-        globals()['cached_model'] = model.get_model()
-        globals()['cached_weights'] = globals()['cached_model'].get_weights()
+    model = ResNet_Interface(incoming_data_shape=(64,64,3))
+    globals()['cached_model'] = model.get_model()
+    globals()['cached_weights'] = globals()['cached_model'].get_weights()
 
 def cache_vgg16_model(params):
-    if globals()['cached_model'] == None:
-        model = VGG16_Interface(incoming_data_shape=(64,64,3))
-        globals()['cached_model'] = model.get_model()
-        globals()['cached_weights'] = globals()['cached_model'].get_weights()
+    model = VGG16_Interface(incoming_data_shape=(64,64,3))
+    globals()['cached_model'] = model.get_model()
+    globals()['cached_weights'] = globals()['cached_model'].get_weights()
 
 def cache_inceptionv3_model(params):
-    if globals()['cached_model'] == None:
-        model = InceptionV3_Interface(incoming_data_shape=(64,64,3))
-        globals()['cached_model'] = model.get_model()
-        globals()['cached_weights'] = globals()['cached_model'].get_weights()
+    model = InceptionV3_Interface(incoming_data_shape=(64,64,3))
+    globals()['cached_model'] = model.get_model()
+    globals()['cached_weights'] = globals()['cached_model'].get_weights()
 
 def find_params(phen_params):
     phen, params = phen_params
@@ -130,6 +128,7 @@ for _ in range(30):
     train_model_tensorflow_imagenet(phen_params, None)
     params['MODEL'] = 'vgg16'
     train_model_tensorflow_imagenet(phen_params, None)
+
     params['MODEL'] = 'inceptionv3'
     train_model_tensorflow_imagenet(phen_params, None)
 

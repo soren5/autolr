@@ -40,7 +40,8 @@ class VGG16_Interface:
     self.model.trainable = True
     
     for layer in self.model.layers:
-      print(f"Adding layer {layer.name} to model, with input shape {layer.input_shape} and output shape {layer.output_shape}")
+      #print(f"Adding layer {layer.name} to model, with input shape {layer.input_shape} and output shape {layer.output_shape}")
+      print(f"Layer {layer.name} config: {layer.get_config()}")
       #self.model.add(layer)
     return
   
