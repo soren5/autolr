@@ -463,7 +463,7 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
                             else: 
                                 self._strides[trainable_weight.name] = tf.constant(0.0, shape=trainable_weight.shape, dtype=tf.float32)
 
-                            if hasattr(layer, 'kernel'):
+                            if hasattr(layer, 'kernel_size'):
                                 self._kernel[trainable_weight.name] = tf.constant(layer.kernel_size[0], shape=trainable_weight.shape, dtype=tf.float32)
                             else:
                                 self._kernel[trainable_weight.name] = tf.constant(0.0, shape=trainable_weight.shape, dtype=tf.float32)
@@ -546,17 +546,13 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
             self._beta_dict[var.name] = tf.Variable(np.zeros(var.shape) , name="beta" + var.name[:-2], shape=var.shape, dtype=tf.float32)
             self._sigma_dict[var.name] = tf.Variable(np.zeros(var.shape) , name="sigma" + var.name[:-2], shape=var.shape, dtype=tf.float32)
 
-        is_dense = tf.constant(0.0 , name="is_dense_" + var.name[:-2], shape=var.shape, dtype=tf.float32) 
-        is_pool = tf.constant(0.0 , name="is_pool_" + var.name[:-2], shape=var.shape, dtype=tf.float32)  
-        is_conv = tf.constant(0.0 , name="is_conv_" + var.name[:-2], shape=var.shape, dtype=tf.float32) 
 
-        print(variable_name)
-        if 'conv2d' in variable_name:
-            is_conv =  tf.constant(1.0 , name="is_conv_" + var.name[:-2], shape=var.shape, dtype=tf.float32)
-        elif 'dense' in variable_name: 
-            is_dense = tf.constant(1.0 , name="is_dense_" + var.name[:-2], shape=var.shape, dtype=tf.float32) 
-        elif 'pool' in variable_name: 
-            is_pool = tf.constant(1.0 , name="is_pool_" + var.name[:-2], shape=var.shape, dtype=tf.float32)  
+        has_strides = tf.constant(float(hasattr(var, 'strides')), shape=var.shape, dtype=tf.float32)
+        has_kernel_size = tf.constant(float(hasattr(var, 'kernel_size')), shape=var.shape, dtype=tf.float32)
+        has_filters = tf.constant(float(hasattr(var, 'filters')), shape=var.shape, dtype=tf.float32)
+        has_dilation_rate = tf.constant(float(hasattr(var, 'dilation_rate')), shape=var.shape, dtype=tf.float32)
+        has_units = tf.constant(float(hasattr(var, 'units')), shape=var.shape, dtype=tf.float32)
+        has_pool_size = tf.constant(float(hasattr(var, 'pool_size')), shape=var.shape, dtype=tf.float32)
 
         var_device, var_dtype = var.device, var.dtype.base_dtype
         coefficients = ((apply_state or {}).get((var_device, var_dtype))
