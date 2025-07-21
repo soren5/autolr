@@ -1,20 +1,22 @@
 from sge.parameters import params
 
 def trim_phenotype(phenotype):
-    print(params)
+    #print(params)
     if "shape" in phenotype:
         phenotype = phenotype.replace(", shape=shape, dtype=tf.float32", "")
         phenotype = phenotype.replace("tf.math.", "")
         phenotype = phenotype.replace("tf.", "")
-        print(params['GRAMMAR'])
-        if 'architecture_layer_type' in params['GRAMMAR']:
-            print("THIS IS A LAYER TYPE GRAMMAR")
+        #print(params['GRAMMAR'])
+        if 'deep_architecture_optimizer' in params['GRAMMAR']:
+            functions = phenotype.split(r'lambda has_strides, strides, has_kernel_size, kernel_size, has_filters, filters, has_dilation_rate, dilation_rate, has_units, units, has_pool_size, pool_size, layer_count, layer_num, shape, alpha')
+        elif 'architecture_layer_type' in params['GRAMMAR']:
+            #print("THIS IS A LAYER TYPE GRAMMAR")
             functions = phenotype.split(r'lambda is_dense, units, is_pool, pool_size, is_conv, kernel_size, filters, stride, layer_count, layer_num, shape, alpha')
         elif 'architecture' in params['GRAMMAR']:
-            print("THIS IS AN ARCHITECTURAL GRAMMAR")
+            #print("THIS IS AN ARCHITECTURAL GRAMMAR")
             functions = phenotype.split(r'lambda layer_count, layer_num, shape, alpha')
         else:
-            print("THIS IS NOT AN ARCHITECTURAL GRAMMAR")
+            #print("THIS IS NOT AN ARCHITECTURAL GRAMMAR")
             functions = phenotype.split(r'lambda shape, alpha')
 
     elif "size" in phenotype:

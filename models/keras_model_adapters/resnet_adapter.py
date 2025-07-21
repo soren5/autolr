@@ -6,59 +6,30 @@ from tensorflow.keras import Sequential
 from tensorflow.compat.v1 import ConfigProto
 from tensorflow.compat.v1 import InteractiveSession
 import numpy as np
-from tensorflow.keras.applications.resnet import ResNet50
-
+from tensorflow.keras.applications.resnet import ResNet50, preprocess_input
+from keras.engine import data_adapter
 config = ConfigProto()
 config.gpu_options.allow_growth = True
 session = InteractiveSession(config=config)
 
+def test_step(self, data):
+    x, y, sample_weight = data_adapter.unpack_x_y_sample_weight(data)
+
+    y_pred = self(x, training=False)
+    # Updates stateful loss metrics.
+    self.compute_loss(x, y, y_pred, sample_weight)
+    print(f" compute loss: {self.compute_loss(x, y, y_pred, sample_weight)}")
+    return self.compute_metrics(x, y, y_pred, sample_weight)
+
 class ResNet_Interface:
-  # For some reason this model seems to want data without the standard /= 255 operation
   def __init__(self, incoming_data_shape=(28,28,1)):
     self.incoming_data_shape = incoming_data_shape
-    self.model = None
-    self.input_layer_shape = (224,224,3)
-    #self.initialize_model()
-    self.add_feature_extractor_to_model()
-    #self.add_classifier_to_model()
+    self.model = ResNet50(input_shape=self.incoming_data_shape,
+                                                include_top=True,
+                                                weights=None, classes=200)
+    self.model.trainable = True
+    self.model.test_step = test_step
+    self.pre_process = preprocess_input
   
   def get_model(self):
     return self.model
-
-  def get_input_layer_shape(self):
-    return self.input_layer_shape
-  
-  '''
-  Feature Extraction is performed by ResNet50 pretrained on imagenet weights. 
-  Input size is 224 x 224.
-  '''
-  def add_feature_extractor_to_model(self):
-
-    feature_extractor = ResNet50(input_shape=self.incoming_data_shape,
-                                                include_top=True,
-                                                weights=None, classes=200)
-    self.model = feature_extractor
-    self.model.trainable = True
-    
-    for layer in self.model.layers:
-      #print(f"Adding layer {layer.name} to model, with input shape {layer.input_shape} and output shape {layer.output_shape}")
-      print(f"Layer {layer.name} config: {layer.get_config()}")
-      #self.model.add(layer)
-    return
-
-  def prepare_input(self, data):
-    from tensorflow.keras.applications.vgg16 import preprocess_input
-    from tensorflow.keras.preprocessing.image import img_to_array, array_to_img
-    print(f"Detected input shape {data.shape}")
-
-    if len(data.shape) == 4 and data.shape[3] == 1:
-      data = data[:,:,:,0]
-
-    if len(data.shape) == 3:
-      data = np.stack([data] * 3, axis=-1)
-
-    data = np.asarray([img_to_array(array_to_img(im, scale=False).resize((224,224))) for im in data])
-
-    print(f"Changed to input shape {data.shape}")
-    return preprocess_input(data)
-

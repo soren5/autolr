@@ -609,6 +609,7 @@ def load_imagenet_training(n_classes=1000, validation_size=5000, test_size=0, ba
         subset='training',
         shuffle=True,
         seed=42)
+
     validation_data = keras.preprocessing.image_dataset_from_directory(
         'imagenet/',
         labels='inferred',
@@ -626,41 +627,22 @@ def load_tiny_imagenet(n_classes=200, validation_size=5000, test_size=0, batch_s
     train_dataset = load_dataset("zh-plus/tiny-imagenet", split='train').with_format("numpy")
     validation_dataset = load_dataset("zh-plus/tiny-imagenet", split='valid').with_format("numpy")
 
-    def resize_image(examples):
-        examples["label"]
-        return examples
-    #train_data = train_data.map(resize_image, remove_columns=["image"], batched=True)
-    #validation_data = validation_data.map(resize_image, remove_columns=["image"], batched=True)
-
-    #train_data['label'] = keras.utils.to_categorical(train_data['label'], n_classes)
-    #validation_data['label'] = keras.utils.to_categorical(validation_data['label'], n_classes)
+    print(f"train len: {len(train_dataset)}, val len: {len(validation_dataset)}")
+    y_train = keras.utils.to_categorical(train_dataset['label'], n_classes)
+    y_val = keras.utils.to_categorical(validation_dataset['label'], n_classes)
 
     x_train = train_dataset['image']
     x_train = np.stack([x if x.shape == (64, 64, 3) else np.stack([x]*3, axis=-1) for x in x_train])
     y_train = keras.utils.to_categorical(train_dataset['label'], n_classes)
+
     x_val = validation_dataset['image']
     x_val = np.stack([x if x.shape == (64, 64, 3) else np.stack([x]*3, axis=-1) for x in x_val])
 
-    y_val = keras.utils.to_categorical(validation_dataset['label'], n_classes)
 
     x_train = x_train.astype('float32')
     x_val = x_val.astype('float32')
 
     img_rows, img_cols, channels = 64, 64, 3
-
-    if False:    
-        x_train /= 255
-        x_val /= 255
-
-    #subraction of the mean image
-    if False:
-        x_mean = 0
-        for x in x_train:
-            x_mean += x
-        x_mean /= len(x_train)
-        x_train -= x_mean
-        x_val -= x_mean
-        x_test -= x_mean
 
     if K.image_data_format() == 'channels_first':
         x_train = x_train.reshape(x_train.shape[0], channels, img_rows, img_cols)
@@ -671,17 +653,15 @@ def load_tiny_imagenet(n_classes=200, validation_size=5000, test_size=0, batch_s
         x_val = x_val.reshape(x_val.shape[0], img_rows, img_cols, channels)
         input_shape = (img_rows, img_cols, channels)
 
-    #train_data = train_data.to_tf_dataset(columns='image', label_cols='label', shuffle=True, batch_size=batch_size)
-    #validation_data = validation_data.to_tf_dataset(columns='image', label_cols='label', shuffle=True, batch_size=batch_size)
-    """
-    # Get an example from train_data
-    for batch in train_data.take(1):
-        example_images, example_labels = batch
-        break
-    """
+    x_val, x_test, y_val, y_test = train_test_split(x_val, y_val,
+                                                        test_size=test_size,
+                                                        stratify=y_val)
     dataset = { 
         'x_train': x_train,
         'y_train': y_train,
         'x_val': x_val,
-        'y_val': y_val}
+        'y_val': y_val,
+        'x_test': x_test,
+        'y_test': y_test,
+        }
     return dataset

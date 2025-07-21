@@ -36,29 +36,29 @@ def train_model_tensorflow_imagenet(phen_params):
     if globals()['cached_dataset'] == None:
         globals()['cached_dataset'] = load_tiny_imagenet(validation_size=validation_size, test_size=fitness_size, batch_size=batch_size)
 
-    cache_vgg16_model(params)
-        
+    if params['MODEL'] == 'resnet':
+        cache_resnet_model(params)
+    elif params['MODEL'] == 'vgg16':
+        cache_vgg16_model(params)
+    elif params['MODEL'] == 'inceptionv3':
+        cache_inceptionv3_model(params)
+    else:
+        raise Exception('Invalid model for validation')        
+    
     return evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience)
 
-def evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience):
+def evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience, optimizer=None):
     dataset = globals()['cached_dataset'] 
     model = tf.keras.models.clone_model(globals()['cached_model'])
-    import numpy as np
-    l = []
-    for p in model.trainable_weights:
-        l.append(K.count_params(p))
-    print('Trainable params: {:,}'.format(np.sum(l)))
-    
-    # optimizer is constant aslong as phen doesn't changed?
-    # -> opportunity to cache opt and compiled model
-    #opt = CustomOptimizerArch(phen=phen, model=model)
-    opt = SGD(learning_rate=0.01, momentum=0.9, nesterov=True)
+
+    opt = CustomOptimizerArchV2(model=model, phen=phen)
+
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
     early_stop = keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=patience, restore_best_weights=True)
     
     score = model.fit(dataset['x_train'], dataset['y_train'],
-        batch_size=100,
-        epochs=100,
+        batch_size=batch_size,
+        epochs=epochs,
         verbose=2,
         validation_data=(dataset['x_val'], dataset['y_val']),
         validation_steps= validation_size // batch_size,
@@ -72,7 +72,10 @@ def evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience)
         results[metric] = []
         for n in score.history[metric]:
             results[metric].append(n)
+
     test_score = model.evaluate(dataset['x_val'], verbose=0, callbacks=[keras.callbacks.History()])
+    results['test_score'] = test_score
+
     return test_score[-1], results
 
 def cache_model(params):

@@ -161,7 +161,7 @@ def evaluate_model(phen, validation_size, batch_size, epochs, patience):
 
 def find_params(phen_params):
     phen, params = phen_params
-    print(params['EPOCHS'])
+    #print(params['EPOCHS'])
     validation_size = params['VALIDATION_SIZE']
     fitness_size =params['FITNESS_SIZE'] 
     batch_size = params['BATCH_SIZE']

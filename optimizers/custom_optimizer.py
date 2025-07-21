@@ -443,6 +443,7 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
             self._strides = {}
             self._kernel = {}
             self._filters = {}
+            self._dilation_rate = {}
 
             self._pool_size = {}
 
@@ -474,9 +475,9 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
                                 self._filters[trainable_weight.name] = tf.constant(0.0, shape=trainable_weight.shape, dtype=tf.float32)
 
                             if hasattr(layer, 'dilation_rate'):
-                                self._filters[trainable_weight.name] = tf.constant(layer.dilation_rate[0], shape=trainable_weight.shape, dtype=tf.float32)
+                                self._dilation_rate[trainable_weight.name] = tf.constant(layer.dilation_rate[0], shape=trainable_weight.shape, dtype=tf.float32)
                             else:
-                                self._filters[trainable_weight.name] = tf.constant(0.0, shape=trainable_weight.shape, dtype=tf.float32)
+                                self._dilation_rate[trainable_weight.name] = tf.constant(0.0, shape=trainable_weight.shape, dtype=tf.float32)
 
                             if hasattr(layer, 'units'):
                                 self._units[trainable_weight.name] = tf.constant(layer.units, shape=trainable_weight.shape, dtype=tf.float32)
@@ -563,14 +564,18 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
                 self._alpha_dict[variable_name].handle, 
                 tf.constant(1.0), 
                 self._alpha_func(
-                    is_dense,
-                    self._units[variable_name],
-                    is_pool,
-                    self._pool_size[variable_name],
-                    is_conv,
-                    self._kernel[variable_name],
-                    self._filters[variable_name],
+                    has_strides,
                     self._strides[variable_name],
+                    has_kernel_size,
+                    self._kernel[variable_name],
+                    has_filters,
+                    self._filters[variable_name],
+                    has_dilation_rate,
+                    self._dilation_rate[variable_name],
+                    has_units,
+                    self._units[variable_name],
+                    has_pool_size,
+                    self._pool_size[variable_name],
                     self._layer_count[variable_name],
                     self._depth_dict[variable_name],
                     var.shape, 
@@ -581,14 +586,18 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
                 self._beta_dict[variable_name].handle, 
                 tf.constant(1.0), 
                 self._beta_func(
-                    is_dense,
-                    self._units[variable_name],
-                    is_pool,
-                    self._pool_size[variable_name],
-                    is_conv,
-                    self._kernel[variable_name],
-                    self._filters[variable_name],
+                    has_strides,
                     self._strides[variable_name],
+                    has_kernel_size,
+                    self._kernel[variable_name],
+                    has_filters,
+                    self._filters[variable_name],
+                    has_dilation_rate,
+                    self._dilation_rate[variable_name],
+                    has_units,
+                    self._units[variable_name],
+                    has_pool_size,
+                    self._pool_size[variable_name],
                     self._layer_count[variable_name],
                     self._depth_dict[variable_name],
                     var.shape, 
@@ -600,14 +609,18 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
                 self._sigma_dict[variable_name].handle, 
                 tf.constant(1.0), 
                 self._sigma_func(
-                    is_dense,
-                    self._units[variable_name],
-                    is_pool,
-                    self._pool_size[variable_name],
-                    is_conv,
-                    self._kernel[variable_name],
-                    self._filters[variable_name],
+                    has_strides,
                     self._strides[variable_name],
+                    has_kernel_size,
+                    self._kernel[variable_name],
+                    has_filters,
+                    self._filters[variable_name],
+                    has_dilation_rate,
+                    self._dilation_rate[variable_name],
+                    has_units,
+                    self._units[variable_name],
+                    has_pool_size,
+                    self._pool_size[variable_name],
                     self._layer_count[variable_name],
                     self._depth_dict[variable_name],
                     var.shape, 
@@ -620,14 +633,18 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
                 var.handle, 
                 tf.constant(1.0), 
                 self._grad_func(
-                    is_dense,
-                    self._units[variable_name],
-                    is_pool,
-                    self._pool_size[variable_name],
-                    is_conv,
-                    self._kernel[variable_name],
-                    self._filters[variable_name],
+                    has_strides,
                     self._strides[variable_name],
+                    has_kernel_size,
+                    self._kernel[variable_name],
+                    has_filters,
+                    self._filters[variable_name],
+                    has_dilation_rate,
+                    self._dilation_rate[variable_name],
+                    has_units,
+                    self._units[variable_name],
+                    has_pool_size,
+                    self._pool_size[variable_name],
                     self._layer_count[variable_name],
                     self._depth_dict[variable_name],
                     var.shape, 

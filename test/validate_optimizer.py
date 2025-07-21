@@ -47,7 +47,10 @@ def train_model_tensorflow_imagenet(phen_params, optimizer):
 
 def evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience, optimizer=None):
     dataset = globals()['cached_dataset'] 
-    model = tf.keras.models.clone_model(globals()['cached_model'])
+    adapter = globals()['cached_model']
+    model = tf.keras.models.clone_model(adapter.get_model())
+    data_process = adapter.pre_process
+
 
     if params['OPTIMIZER'] == "ADES":
         opt = ADES(model=model)
@@ -64,11 +67,11 @@ def evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience,
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
     early_stop = keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=patience, restore_best_weights=True)
     
-    score = model.fit(dataset['x_train'], dataset['y_train'],
+    score = model.fit(data_process(dataset['x_train']), dataset['y_train'],
         batch_size=batch_size,
         epochs=epochs,
         verbose=2,
-        validation_data=(dataset['x_val'], dataset['y_val']),
+        validation_data=(data_process(dataset['x_val']), dataset['y_val']),
         validation_steps= validation_size // batch_size,
         callbacks=[
             early_stop
@@ -81,8 +84,11 @@ def evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience,
         results[metric] = []
         for n in score.history[metric]:
             results[metric].append(n)
-    test_score = model.evaluate(dataset['x_val'], verbose=0, callbacks=[keras.callbacks.History()])
+            
+    test_score = model.evaluate(data_process(dataset['x_test']), verbose=2)
     results['test_score'] = test_score
+    print(f"TEST SCORE: {test_score}")
+
     with open(experiment_name + ".json", 'w+') as f:
         json.dump(results, f)
     return test_score[-1], results
@@ -95,18 +101,18 @@ def cache_model(params):
 
 def cache_resnet_model(params):
     model = ResNet_Interface(incoming_data_shape=(64,64,3))
-    globals()['cached_model'] = model.get_model()
-    globals()['cached_weights'] = globals()['cached_model'].get_weights()
+    globals()['cached_model'] = model
+    globals()['cached_weights'] = globals()['cached_model'].get_model().get_weights()
 
 def cache_vgg16_model(params):
     model = VGG16_Interface(incoming_data_shape=(64,64,3))
-    globals()['cached_model'] = model.get_model()
-    globals()['cached_weights'] = globals()['cached_model'].get_weights()
+    globals()['cached_model'] = model
+    globals()['cached_weights'] = globals()['cached_model'].get_model().get_weights()
 
 def cache_inceptionv3_model(params):
     model = InceptionV3_Interface(incoming_data_shape=(64,64,3))
-    globals()['cached_model'] = model.get_model()
-    globals()['cached_weights'] = globals()['cached_model'].get_weights()
+    globals()['cached_model'] = model
+    globals()['cached_weights'] = globals()['cached_model'].get_model().get_weights()
 
 def find_params(phen_params):
     phen, params = phen_params
@@ -124,11 +130,13 @@ load_parameters(parameter_file)
 
 for _ in range(30):
     params['OPTIMIZER'] = 'Adam'
+
     params['MODEL'] = 'resnet'
     train_model_tensorflow_imagenet(phen_params, None)
-    params['MODEL'] = 'vgg16'
-    train_model_tensorflow_imagenet(phen_params, None)
 
-    params['MODEL'] = 'inceptionv3'
-    train_model_tensorflow_imagenet(phen_params, None)
+    #params['MODEL'] = 'vgg16'
+    #train_model_tensorflow_imagenet(phen_params, None)
+
+    #params['MODEL'] = 'inceptionv3'
+    #train_model_tensorflow_imagenet(phen_params, None)
 

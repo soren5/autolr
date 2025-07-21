@@ -15,6 +15,6 @@ RUN : \
 RUN python3.8 -m venv /venv
 ENV PATH=/venv/bin:$PATH
 RUN apt-get update 
-RUN apt-get install git
+RUN apt-get install git -y
 RUN pip3 install --upgrade pip
 RUN pip3 install -r requirements.txt
