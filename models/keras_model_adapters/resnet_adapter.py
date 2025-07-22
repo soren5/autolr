@@ -28,7 +28,6 @@ class ResNet_Interface:
                                                 include_top=True,
                                                 weights=None, classes=200)
     self.model.trainable = True
-    self.model.test_step = test_step
     self.pre_process = preprocess_input
   
   def get_model(self):

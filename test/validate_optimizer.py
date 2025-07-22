@@ -78,14 +78,14 @@ def evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience,
         ])
 
 
-    K.clear_session()
+    #K.clear_session()
     results = {}
     for metric in score.history:
         results[metric] = []
         for n in score.history[metric]:
             results[metric].append(n)
             
-    test_score = model.evaluate(data_process(dataset['x_test']), verbose=2)
+    test_score = model.evaluate(data_process(dataset['x_test']), dataset['y_test'], verbose=2)
     results['test_score'] = test_score
     print(f"TEST SCORE: {test_score}")
 
