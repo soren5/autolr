@@ -49,19 +49,20 @@ def train_model_tensorflow_imagenet(phen_params):
 
 def evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience, optimizer=None):
     dataset = globals()['cached_dataset'] 
-    model = tf.keras.models.clone_model(globals()['cached_model'])
+    adapter = globals()['cached_model']
+    model = tf.keras.models.clone_model(adapter.get_model())
+    data_process = adapter.pre_process
 
     opt = CustomOptimizerArchV2(model=model, phen=phen)
 
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
     early_stop = keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=patience, restore_best_weights=True)
     
-    score = model.fit(dataset['x_train'], dataset['y_train'],
+    score = model.fit(data_process(dataset['x_train']), dataset['y_train'],
         batch_size=batch_size,
         epochs=epochs,
         verbose=2,
-        validation_data=(dataset['x_val'], dataset['y_val']),
-        validation_steps= validation_size // batch_size,
+        validation_data=(data_process(dataset['x_val']), dataset['y_val']),
         callbacks=[
             early_stop
         ])
@@ -72,8 +73,8 @@ def evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience,
         results[metric] = []
         for n in score.history[metric]:
             results[metric].append(n)
-
-    test_score = model.evaluate(dataset['x_val'], verbose=0, callbacks=[keras.callbacks.History()])
+            
+    test_score = model.evaluate(data_process(dataset['x_test']), dataset['y_test'], verbose=2)
     results['test_score'] = test_score
 
     return test_score[-1], results

@@ -627,21 +627,65 @@ def load_tiny_imagenet(n_classes=200, validation_size=5000, test_size=0, batch_s
     train_dataset = load_dataset("zh-plus/tiny-imagenet", split='train').with_format("numpy")
     validation_dataset = load_dataset("zh-plus/tiny-imagenet", split='valid').with_format("numpy")
 
-    print(f"train len: {len(train_dataset)}, val len: {len(validation_dataset)}")
-    y_train = keras.utils.to_categorical(train_dataset['label'], n_classes)
-    y_val = keras.utils.to_categorical(validation_dataset['label'], n_classes)
-
+    # Remove grayscale images from train set
     x_train = train_dataset['image']
-    x_train = np.stack([x if x.shape == (64, 64, 3) else np.stack([x]*3, axis=-1) for x in x_train])
-    y_train = keras.utils.to_categorical(train_dataset['label'], n_classes)
+    y_train = train_dataset['label']
+    print(f'[BEFORE] x_train shape: {x_train.shape}, y_train shape: {y_train.shape}')
 
+    train_color_indices = [i for i, x in enumerate(x_train) if x.shape == (64, 64, 3)]
+    x_train = np.array([x_train[i] for i in train_color_indices])
+    y_train = np.array([y_train[i] for i in train_color_indices])
+    y_train = keras.utils.to_categorical(y_train, n_classes)
+
+    # Remove grayscale images from validation set
     x_val = validation_dataset['image']
-    x_val = np.stack([x if x.shape == (64, 64, 3) else np.stack([x]*3, axis=-1) for x in x_val])
-
+    y_val = validation_dataset['label']
+    print(f'[BEFORE] x_val shape: {x_val.shape}, y_val shape: {y_val.shape}')
+    val_color_indices = [i for i, x in enumerate(x_val) if x.shape == (64, 64, 3)]
+    x_val = np.array([x_val[i] for i in val_color_indices])
+    y_val = np.array([y_val[i] for i in val_color_indices])
+    y_val = keras.utils.to_categorical(y_val, n_classes)
 
     x_train = x_train.astype('float32')
     x_val = x_val.astype('float32')
 
+    print(f'[AFTER] x_train shape: {x_train.shape}, y_train shape: {y_train.shape}')
+    print(f'[AFTER] x_val shape: {x_val.shape}, y_val shape: {y_val.shape}')
+
+    # --- Balance classes in train set ---
+    train_labels = np.argmax(y_train, axis=1)
+    train_class_counts = np.bincount(train_labels, minlength=n_classes)
+    min_train_count = np.min(train_class_counts)
+    print(f'[BALANCE] train class counts: {train_class_counts}, using {min_train_count} per class')
+    balanced_train_indices = []
+    for c in range(n_classes):
+        idx = np.where(train_labels == c)[0]
+        if len(idx) > min_train_count:
+            idx = np.random.choice(idx, min_train_count, replace=False)
+        balanced_train_indices.extend(idx)
+    balanced_train_indices = np.array(balanced_train_indices)
+    x_train = x_train[balanced_train_indices]
+    y_train = y_train[balanced_train_indices]
+
+    # --- Balance classes in val set ---
+    val_labels = np.argmax(y_val, axis=1)
+    val_class_counts = np.bincount(val_labels, minlength=n_classes)
+    min_val_count = np.min(val_class_counts)
+    print(f'[BALANCE] val class counts: {val_class_counts}, using {min_val_count} per class')
+    balanced_val_indices = []
+    for c in range(n_classes):
+        idx = np.where(val_labels == c)[0]
+        if len(idx) > min_val_count:
+            idx = np.random.choice(idx, min_val_count, replace=False)
+        balanced_val_indices.extend(idx)
+    balanced_val_indices = np.array(balanced_val_indices)
+    x_val = x_val[balanced_val_indices]
+    y_val = y_val[balanced_val_indices]
+
+    # ...existing code...
+
+    print(f'[POST BALANCE] x_train shape: {x_train.shape}, y_train shape: {y_train.shape}')
+    print(f'[POST BALANCE] x_val shape: {x_val.shape}, y_val shape: {y_val.shape}')
     img_rows, img_cols, channels = 64, 64, 3
 
     if K.image_data_format() == 'channels_first':

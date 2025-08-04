@@ -67,12 +67,12 @@ def evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience,
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
     early_stop = keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=patience, restore_best_weights=True)
     
+    print(f"batch size {batch_size}, epochs {epochs}, patience {patience}, validation size {validation_size}")
     score = model.fit(data_process(dataset['x_train']), dataset['y_train'],
         batch_size=batch_size,
         epochs=epochs,
         verbose=2,
         validation_data=(data_process(dataset['x_val']), dataset['y_val']),
-        validation_steps= validation_size // batch_size,
         callbacks=[
             early_stop
         ])
