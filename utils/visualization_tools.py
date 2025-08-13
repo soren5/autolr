@@ -91,6 +91,7 @@ def load_results(root_dir):
     def preprocess_population_data_from_json(json_file_path, experiment_name, run_number):
         processed_data = []
         try:
+            print(json_file_path)
             with open(json_file_path, 'r') as file:
                 content = file.read()
             
@@ -121,8 +122,9 @@ def load_results(root_dir):
             print(f"An exception of type {type(e).__name__} occurred: {e}")
             print("Error in reading results ", json_file_path)
         return processed_data
-
+    print(root_dir)
     json_files, experiment_names, run_numbers = get_all_json_files(root_dir)
+    print(json_files)
     chunk_size = 200
 
     chunks = [json_files[i:i + chunk_size] for i in range(0, len(json_files), chunk_size)]
@@ -133,6 +135,7 @@ def load_results(root_dir):
         for j, file_path in enumerate(chunk):
             experiment_name = experiment_names[i * chunk_size + j]
             run_number = run_numbers[i * chunk_size + j]
+            print(file_path, experiment_name, run_number)
             processed_data = preprocess_population_data_from_json(file_path, experiment_name, run_number)
             combined_data.extend(processed_data)
     df = pd.DataFrame(combined_data)
