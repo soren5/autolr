@@ -87,11 +87,14 @@ def get_all_json_files(root_dir):
 
 
 def load_results(root_dir):
+
+    archives = {}
+
     # Step 1: Data Preprocessing
     def preprocess_population_data_from_json(json_file_path, experiment_name, run_number):
         processed_data = []
         try:
-            print(json_file_path)
+            #print(json_file_path)
             with open(json_file_path, 'r') as file:
                 content = file.read()
             
@@ -100,18 +103,22 @@ def load_results(root_dir):
                 file.write(modified_content)
             with open(json_file_path, 'r') as file:
                 if "iteration" in json_file_path:
-                    print(json_file_path, extract_number(json_file_path))
+                    #print(json_file_path, extract_number(json_file_path))
                     data = json.load(file)
                     for x in data:
                         if type(x) == dict:
                             indiv_data = {
-                                'Experiment name': experiment_name,
-                                'Run number': run_number,
-                                'Individual number': x['id'],
-                                'Generation': extract_number(json_file_path),
-                                'Phenotype': x['phenotype'],
-                                'Smart Phenotype': x['smart_phenotype'],
-                                'Fitness': x['fitness']
+                                'experiment_name': experiment_name,
+                                'run_number': run_number,
+                                'genetic_id': x['id'],
+                                'generation': extract_number(json_file_path),
+                                'phenotype': x['phenotype'],
+                                'smart_phenotype': x['smart_phenotype'],
+                                'fitness': x['fitness'],
+                                'operation': x['operation'],
+                                'parents': x['parent'] if 'parent' in x else None,
+                                'genotype': x['genotype'],
+
                             }
                             if 'other_info' in x:
                                 for extra in x['other_info']:
@@ -122,9 +129,10 @@ def load_results(root_dir):
             print(f"An exception of type {type(e).__name__} occurred: {e}")
             print("Error in reading results ", json_file_path)
         return processed_data
-    print(root_dir)
+    #print(root_dir)
     json_files, experiment_names, run_numbers = get_all_json_files(root_dir)
-    print(json_files)
+    json_files = sorted(json_files, reverse=True)
+    #print(json_files)
     chunk_size = 200
 
     chunks = [json_files[i:i + chunk_size] for i in range(0, len(json_files), chunk_size)]
@@ -135,7 +143,7 @@ def load_results(root_dir):
         for j, file_path in enumerate(chunk):
             experiment_name = experiment_names[i * chunk_size + j]
             run_number = run_numbers[i * chunk_size + j]
-            print(file_path, experiment_name, run_number)
+            #print(file_path, experiment_name, run_number)
             processed_data = preprocess_population_data_from_json(file_path, experiment_name, run_number)
             combined_data.extend(processed_data)
     df = pd.DataFrame(combined_data)
