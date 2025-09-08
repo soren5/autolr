@@ -297,7 +297,7 @@ def test_layer_type_architecture(base_fixture):
                 other_info['source'] = 'evaluation'
             else:
                 fit = -0.1
-                other_info = {'source': 'sanity check'}
+                other_info = {'source': 'degenerate detection'}
             return fit, other_info
 
         def init_net(self, params):

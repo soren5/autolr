@@ -4,6 +4,8 @@ from sge.parameters import (
     params,
     set_parameters
 )
+import numpy as np
+from utils.smart_phenotype import readable_phenotype
 from utils.xor_sanity_check import xor_check
 class Optimizer_Evaluator_Tensorflow:
     def __init__(self, train_model=None):  #should give a function 
@@ -12,15 +14,20 @@ class Optimizer_Evaluator_Tensorflow:
         self.train_model = train_model
     
     def evaluate(self, phen, params):
-        #if xor_check(phen):
-        if True:
+        print(f"\n\n\nTesting phenotype:\n{readable_phenotype(phen)}")
+        if xor_check(phen):
+        #if True:
             foo = self.train_model([phen, params])
             fit = -foo[0]
+            if np.isnan(fit):
+                print("NAN fitness, returning FITNESS_FLOOR")
+                fit = params['FITNESS_FLOOR']
+            print(f"Fitness: {fit}")
             other_info = foo[1]
             other_info['source'] = 'evaluation'
         else:
-            fit = -0.1
-            other_info = {'source': 'sanity check'}
+            fit = params['FITNESS_FLOOR']
+            other_info = {'source': 'degenerate detection'}
         return fit, other_info
 
     def init_net(self, params):
@@ -57,8 +64,8 @@ class Optimizer_Evaluator_Dual_Task:
             other_info = foo[1]
             other_info['source'] = 'evaluation'
         else:
-            fit = -0.1
-            other_info = {'source': 'sanity check'}
+            fit = params['FITNESS_FLOOR']
+            other_info = {'source': 'degenerate detection'}
         return fit, other_info
 
     def init_net(self, params):

@@ -31,7 +31,7 @@ def trim_phenotype(phenotype):
 
 def smart_phenotype(phenotype):
     functions = trim_phenotype(phenotype)
-    print(functions)
+    #print(functions)
     try:
         alpha_func_string = functions[1][8:-2]
         beta_func_string = functions[2][14:-2] 
@@ -56,7 +56,7 @@ def single_task_key(phenotype, it):
 
 def readable_phenotype(phenotype):
     functions = trim_phenotype(phenotype)
-    print(f'Readable Phenotype Functions: {functions[0]}\n{functions[1]}\n{functions[2]}\n{functions[3]}\n')
+    #print(f'Readable Phenotype Functions: {functions[0]}\n{functions[1]}\n{functions[2]}\n{functions[3]}\n')
     alpha_func_string = functions[1][8:-2]
     beta_func_string = functions[2][14:-2] 
     sigma_func_string = functions[3][21:-2] 
