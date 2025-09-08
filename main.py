@@ -69,7 +69,7 @@ class Optimizer_Evaluator_Dual_Task:
         return fit, other_info
 
     def init_net(self, params):
-        from models.keras_model_adapter import VGG16_Interface, MobileNet_Interface
+        from models.keras_model_adapters.keras_model_adapter import VGG16_Interface, MobileNet_Interface
         self.fmnist_model_interface = VGG16_Interface()
         self.cifar_model_interface = MobileNet_Interface()
 
