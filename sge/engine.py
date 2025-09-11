@@ -65,7 +65,7 @@ def evaluate(ind, eval_func):
         phen = ind['phenotype']
         tree_depth = ind['tree_depth']
     other_info = {}
-    print(f"Registering {smart_phenotype(phen)}")
+    #print(f"Registering {smart_phenotype(phen)}")
     if 'grad' in smart_phenotype(phen):
         if "FAKE_FITNESS" in params and params['FAKE_FITNESS']:
             print(f"USING FAKE FITNESS")
@@ -76,7 +76,7 @@ def evaluate(ind, eval_func):
         else:
             quality, other_info = eval_func.evaluate(phen, params)
     else:
-        print('\tSKIP xor check')
+        print('\t[GRAD CHECK] FAIL')
         quality = params['FITNESS_FLOOR']
         other_info = {'source': 'invalid detection'}
 
@@ -136,7 +136,7 @@ def evolutionary_algorithm(evaluation_function=None, parameters=None, logger_mod
     logger = read_params(parameters, logger_module)
     setup(evaluation_function, parameters, logger_module)
 
-    check_google_colab(params, logger)
+    #check_google_colab(params, logger)
 
 
     population, archive, counter, it = initialize_pop(logger)
@@ -220,7 +220,7 @@ def reproduction(logger, population, archive, counter, it, new_population):
         new_indiv = selection(population)
         new_indiv_2 = selection(population) 
         #print(new_indiv)
-        new_indiv = crossover(new_indiv, new_indiv_2)
+        new_indiv = crossover(new_indiv, new_indiv_2, params['PROB_CROSSOVER'])
         new_indiv = mutation(new_indiv)
         new_indiv = map_phenotype(new_indiv)
         archive, counter, new_population, new_indiv = update_archive_with_new_indiv(archive, counter, new_population, new_indiv)
@@ -281,12 +281,12 @@ def mutation(new_indiv):
     return new_indiv
 
 def tournament_selection(population):
-    if random.random() < params['PROB_CROSSOVER']:
-        p1 = tournament(population, params['TSIZE'])
-        p2 = tournament(population, params['TSIZE'])
-        new_indiv = crossover(p1, p2)
-    else:
-        new_indiv = tournament(population, params['TSIZE'])
+    #if random.random() < params['PROB_CROSSOVER']:
+    #    p1 = tournament(population, params['TSIZE'])
+    #    p2 = tournament(population, params['TSIZE'])
+    #    new_indiv = crossover(p1, p2)
+    #else:
+    new_indiv = tournament(population, params['TSIZE'])
     return new_indiv
 
 def reproduce_via_elitism(population):
@@ -311,6 +311,7 @@ def update_fitness_based_on_archive(archive, indiv, key):
         indiv['other_info'] = {}
     if 'source' not in indiv['other_info']:
         indiv['other_info']['source'] = 'archive'
+
 
 def update_key(indiv):
     key = single_task_key(indiv['phenotype'], params['CURRENT_GEN'])

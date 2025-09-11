@@ -421,7 +421,7 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
         else:
             exec_env = {"tf": tf}
             exec(phen, exec_env)
-            print(phen)
+            #print(phen)
             self._alpha_func = exec_env["alpha_func"]
             self._beta_func = exec_env["beta_func"]
             self._sigma_func = exec_env["sigma_func"]
