@@ -100,7 +100,6 @@ class CustomOptimizer(keras.optimizers.Optimizer):
                 var.handle, tf.constant(1.0), self._grad_func(var.shape, self._alpha_dict[variable_name], self._beta_dict[variable_name], self._sigma_dict[variable_name], grad), use_locking=self._use_locking)
         return foo
 
-
 class CustomOptimizerArch(keras.optimizers.Optimizer):
     def __init__(self,
                             name="CustomOptimizerArch",
