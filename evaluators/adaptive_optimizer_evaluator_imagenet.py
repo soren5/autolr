@@ -49,11 +49,12 @@ def train_model_tensorflow_imagenet(phen_params):
 
 def evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience, optimizer=None):
     dataset = globals()['cached_dataset'] 
-    adapter = globals()['cached_model']
-    model = tf.keras.models.clone_model(adapter.get_model())
-    data_process = adapter.pre_process
+    model = globals()['cached_model']
+    model = tf.keras.models.clone_model(model)
+    data_process = globals()['pre_process']
 
     opt = CustomOptimizerArchV2(model=model, phen=phen)
+    #opt = Adam()
 
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
     early_stop = keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=patience, restore_best_weights=True)
@@ -76,6 +77,7 @@ def evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience,
             
     test_score = model.evaluate(data_process(dataset['x_test']), dataset['y_test'], verbose=2)
     results['test_score'] = test_score
+    print('Test score:', test_score[0])
 
     return test_score[-1], results
 
@@ -93,25 +95,28 @@ def cache_model(params):
 
 def cache_resnet_model(params):
     if globals()['cached_model'] == None:
-        model = ResNet_Interface(incoming_data_shape=(64,64,3))
-        globals()['cached_model'] = model.get_model()
+        interface = ResNet_Interface(incoming_data_shape=(64,64,3))
+        globals()['cached_model'] = interface.get_model()
         globals()['cached_weights'] = globals()['cached_model'].get_weights()
+        globals()['pre_process'] = interface.pre_process
 
 def cache_vgg16_model(params):
     if globals()['cached_model'] == None:
-        model = VGG16_Interface(incoming_data_shape=(64,64,3))
-        globals()['cached_model'] = model.get_model()
+        interface = VGG16_Interface(incoming_data_shape=(64,64,3))
+        globals()['cached_model'] = interface.get_model()
         globals()['cached_weights'] = globals()['cached_model'].get_weights()
+        globals()['pre_process'] = interface.pre_process
 
 def cache_inceptionv3_model(params):
     if globals()['cached_model'] == None:
-        model = InceptionV3_Interface(incoming_data_shape=(64,64,3))
-        globals()['cached_model'] = model.get_model()
+        interface = InceptionV3_Interface(incoming_data_shape=(64,64,3))
+        globals()['cached_model'] = interface.get_model()
         globals()['cached_weights'] = globals()['cached_model'].get_weights()
+        globals()['pre_process'] = interface.pre_process
 
 def find_params(phen_params):
     phen, params = phen_params
-    print(params['EPOCHS'])
+    #print(params['EPOCHS'])
     validation_size = params['VALIDATION_SIZE']
     fitness_size =params['FITNESS_SIZE'] 
     batch_size = params['BATCH_SIZE']

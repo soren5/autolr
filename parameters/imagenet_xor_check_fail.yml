@@ -1,32 +1,32 @@
 POPSIZE: 100
-GENERATIONS: 200
+GENERATIONS: 100
 ELITISM: 1                   # number of individuals that survive
-PROB_CROSSOVER: 0.05
+PROB_CROSSOVER: 0.01
 PROB_MUTATION: {
 0: 0.0, #start
 1: 0.01, #alpha_expr
-2: 0.05, #alpha_func 
+2: 0.01, #alpha_func 
 3: 0.05, #alpha_terminal
 4: 0.15, #alpha_arch
 5: 0.15, #alpha_layer_var
 6: 0.15, #alpha_var_const
 7: 0.15, #alpha_const
 8: 0.01, #beta_expr
-9: 0.05, #beta_func
+9: 0.01, #beta_func
 10: 0.05, #beta_terminal
 11: 0.15, #beta_arch
 12: 0.15, #beta_layer_var
 13: 0.15, #beta_var_const
 14: 0.15, #beta_const
 15: 0.01, #sigma_expr
-16: 0.05, #sigma_func
+16: 0.01, #sigma_func
 17: 0.05, #sigma_terminal
 18: 0.15, #sigma_arch
 19: 0.15, #sigma_layer_var
 20: 0.15, #sigma_var_const
 21: 0.15, #sigma_const
 22: 0.01, #grad_expr
-23: 0.05, #grad_func
+23: 0.01, #grad_func
 24: 0.05, #grad_terminal
 25: 0.15, #grad_arch
 26: 0.15, #grad_layer_var
@@ -35,7 +35,7 @@ PROB_MUTATION: {
 TSIZE: 2
 GRAMMAR: 'grammars/deep_architecture_optimizer_grammar.txt'
 EXPERIMENT_NAME: 'dumps/resnet_architecture'
-RUN: 9
+RUN: 5
 INCLUDE_GENOTYPE: True
 SAVE_STEP: 1
 VERBOSE: True
