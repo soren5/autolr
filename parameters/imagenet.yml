@@ -1,7 +1,7 @@
 POPSIZE: 100
 GENERATIONS: 200
-ELITISM: 1                   # number of individuals that survive
-PROB_CROSSOVER: 0.05
+ELITISM: 10                   # number of individuals that survive
+PROB_CROSSOVER: 0.5
 PROB_MUTATION: {
 0: 0.0, #start
 1: 0.01, #alpha_expr
@@ -32,7 +32,7 @@ PROB_MUTATION: {
 26: 0.15, #grad_layer_var
 27: 0.15 #grad_const
 }
-TSIZE: 2
+TSIZE: 5
 GRAMMAR: 'grammars/deep_architecture_optimizer_grammar.txt'
 EXPERIMENT_NAME: 'dumps/resnet_architecture'
 RUN: 9
