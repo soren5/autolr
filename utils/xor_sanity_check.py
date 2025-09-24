@@ -7,6 +7,7 @@ from keras.layers.core import Dense, Dropout, Activation
 import math
 from sge.parameters import params
 from tensorflow.keras.optimizers import Adam, SGD, RMSprop
+from tensorflow.keras import backend as K
 
 model = Sequential()
 model.add(Dense(8, input_dim=2))
@@ -63,4 +64,6 @@ def xor_check(phen):
     except:
         print("[XOR CHECK] EXCEPTION")
         clear = False 
+    K.clear_session()
+    
     return clear
