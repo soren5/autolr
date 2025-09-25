@@ -3,6 +3,7 @@ from tensorflow import keras
 from tensorflow.python.training import training_ops
 import torch
 import numpy as np
+from utils.smart_phenotype import readable_phenotype
 
 class CustomOptimizer(keras.optimizers.Optimizer):
     def __init__(self,
@@ -427,6 +428,38 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
             self._sigma_func = exec_env["sigma_func"]
             self._grad_func = exec_env["grad_func"]
 
+        self._variables_used = {
+            'layer_count': False,
+            'layer_num': False,
+            'alpha': False,
+            'beta': False,
+            'sigma': False,
+            'strides': False,
+            'kernel_size': False,
+            'filters': False,
+            'dilation_rate': False,
+            'units': False,
+            'pool_size': False,
+        }
+        
+        readable_phen, alpha_phen, beta_phen, sigma_phen, grad_phen = readable_phenotype(phen, full_return=True)
+        for key in self._variables_used.keys():
+            if key in grad_phen:
+                self._variables_used[key] = True
+                if key == 'alpha':
+                    for second_key in self._variables_used.keys():
+                        if second_key in alpha_phen:
+                            self._variables_used[second_key] = True
+                elif key == 'beta':
+                    for second_key in self._variables_used.keys():
+                        if second_key in beta_phen:
+                            self._variables_used[second_key] = True
+                elif key == 'sigma':
+                    for second_key in self._variables_used.keys():
+                        if second_key in sigma_phen:
+                            self._variables_used[second_key] = True
+
+        print("Variables used in optimizer: ", self._variables_used)
         if alpha != None:
             print("Loading Alpha ", alpha)
             self._alpha_dict = alpha
@@ -453,46 +486,67 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
             if model != None:
                     for layer in model.layers:
                         for trainable_weight in layer._trainable_weights:
-                            self._depth_dict[trainable_weight.name] = tf.constant(depth, shape=trainable_weight.shape, dtype=tf.float32)
-                            self._alpha_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="alpha" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
-                            self._beta_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="beta" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
-                            self._sigma_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="sigma" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32)
                             
-                            if hasattr(layer, 'strides'):
-                                self._strides[trainable_weight.name] = tf.constant(layer.strides[0], shape=trainable_weight.shape, dtype=tf.float32)
-                            else: 
-                                self._strides[trainable_weight.name] = tf.constant(0.0, shape=trainable_weight.shape, dtype=tf.float32)
-
-                            if hasattr(layer, 'kernel_size'):
-                                self._kernel[trainable_weight.name] = tf.constant(layer.kernel_size[0], shape=trainable_weight.shape, dtype=tf.float32)
-                            else:
-                                self._kernel[trainable_weight.name] = tf.constant(0.0, shape=trainable_weight.shape, dtype=tf.float32)
-
-                            if hasattr(layer, 'filters'):    
-                                self._filters[trainable_weight.name] = tf.constant(layer.filters, shape=trainable_weight.shape, dtype=tf.float32)
-                            else:
-                                self._filters[trainable_weight.name] = tf.constant(0.0, shape=trainable_weight.shape, dtype=tf.float32)
-
-                            if hasattr(layer, 'dilation_rate'):
-                                self._dilation_rate[trainable_weight.name] = tf.constant(layer.dilation_rate[0], shape=trainable_weight.shape, dtype=tf.float32)
-                            else:
-                                self._dilation_rate[trainable_weight.name] = tf.constant(0.0, shape=trainable_weight.shape, dtype=tf.float32)
-
-                            if hasattr(layer, 'units'):
-                                self._units[trainable_weight.name] = tf.constant(layer.units, shape=trainable_weight.shape, dtype=tf.float32)
-                            else:
-                                self._units[trainable_weight.name] = tf.constant(0.0, shape=trainable_weight.shape, dtype=tf.float32) 
+                            self._depth_dict[trainable_weight.name] = tf.constant(depth, shape=trainable_weight.shape, dtype=tf.float32) if self._variables_used['layer_num'] else None
+                            self._alpha_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="alpha" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32) if self._variables_used['alpha'] else None
+                            self._beta_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="beta" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32) if self._variables_used['beta'] else None
+                            self._sigma_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="sigma" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32) if self._variables_used['sigma'] else None
                             
-                            if hasattr(layer, 'pool_size'):
-                                self._pool_size[trainable_weight.name] = tf.constant(layer.pool_size[0], shape=trainable_weight.shape, dtype=tf.float32)
+                            if self._variables_used['strides']:
+                                if hasattr(layer, 'strides'):
+                                    self._strides[trainable_weight.name] = tf.constant(layer.strides[0], shape=trainable_weight.shape, dtype=tf.float32)
+                                else: 
+                                    self._strides[trainable_weight.name] = tf.constant(0.0, shape=trainable_weight.shape, dtype=tf.float32)
                             else:
-                                self._pool_size[trainable_weight.name] = tf.constant(0.0, shape=trainable_weight.shape, dtype=tf.float32) 
+                                self._strides[trainable_weight.name] = None
+
+                            if self._variables_used['kernel_size']:
+                                if hasattr(layer, 'kernel_size'):
+                                    self._kernel[trainable_weight.name] = tf.constant(layer.kernel_size[0], shape=trainable_weight.shape, dtype=tf.float32)
+                                else:
+                                    self._kernel[trainable_weight.name] = tf.constant(0.0, shape=trainable_weight.shape, dtype=tf.float32)
+                            else:
+                                self._kernel[trainable_weight.name] = None
+
+                            if self._variables_used['filters']:
+                                if hasattr(layer, 'filters'):    
+                                    self._filters[trainable_weight.name] = tf.constant(layer.filters, shape=trainable_weight.shape, dtype=tf.float32)
+                                else:
+                                    self._filters[trainable_weight.name] = tf.constant(0.0, shape=trainable_weight.shape, dtype=tf.float32)
+                            else:
+                                self._filters[trainable_weight.name] = None
+
+                            if self._variables_used['dilation_rate']:
+                                if hasattr(layer, 'dilation_rate'):
+                                    self._dilation_rate[trainable_weight.name] = tf.constant(layer.dilation_rate[0], shape=trainable_weight.shape, dtype=tf.float32)
+                                else:
+                                    self._dilation_rate[trainable_weight.name] = tf.constant(0.0, shape=trainable_weight.shape, dtype=tf.float32)
+                            else:
+                                self._dilation_rate[trainable_weight.name] = None
+
+                            if self._variables_used['units']:
+                                if hasattr(layer, 'units'):
+                                    self._units[trainable_weight.name] = tf.constant(layer.units, shape=trainable_weight.shape, dtype=tf.float32)
+                                else:
+                                    self._units[trainable_weight.name] = tf.constant(0.0, shape=trainable_weight.shape, dtype=tf.float32) 
+                            else:
+                                self._units[trainable_weight.name] = None
+
+                            if self._variables_used['pool_size']:
+                                if hasattr(layer, 'pool_size'):
+                                    self._pool_size[trainable_weight.name] = tf.constant(layer.pool_size[0], shape=trainable_weight.shape, dtype=tf.float32)
+                                else:
+                                    self._pool_size[trainable_weight.name] = tf.constant(0.0, shape=trainable_weight.shape, dtype=tf.float32) 
+                            else:
+                                self._pool_size[trainable_weight.name] = None
 
                             depth += 1
-                    for layer in model.layers:
-                        for trainable_weight in layer._trainable_weights:
-                            #print(trainable_weight.name)
-                            self._layer_count[trainable_weight.name] = tf.constant(depth, shape=trainable_weight.shape, dtype=tf.float32)
+
+                    if self._variables_used['layer_num']:
+                        for layer in model.layers:
+                            for trainable_weight in layer._trainable_weights:
+                                #print(trainable_weight.name)
+                                self._layer_count[trainable_weight.name] = tf.constant(depth, shape=trainable_weight.shape, dtype=tf.float32)
             elif vars != None:
                 for var in vars:
                     self._depth_dict[var.name] = tf.constant(depth, shape=var.shape, dtype=tf.float32)
@@ -508,7 +562,8 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
 
     def check_slots(self):
         return self._alpha_dict == None and self._beta_dict == None and self._sigma_dict == None
-
+    
+    """
     def init_variables(self, var_list):
         import numpy as np
         create_alpha_flag = self._alpha_dict == None
@@ -526,10 +581,8 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
             if create_beta_flag:
                 self._beta_dict[var.name] = tf.Variable(np.zeros(var.shape), name="beta" + var.name[:-2], shape=var.shape, dtype=tf.float32)
             if create_sigma_flag:
-                self._sigma_dict[var.name] = tf.Variable(np.zeros(var.shape), name="sigma" + var.name[:-2], shape=var.shape, dtype=tf.float32)
-                
-    def _create_slots(self, var_list):
-        pass
+                self._sigma_dict[var.name] = tf.Variable(np.zeros(var.shape), name="sigma" + var.name[:-2], shape=var.shape, dtype=tf.float32)                
+    """
 
     def _prepare_local(self, var_device, var_dtype, apply_state):
         super(CustomOptimizerArchV2, self)._prepare_local(var_device, var_dtype, apply_state)
@@ -541,24 +594,26 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
         variable_name = var.name
         #print(self._layer_count[variable_name])
         #print(self._depth_dict[variable_name])
+        """
         if variable_name not in self._alpha_dict:
             self._alpha_dict[var.name] = tf.Variable(np.zeros(var.shape) , name="alpha" + var.name[:-2], shape=var.shape, dtype=tf.float32)
             self._beta_dict[var.name] = tf.Variable(np.zeros(var.shape) , name="beta" + var.name[:-2], shape=var.shape, dtype=tf.float32)
             self._sigma_dict[var.name] = tf.Variable(np.zeros(var.shape) , name="sigma" + var.name[:-2], shape=var.shape, dtype=tf.float32)
+        """
 
-
-        has_strides = tf.constant(float(hasattr(var, 'strides')), shape=var.shape, dtype=tf.float32)
-        has_kernel_size = tf.constant(float(hasattr(var, 'kernel_size')), shape=var.shape, dtype=tf.float32)
-        has_filters = tf.constant(float(hasattr(var, 'filters')), shape=var.shape, dtype=tf.float32)
-        has_dilation_rate = tf.constant(float(hasattr(var, 'dilation_rate')), shape=var.shape, dtype=tf.float32)
-        has_units = tf.constant(float(hasattr(var, 'units')), shape=var.shape, dtype=tf.float32)
-        has_pool_size = tf.constant(float(hasattr(var, 'pool_size')), shape=var.shape, dtype=tf.float32)
+        
+        has_strides = tf.constant(float(hasattr(var, 'strides')), shape=var.shape, dtype=tf.float32) if self._variables_used['strides'] else None
+        has_kernel_size = tf.constant(float(hasattr(var, 'kernel_size')), shape=var.shape, dtype=tf.float32) if self._variables_used['kernel_size'] else None
+        has_filters = tf.constant(float(hasattr(var, 'filters')), shape=var.shape, dtype=tf.float32) if self._variables_used['filters'] else None
+        has_dilation_rate = tf.constant(float(hasattr(var, 'dilation_rate')), shape=var.shape, dtype=tf.float32) if self._variables_used['dilation_rate'] else None
+        has_units = tf.constant(float(hasattr(var, 'units')), shape=var.shape, dtype=tf.float32) if self._variables_used['units'] else None
+        has_pool_size = tf.constant(float(hasattr(var, 'pool_size')), shape=var.shape, dtype=tf.float32) if self._variables_used['pool_size'] else None
 
         var_device, var_dtype = var.device, var.dtype.base_dtype
         coefficients = ((apply_state or {}).get((var_device, var_dtype))
                                         or self._fallback_apply_state(var_device, var_dtype))
         
-        if self._alpha_func != None:
+        if self._alpha_func != None and self._variables_used['alpha']:
             training_ops.resource_apply_gradient_descent(
                 self._alpha_dict[variable_name].handle, 
                 tf.constant(1.0), 
@@ -580,7 +635,8 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
                     var.shape, 
                     self._alpha_dict[variable_name], 
                     grad), use_locking=self._use_locking)
-        if self._beta_func != None:
+            
+        if self._beta_func != None and self._variables_used['beta']:
             training_ops.resource_apply_gradient_descent(
                 self._beta_dict[variable_name].handle, 
                 tf.constant(1.0), 
@@ -603,7 +659,8 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
                     self._alpha_dict[variable_name], 
                     self._beta_dict[variable_name], 
                     grad), use_locking=self._use_locking)
-        if self._sigma_func!= None:
+                
+        if self._sigma_func!= None and self._variables_used['sigma']:
             training_ops.resource_apply_gradient_descent(
                 self._sigma_dict[variable_name].handle, 
                 tf.constant(1.0), 
