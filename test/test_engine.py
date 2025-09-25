@@ -1,5 +1,6 @@
 import utils.utilities as ut
 import pytest
+from utils.xor_sanity_check import xor_check
 
 class TensorflowFitnessGenerator:
     def __init__(self) -> None:
@@ -289,8 +290,7 @@ def test_layer_type_architecture(base_fixture):
             self.train_model = train_model
         
         def evaluate(self, phen, params):
-            #if xor_check(phen):
-            if True:
+            if xor_check(phen):
                 foo = self.train_model([phen, params])
                 fit = -foo[0]
                 other_info = foo[1]
@@ -317,7 +317,7 @@ def test_layer_type_architecture(base_fixture):
         "PROB_CROSSOVER": 0.9,
         "PROB_MUTATION": 0.9,
         "TSIZE": 2,
-        "GRAMMAR": 'grammars/architecture_layer_type_grammar.txt',
+        "GRAMMAR": 'grammars/deep_architecture_optimizer_grammar.txt',
         "MODEL": 'models/mnist_model.h5',
         "EXPERIMENT_NAME": 'dumps/test_layer_type_architecture',
         "RUN": 1,
