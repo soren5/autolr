@@ -30,7 +30,7 @@ default_params = {
     'PREPOPULATE': False,
     'PATIENCE': False,
     'FITNESS_FLOOR': 0,
-    'LOAD_ARCHIVE': False,
+    'LOAD_ARCHIVE': True,
     'CURRENT_GEN': -1,
     }
 params = default_params.copy()

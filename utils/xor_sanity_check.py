@@ -44,7 +44,10 @@ def xor_check(phen):
                 self.model.stop_training = True
 
 
-    opt = CustomOptimizerArchV2(model=model, phen=phen)
+    if type(params['PROB_MUTATION']) == list and len(params['PROB_MUTATION']) == 28:
+        opt = CustomOptimizerArchV2(model=model, phen=phen)
+    else:
+        opt = CustomOptimizerArch(model=model, phen=phen)
     #opt = Adam()
 
     model.compile(optimizer=opt, loss=tf.keras.losses.MeanSquaredError(), metrics=['mse', 'binary_accuracy'])
