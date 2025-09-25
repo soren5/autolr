@@ -1,7 +1,5 @@
 import utils.utilities as ut
 import pytest
-from utils.xor_sanity_check import xor_check
-
 class TensorflowFitnessGenerator:
     def __init__(self) -> None:
         self.fitness ={}
@@ -283,6 +281,7 @@ def test_layer_type_architecture(base_fixture):
     from main import Optimizer_Evaluator_Tensorflow
     from utils import create_models
     from sge.parameters import manual_load_parameters
+    from utils.xor_sanity_check import xor_check
     class Optimizer_Evaluator_Tensorflow:
         def __init__(self, train_model=None):  #should give a function 
             if train_model == None: 
@@ -340,11 +339,11 @@ def test_layer_type_architecture(base_fixture):
     sge.evolutionary_algorithm(parameters=parameters, evaluation_function=evaluation_function)
 
 if __name__ == "__main__":
-    test_default_parameters(base_fixture)
-    test_reevaluation(base_fixture)
-    test_archive_id(base_fixture)
-    test_archive(base_fixture)
-    test_parameters(base_fixture)
-    test_mutation_errors(base_fixture)
-    test_engine(base_fixture)
+    #test_default_parameters(base_fixture)
+    #test_reevaluation(base_fixture)
+    #test_archive_id(base_fixture)
+    #test_archive(base_fixture)
+    #test_parameters(base_fixture)
+    #test_mutation_errors(base_fixture)
+    #test_engine(base_fixture)
     test_layer_type_architecture(base_fixture)

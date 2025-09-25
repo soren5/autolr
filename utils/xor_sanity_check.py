@@ -8,7 +8,7 @@ import math
 from sge.parameters import params
 from tensorflow.keras.optimizers import Adam, SGD, RMSprop
 from tensorflow.keras import backend as K
-
+from sge.grammar import grammar
 model = Sequential()
 model.add(Dense(8, input_dim=2))
 model.add(Activation('tanh'))
@@ -44,7 +44,7 @@ def xor_check(phen):
                 self.model.stop_training = True
 
 
-    if type(params['PROB_MUTATION']) == list and len(params['PROB_MUTATION']) == 28:
+    if len(grammar.non_recursive_options) == 28:
         opt = CustomOptimizerArchV2(model=model, phen=phen)
     else:
         opt = CustomOptimizerArch(model=model, phen=phen)
