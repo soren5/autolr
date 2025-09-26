@@ -545,7 +545,7 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
                         for layer in model.layers:
                             for trainable_weight in layer._trainable_weights:
                                 #print(trainable_weight.name)
-                                if self._variables_used['layer_num']:
+                                if self._variables_used['layer_count']:
                                     self._layer_count[trainable_weight.name] = tf.constant(depth, shape=trainable_weight.shape, dtype=tf.float32)
                                 else:
                                     self._layer_count[trainable_weight.name] = None
