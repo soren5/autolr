@@ -444,22 +444,28 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
         
         readable_phen, alpha_phen, beta_phen, sigma_phen, grad_phen = readable_phenotype(phen, full_return=True)
 
-        for _ in range(4): #This is an ugly way to make sure we account for cascading dependencies, we should turn this into a recursive function instead
-            for key in self._variables_used.keys():
-                if key in grad_phen:
-                    self._variables_used[key] = True
-                    if key == 'alpha':
-                        for second_key in self._variables_used.keys():
-                            if second_key in alpha_phen:
-                                self._variables_used[second_key] = True
-                    elif key == 'beta':
-                        for second_key in self._variables_used.keys():
-                            if second_key in beta_phen:
-                                self._variables_used[second_key] = True
-                    elif key == 'sigma':
-                        for second_key in self._variables_used.keys():
-                            if second_key in sigma_phen:
-                                self._variables_used[second_key] = True
+        #This is an ugly way to make sure we account for cascading dependencies, we should turn this into a recursive function instead
+        for key in self._variables_used.keys():
+            if key in grad_phen:
+                self._variables_used[key] = True
+                if key == 'alpha':
+                    for second_key in self._variables_used.keys():
+                        if second_key in alpha_phen:
+                            self._variables_used[second_key] = True
+                elif key == 'beta':
+                    for second_key in self._variables_used.keys():
+                        if second_key in beta_phen:
+                            self._variables_used[second_key] = True
+                elif key == 'sigma':
+                    for second_key in self._variables_used.keys():
+                        if second_key in sigma_phen:
+                            self._variables_used[second_key] = True
+        for func_key, func_phen in zip(['alpha', 'beta', 'sigma'], [alpha_phen, beta_phen, sigma_phen]):
+            if self._variables_used[func_key]:
+                for key in self._variables_used.keys():
+                    if key in func_phen:
+                        self._variables_used[key] = True
+
 
         print("Variables used in optimizer: ", self._variables_used)
         if alpha != None:
