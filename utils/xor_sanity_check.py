@@ -7,7 +7,8 @@ from keras.layers.core import Dense, Dropout, Activation
 import math
 from sge.parameters import params
 from tensorflow.keras.optimizers import Adam, SGD, RMSprop
-
+from tensorflow.keras import backend as K
+from sge.grammar import grammar
 model = Sequential()
 model.add(Dense(8, input_dim=2))
 model.add(Activation('tanh'))
@@ -43,7 +44,10 @@ def xor_check(phen):
                 self.model.stop_training = True
 
 
-    opt = CustomOptimizerArchV2(model=model, phen=phen)
+    if len(grammar.non_recursive_options) == 28:
+        opt = CustomOptimizerArchV2(model=model, phen=phen)
+    else:
+        opt = CustomOptimizerArch(model=model, phen=phen)
     #opt = Adam()
 
     model.compile(optimizer=opt, loss=tf.keras.losses.MeanSquaredError(), metrics=['mse', 'binary_accuracy'])
@@ -63,4 +67,6 @@ def xor_check(phen):
     except:
         print("[XOR CHECK] EXCEPTION")
         clear = False 
+    K.clear_session()
+    
     return clear

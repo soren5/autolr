@@ -55,7 +55,7 @@ def single_task_key(phenotype, it):
     s_phen = smart_phenotype(phenotype)
     return s_phen
 
-def readable_phenotype(phenotype, debug=False):
+def readable_phenotype(phenotype, debug=False, full_return=False):
     functions = trim_phenotype(phenotype)
     if debug:
         print(f'Readable Phenotype Functions: {functions[0]}\n{functions[1]}\n{functions[2]}\n{functions[3]}\n')
@@ -65,4 +65,7 @@ def readable_phenotype(phenotype, debug=False):
     grad_func_string = functions[-1][21:]
     readable_phenotype_string = f"alpha = alpha - {alpha_func_string}\nbeta = beta - {beta_func_string}\nsigma = sigma - {sigma_func_string}\nweights = weights - {grad_func_string}\n"
 
-    return readable_phenotype_string
+    if full_return:
+        return readable_phenotype_string, alpha_func_string, beta_func_string, sigma_func_string, grad_func_string
+    else:
+        return readable_phenotype_string
