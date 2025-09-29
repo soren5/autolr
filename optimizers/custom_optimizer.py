@@ -611,13 +611,6 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
             self._sigma_dict[var.name] = tf.Variable(np.zeros(var.shape) , name="sigma" + var.name[:-2], shape=var.shape, dtype=tf.float32)
         """
 
-        
-        has_strides = tf.constant(float(hasattr(var, 'strides')), shape=var.shape, dtype=tf.float32) if self._variables_used['strides'] else None
-        has_kernel_size = tf.constant(float(hasattr(var, 'kernel_size')), shape=var.shape, dtype=tf.float32) if self._variables_used['kernel_size'] else None
-        has_filters = tf.constant(float(hasattr(var, 'filters')), shape=var.shape, dtype=tf.float32) if self._variables_used['filters'] else None
-        has_dilation_rate = tf.constant(float(hasattr(var, 'dilation_rate')), shape=var.shape, dtype=tf.float32) if self._variables_used['dilation_rate'] else None
-        has_units = tf.constant(float(hasattr(var, 'units')), shape=var.shape, dtype=tf.float32) if self._variables_used['units'] else None
-        has_pool_size = tf.constant(float(hasattr(var, 'pool_size')), shape=var.shape, dtype=tf.float32) if self._variables_used['pool_size'] else None
 
         var_device, var_dtype = var.device, var.dtype.base_dtype
         coefficients = ((apply_state or {}).get((var_device, var_dtype))
@@ -628,17 +621,11 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
                 self._alpha_dict[variable_name].handle, 
                 tf.constant(1.0), 
                 self._alpha_func(
-                    has_strides,
                     self._strides[variable_name],
-                    has_kernel_size,
                     self._kernel[variable_name],
-                    has_filters,
                     self._filters[variable_name],
-                    has_dilation_rate,
                     self._dilation_rate[variable_name],
-                    has_units,
                     self._units[variable_name],
-                    has_pool_size,
                     self._pool_size[variable_name],
                     self._layer_count[variable_name],
                     self._depth_dict[variable_name],
@@ -651,17 +638,11 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
                 self._beta_dict[variable_name].handle, 
                 tf.constant(1.0), 
                 self._beta_func(
-                    has_strides,
                     self._strides[variable_name],
-                    has_kernel_size,
                     self._kernel[variable_name],
-                    has_filters,
                     self._filters[variable_name],
-                    has_dilation_rate,
                     self._dilation_rate[variable_name],
-                    has_units,
                     self._units[variable_name],
-                    has_pool_size,
                     self._pool_size[variable_name],
                     self._layer_count[variable_name],
                     self._depth_dict[variable_name],
@@ -675,17 +656,11 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
                 self._sigma_dict[variable_name].handle, 
                 tf.constant(1.0), 
                 self._sigma_func(
-                    has_strides,
                     self._strides[variable_name],
-                    has_kernel_size,
                     self._kernel[variable_name],
-                    has_filters,
                     self._filters[variable_name],
-                    has_dilation_rate,
                     self._dilation_rate[variable_name],
-                    has_units,
                     self._units[variable_name],
-                    has_pool_size,
                     self._pool_size[variable_name],
                     self._layer_count[variable_name],
                     self._depth_dict[variable_name],
@@ -699,17 +674,11 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
                 var.handle, 
                 tf.constant(1.0), 
                 self._grad_func(
-                    has_strides,
                     self._strides[variable_name],
-                    has_kernel_size,
                     self._kernel[variable_name],
-                    has_filters,
                     self._filters[variable_name],
-                    has_dilation_rate,
                     self._dilation_rate[variable_name],
-                    has_units,
                     self._units[variable_name],
-                    has_pool_size,
                     self._pool_size[variable_name],
                     self._layer_count[variable_name],
                     self._depth_dict[variable_name],
