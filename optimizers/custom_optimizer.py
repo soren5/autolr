@@ -465,6 +465,11 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
                 for key in self._variables_used.keys():
                     if key in func_phen:
                         self._variables_used[key] = True
+        for func_key, func_phen in zip(['alpha', 'beta', 'sigma'], [alpha_phen, beta_phen, sigma_phen]):
+            if self._variables_used[func_key]:
+                for key in self._variables_used.keys():
+                    if key in func_phen:
+                        self._variables_used[key] = True
 
 
         print("Variables used in optimizer: ", self._variables_used)
