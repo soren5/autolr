@@ -1,22 +1,28 @@
-import tensorflow as tf
-import numpy as np
-from utils.smart_phenotype import readable_phenotype
-from optimizers.custom_optimizer import CustomOptimizerArch, CustomOptimizerLayerVar
-from keras.models import Sequential
-from keras.layers.core import Dense, Dropout, Activation
+import gc
 import math
-from sge.parameters import params
-from tensorflow.keras.optimizers import Adam, SGD, RMSprop
+
+import numpy as np
+import tensorflow as tf
+from keras.layers.core import Activation, Dense, Dropout
+from keras.models import Sequential
 from tensorflow.keras import backend as K
+from tensorflow.keras.optimizers import SGD, Adam, RMSprop
+
+from optimizers.custom_optimizer import (CustomOptimizerAggregates,
+                                         CustomOptimizerArch,
+                                         CustomOptimizerLayerVar)
 from sge.grammar import grammar
-model = Sequential()
-model.add(Dense(8, input_dim=2))
-model.add(Activation('tanh'))
-model.add(Dense(1))
-model.add(Activation('sigmoid'))
-model.save_weights('models/xor_model.h5')
+from sge.parameters import params
+from utils.smart_phenotype import readable_phenotype
+
 
 def xor_check(phen):
+    model = Sequential()
+    model.add(Dense(8, input_dim=2))
+    model.add(Activation('tanh'))
+    model.add(Dense(1))
+    model.add(Activation('sigmoid'))
+    model.save_weights('models/xor_model.h5')
     print('[XOR CHECK] START')
     x = np.array([[0, 0],
                 [0, 1],
@@ -43,19 +49,17 @@ def xor_check(phen):
                 print(f"[XOR CHECK] Solved at Epoch {self.epoch}, Batch {batch}")
                 self.model.stop_training = True
 
-
-    if len(grammar.non_recursive_options) == 28:
-        opt = CustomOptimizerLayerVar(model=model, phen=phen)
+    if 'momentum' in phen:
+        opt = CustomOptimizerAggregates(model=model, phen=phen)
     else:
-        opt = CustomOptimizerArch(model=model, phen=phen)
-    #opt = Adam()
-
+        opt = CustomOptimizerLayerVar(model=model, phen=phen)
+        
     model.compile(optimizer=opt, loss=tf.keras.losses.MeanSquaredError(), metrics=['mse', 'binary_accuracy'])
-    
     history = model.fit(x, y, batch_size=4, epochs=5000, verbose=0, callbacks=[My_Callback()])
-
     predictions = model.predict_on_batch(x)
     model.load_weights('models/xor_model.h5')
+
+
     try:
         binary_predictions = np.array([[round(pred[0])] for pred in predictions], dtype=np.float32)
         clear = (binary_predictions.astype(int) == y.astype(int)).all()
@@ -67,6 +71,7 @@ def xor_check(phen):
     except:
         print("[XOR CHECK] EXCEPTION")
         clear = False 
+
     K.clear_session()
-    
+    gc.collect()
     return clear
