@@ -427,6 +427,7 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
             self._beta_func = exec_env["beta_func"]
             self._sigma_func = exec_env["sigma_func"]
             self._grad_func = exec_env["grad_func"]
+            self.momentum_term = exec_env["momentum_term"]
 
         self._variables_used = {
             'layer_count': False,
@@ -440,9 +441,10 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
             'dilation_rate': False,
             'units': False,
             'pool_size': False,
+            'momentum': False,
         }
         
-        readable_phen, alpha_phen, beta_phen, sigma_phen, grad_phen = readable_phenotype(phen, full_return=True)
+        readable_phen, alpha_phen, beta_phen, sigma_phen, grad_phen = readable_phenotype(phen, full_return=True, debug=True)
 
         #This is an ugly way to make sure we account for cascading dependencies, we should turn this into a recursive function instead
         for key in self._variables_used.keys():
@@ -473,17 +475,13 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
 
 
         print("Variables used in optimizer: ", self._variables_used)
-        if alpha != None:
-            print("Loading Alpha ", alpha)
-            self._alpha_dict = alpha
-            self._beta_dict = beta
-            self._sigma_dict = sigma
-        else:
+        if True:
             self._alpha_dict = {}
             self._beta_dict = {}
             self._sigma_dict = {}
             self._depth_dict = {}
             self._layer_count = {}
+            self.momentum = {}
 
             self._strides = {}
             self._kernel = {}
@@ -504,9 +502,11 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
                             self._alpha_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="alpha" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32) if self._variables_used['alpha'] else None
                             self._beta_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="beta" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32) if self._variables_used['beta'] else None
                             self._sigma_dict[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="sigma" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32) if self._variables_used['sigma'] else None
-                            
+                            self.momentum[trainable_weight.name] = tf.Variable(np.zeros(trainable_weight.shape) , name="momentum" + trainable_weight.name[:-2], shape=trainable_weight.shape, dtype=tf.float32) if self._variables_used['momentum'] else None
+
                             if self._variables_used['strides']:
                                 if hasattr(layer, 'strides'):
+                                    print(f'strides {layer.strides[0]}')
                                     self._strides[trainable_weight.name] = tf.constant(layer.strides[0], shape=trainable_weight.shape, dtype=tf.float32)
                                 else: 
                                     self._strides[trainable_weight.name] = tf.constant(0.0, shape=trainable_weight.shape, dtype=tf.float32)
@@ -515,6 +515,7 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
 
                             if self._variables_used['kernel_size']:
                                 if hasattr(layer, 'kernel_size'):
+                                    print(f'kernel_size {layer.kernel_size[0]}')
                                     self._kernel[trainable_weight.name] = tf.constant(layer.kernel_size[0], shape=trainable_weight.shape, dtype=tf.float32)
                                 else:
                                     self._kernel[trainable_weight.name] = tf.constant(0.0, shape=trainable_weight.shape, dtype=tf.float32)
@@ -523,6 +524,7 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
 
                             if self._variables_used['filters']:
                                 if hasattr(layer, 'filters'):    
+                                    print(f'filters {layer.filters}')
                                     self._filters[trainable_weight.name] = tf.constant(layer.filters, shape=trainable_weight.shape, dtype=tf.float32)
                                 else:
                                     self._filters[trainable_weight.name] = tf.constant(0.0, shape=trainable_weight.shape, dtype=tf.float32)
@@ -531,6 +533,7 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
 
                             if self._variables_used['dilation_rate']:
                                 if hasattr(layer, 'dilation_rate'):
+                                    print(f'dilation_rate {layer.dilation_rate[0]}')
                                     self._dilation_rate[trainable_weight.name] = tf.constant(layer.dilation_rate[0], shape=trainable_weight.shape, dtype=tf.float32)
                                 else:
                                     self._dilation_rate[trainable_weight.name] = tf.constant(0.0, shape=trainable_weight.shape, dtype=tf.float32)
@@ -539,6 +542,7 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
 
                             if self._variables_used['units']:
                                 if hasattr(layer, 'units'):
+                                    print(f'units {layer.units}')
                                     self._units[trainable_weight.name] = tf.constant(layer.units, shape=trainable_weight.shape, dtype=tf.float32)
                                 else:
                                     self._units[trainable_weight.name] = tf.constant(0.0, shape=trainable_weight.shape, dtype=tf.float32) 
@@ -547,6 +551,7 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
 
                             if self._variables_used['pool_size']:
                                 if hasattr(layer, 'pool_size'):
+                                    print(f'pool_size {layer.pool_size[0]}')
                                     self._pool_size[trainable_weight.name] = tf.constant(layer.pool_size[0], shape=trainable_weight.shape, dtype=tf.float32)
                                 else:
                                     self._pool_size[trainable_weight.name] = tf.constant(0.0, shape=trainable_weight.shape, dtype=tf.float32) 
@@ -575,10 +580,6 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
             else:
                 raise Exception("Nothing to optimize")
 
-    def check_slots(self):
-        return self._alpha_dict == None and self._beta_dict == None and self._sigma_dict == None
-    
-    """
     def init_variables(self, var_list):
         import numpy as np
         create_alpha_flag = self._alpha_dict == None
@@ -597,53 +598,33 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
                 self._beta_dict[var.name] = tf.Variable(np.zeros(var.shape), name="beta" + var.name[:-2], shape=var.shape, dtype=tf.float32)
             if create_sigma_flag:
                 self._sigma_dict[var.name] = tf.Variable(np.zeros(var.shape), name="sigma" + var.name[:-2], shape=var.shape, dtype=tf.float32)                
-    """
 
     def _prepare_local(self, var_device, var_dtype, apply_state):
         super(CustomOptimizerArchV2, self)._prepare_local(var_device, var_dtype, apply_state)
 
 
     def _resource_apply_dense(self, grad, var, apply_state=None):
-        #print(self.phen)
-        #print("_resource_apply_dense")
         variable_name = var.name
-        #print(self._layer_count[variable_name])
-        #print(self._depth_dict[variable_name])
-        """
-        if variable_name not in self._alpha_dict:
-            self._alpha_dict[var.name] = tf.Variable(np.zeros(var.shape) , name="alpha" + var.name[:-2], shape=var.shape, dtype=tf.float32)
-            self._beta_dict[var.name] = tf.Variable(np.zeros(var.shape) , name="beta" + var.name[:-2], shape=var.shape, dtype=tf.float32)
-            self._sigma_dict[var.name] = tf.Variable(np.zeros(var.shape) , name="sigma" + var.name[:-2], shape=var.shape, dtype=tf.float32)
-        """
-
-        
-        has_strides = tf.constant(float(hasattr(var, 'strides')), shape=var.shape, dtype=tf.float32) if self._variables_used['strides'] else None
-        has_kernel_size = tf.constant(float(hasattr(var, 'kernel_size')), shape=var.shape, dtype=tf.float32) if self._variables_used['kernel_size'] else None
-        has_filters = tf.constant(float(hasattr(var, 'filters')), shape=var.shape, dtype=tf.float32) if self._variables_used['filters'] else None
-        has_dilation_rate = tf.constant(float(hasattr(var, 'dilation_rate')), shape=var.shape, dtype=tf.float32) if self._variables_used['dilation_rate'] else None
-        has_units = tf.constant(float(hasattr(var, 'units')), shape=var.shape, dtype=tf.float32) if self._variables_used['units'] else None
-        has_pool_size = tf.constant(float(hasattr(var, 'pool_size')), shape=var.shape, dtype=tf.float32) if self._variables_used['pool_size'] else None
 
         var_device, var_dtype = var.device, var.dtype.base_dtype
         coefficients = ((apply_state or {}).get((var_device, var_dtype))
                                         or self._fallback_apply_state(var_device, var_dtype))
-        
+
+        if self._variables_used['momentum']:
+            training_ops.resource_apply_gradient_descent( 
+                self.momentum[variable_name].handle,
+                tf.constant(1.0),
+                momentum_function(grad, self.momentum[variable_name], self.momentum_term))
         if self._alpha_func != None and self._variables_used['alpha']:
             training_ops.resource_apply_gradient_descent(
                 self._alpha_dict[variable_name].handle, 
                 tf.constant(1.0), 
                 self._alpha_func(
-                    has_strides,
                     self._strides[variable_name],
-                    has_kernel_size,
                     self._kernel[variable_name],
-                    has_filters,
                     self._filters[variable_name],
-                    has_dilation_rate,
                     self._dilation_rate[variable_name],
-                    has_units,
                     self._units[variable_name],
-                    has_pool_size,
                     self._pool_size[variable_name],
                     self._layer_count[variable_name],
                     self._depth_dict[variable_name],
@@ -656,17 +637,11 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
                 self._beta_dict[variable_name].handle, 
                 tf.constant(1.0), 
                 self._beta_func(
-                    has_strides,
                     self._strides[variable_name],
-                    has_kernel_size,
                     self._kernel[variable_name],
-                    has_filters,
                     self._filters[variable_name],
-                    has_dilation_rate,
                     self._dilation_rate[variable_name],
-                    has_units,
                     self._units[variable_name],
-                    has_pool_size,
                     self._pool_size[variable_name],
                     self._layer_count[variable_name],
                     self._depth_dict[variable_name],
@@ -680,17 +655,11 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
                 self._sigma_dict[variable_name].handle, 
                 tf.constant(1.0), 
                 self._sigma_func(
-                    has_strides,
                     self._strides[variable_name],
-                    has_kernel_size,
                     self._kernel[variable_name],
-                    has_filters,
                     self._filters[variable_name],
-                    has_dilation_rate,
                     self._dilation_rate[variable_name],
-                    has_units,
                     self._units[variable_name],
-                    has_pool_size,
                     self._pool_size[variable_name],
                     self._layer_count[variable_name],
                     self._depth_dict[variable_name],
@@ -704,17 +673,12 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
                 var.handle, 
                 tf.constant(1.0), 
                 self._grad_func(
-                    has_strides,
+                    self.momentum[variable_name],
                     self._strides[variable_name],
-                    has_kernel_size,
                     self._kernel[variable_name],
-                    has_filters,
                     self._filters[variable_name],
-                    has_dilation_rate,
                     self._dilation_rate[variable_name],
-                    has_units,
                     self._units[variable_name],
-                    has_pool_size,
                     self._pool_size[variable_name],
                     self._layer_count[variable_name],
                     self._depth_dict[variable_name],
@@ -781,3 +745,37 @@ class CustomOptimizerArchV2(keras.optimizers.Optimizer):
                     self._sigma_dict[variable_name],
                     grad))
         return foo
+
+@tf.function
+def momentum_function(grad, prev_momentum, momentum_term):
+    return tf.subtract(
+                tf.multiply(
+                    tf.subtract(1.0, momentum_term),
+                    prev_momentum),
+                tf.multiply(
+                    tf.subtract(1.0, momentum_term),
+                    grad),
+                )
+@tf.function
+def v_function(grad, prev_momentum, momentum_term):
+    return tf.subtract(
+                tf.multiply(
+                    tf.subtract(1.0, momentum_term),
+                    prev_momentum),
+                tf.multiply(
+                    tf.subtract(1.0, momentum_term),
+                    tf.norm(grad)),
+                )
+
+@tf.function
+def layer_wise_lr(grad, prev_momentum, weights, trust_term):
+    return tf.add(
+                prev_momentum,
+                tf.multiply(
+                    tf.math.divide_no_nan(
+                        tf.norm(weights),
+                        tf.norm(grad)
+                    ),
+                    trust_term,
+                )
+                )
