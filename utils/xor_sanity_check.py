@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from utils.smart_phenotype import readable_phenotype
-from optimizers.custom_optimizer import CustomOptimizerArch, CustomOptimizerArchV2
+from optimizers.custom_optimizer import CustomOptimizerArch, CustomOptimizerLayerVar
 from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation
 import math
@@ -45,7 +45,7 @@ def xor_check(phen):
 
 
     if len(grammar.non_recursive_options) == 28:
-        opt = CustomOptimizerArchV2(model=model, phen=phen)
+        opt = CustomOptimizerLayerVar(model=model, phen=phen)
     else:
         opt = CustomOptimizerArch(model=model, phen=phen)
     #opt = Adam()

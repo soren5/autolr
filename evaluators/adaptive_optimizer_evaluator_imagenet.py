@@ -5,7 +5,7 @@ from utils.data_functions import load_tiny_imagenet
 import tensorflow as tf
 from tensorflow.keras.optimizers import Adam, SGD, RMSprop
 from utils.smart_phenotype import readable_phenotype, smart_phenotype
-from optimizers.custom_optimizer import CustomOptimizerArchV2, CustomOptimizerArch
+from optimizers.custom_optimizer import CustomOptimizerLayerVar, CustomOptimizerArch
 import datetime
 from models.keras_model_adapters.vgg16_adapter import VGG16_Interface
 from models.keras_model_adapters.inceptionv3_adapter import InceptionV3_Interface
@@ -53,7 +53,7 @@ def evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience,
     model = tf.keras.models.clone_model(model)
     data_process = globals()['pre_process']
 
-    opt = CustomOptimizerArchV2(model=model, phen=phen)
+    opt = CustomOptimizerLayerVar(model=model, phen=phen)
     #opt = Adam()
 
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])

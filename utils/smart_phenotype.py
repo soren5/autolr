@@ -12,7 +12,7 @@ def trim_phenotype(phenotype):
             if 'has_strides' in phenotype:
                 functions = phenotype.split(r'lambda has_strides, strides, has_kernel_size, kernel_size, has_filters, filters, has_dilation_rate, dilation_rate, has_units, units, has_pool_size, pool_size, layer_count, layer_num, shape, alpha')
             elif 'momentum' in phenotype:
-                functions = phenotype.split(r'lambda momentum, strides, kernel_size, filters, dilation_rate, units, pool_size, layer_count, layer_num, shape, alpha')
+                functions = phenotype.split(r'lambda momentum, variance, layer_wise_lr, strides, kernel_size, filters, dilation_rate, units, pool_size, layer_count, layer_num, shape, alpha')
             else:
                 functions = phenotype.split(r'lambda strides, kernel_size, filters, dilation_rate, units, pool_size, layer_count, layer_num, shape, alpha')
 
