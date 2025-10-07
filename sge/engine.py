@@ -21,7 +21,7 @@ from sge.parameters import (
     manual_load_parameters
 )
 from utils.genotypes import *
-from utils.smart_phenotype import smart_phenotype, single_task_key
+from utils.smart_phenotype import smart_phenotype, single_task_key, readable_phenotype
 
 
 def generate_random_individual():
@@ -290,7 +290,18 @@ def tournament_selection(population):
     return new_indiv
 
 def reproduce_via_elitism(population):
-    new_population = population[:params['ELITISM']]
+    behaviors_added = []
+    new_population = []
+    print("[ELITE] Adding following individuals to new population:")
+    for indiv in population:
+        if indiv['smart_phenotype'] not in behaviors_added and len(behaviors_added) < params['ELITISM']:
+            behaviors_added.append(indiv['smart_phenotype'])
+            new_population.append(indiv)
+            print(readable_phenotype(indiv['phenotype']))
+    while len(new_population) < params['ELITISM']:
+        print("[ELITE] Could not fill with unique individuals, adding best individual again.")
+        new_population.append(population[0])
+
     for indiv in new_population:
         indiv['operation'] = 'elitism'
         indiv['other_info']['source'] = 'elitism'
@@ -382,4 +393,3 @@ def initialize_pop(logger):
                 indiv['phenotype'] = phen
                 indiv['mapping_values'] = mapping_values
     return population, archive, counter, it
-
