@@ -50,6 +50,7 @@ def train_model_tensorflow_imagenet(phen_params):
 def evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience, optimizer=None):
     dataset = globals()['cached_dataset'] 
     model = globals()['cached_model']
+    model.set_weights(globals()['cached_weights'])
     model = tf.keras.models.clone_model(model)
     data_process = globals()['pre_process']
 
