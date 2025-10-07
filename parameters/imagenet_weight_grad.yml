@@ -33,8 +33,8 @@ PROB_MUTATION: {
 27: 0.15 #grad_const
 }
 TSIZE: 5
-GRAMMAR: 'grammars/deep_architecture_optimizer_grammar.txt'
-EXPERIMENT_NAME: 'dumps/resnet_architecture'
+GRAMMAR: 'grammars/deep_architecture_optimizer_grammar_no_conditions_weight_grad.txt'
+EXPERIMENT_NAME: 'dumps/resnet_architecture_weight_grad'
 RUN: 1
 INCLUDE_GENOTYPE: True
 SAVE_STEP: 1
