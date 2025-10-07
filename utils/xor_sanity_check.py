@@ -22,7 +22,6 @@ def xor_check(phen):
     model.add(Activation('tanh'))
     model.add(Dense(1))
     model.add(Activation('sigmoid'))
-    model.save_weights('models/xor_model.h5')
     print('[XOR CHECK] START')
     x = np.array([[0, 0],
                 [0, 1],
