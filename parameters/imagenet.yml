@@ -35,7 +35,7 @@ PROB_MUTATION: {
 TSIZE: 5
 GRAMMAR: 'grammars/deep_architecture_optimizer_grammar.txt'
 EXPERIMENT_NAME: 'dumps/resnet_architecture'
-RUN: 1
+RUN: 14
 INCLUDE_GENOTYPE: True
 SAVE_STEP: 1
 VERBOSE: True
@@ -50,7 +50,9 @@ PREPOPULATE: False
 PROTECT: False
 GENES: 'adam'
 PATIENCE: 3
-FAKE_FITNESS: False
+FAKE_FITNESS: False 
 FITNESS_FLOOR: 0.005
 CLEAR_XOR_CHECK: False
 LOAD_ARCHIVE: True
+SINGLE_GEN: True
+RESUME: 'Last'
