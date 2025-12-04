@@ -97,6 +97,11 @@ def save_population(generation, population):
         json.dump(population, f)
 
 def load_population(generation):
+    # Load latest generation if generation is -1
+    if generation == -1:
+        generation = find_last_generation_to_load()
+        if generation is None:
+            raise Exception("Cannot find any previous generation to load")
     #find file in correct folder
     f = '%s/run_%d/population_%d.json' % (params['EXPERIMENT_NAME'], params['RUN'], generation)
     if(not path.isfile(f)):

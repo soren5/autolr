@@ -32,6 +32,7 @@ default_params = {
     'FITNESS_FLOOR': 0,
     'LOAD_ARCHIVE': False,
     'CURRENT_GEN': -1,
+    'SINGLE_GEN': False,
     }
 params = default_params.copy()
 

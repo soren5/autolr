@@ -214,6 +214,8 @@ def check_google_colab(params, logger):
         logger.load_random_state(params['RESUME'])
         it = params['RESUME']
         counter = int(np.max([archive[x]['id'] for x in archive]))
+    if 'SINGLE_GEN' in params and params['SINGLE_GEN']:
+        params['GENERATIONS'] = params['CURRENT_GEN'] + 1
 
 def reproduction(logger, population, archive, counter, it, new_population):
     while len(new_population) < params['POPSIZE']:
