@@ -5,7 +5,7 @@ from sge.parameters import (
     set_parameters
 )
 import numpy as np
-from utils.smart_phenotype import readable_phenotype
+from utils.smart_phenotype import readable_phenotype, smart_phenotype
 from utils.xor_sanity_check import xor_check
 class Optimizer_Evaluator_Tensorflow:
     def __init__(self, train_model=None):  #should give a function 
@@ -14,7 +14,7 @@ class Optimizer_Evaluator_Tensorflow:
         self.train_model = train_model
     
     def evaluate(self, phen, params):
-        print(f"\n\n\nTesting phenotype:\n{readable_phenotype(phen)}")
+        print(f"\n\n\nTesting phenotype {smart_phenotype(phen)}:\n{readable_phenotype(phen)}")
         if xor_check(phen):
         #if True:
             foo = self.train_model([phen, params])

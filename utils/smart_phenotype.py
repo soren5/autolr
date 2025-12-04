@@ -1,4 +1,23 @@
 from sge.parameters import params
+import re
+
+def remove_scientific_notation_from_end(text):
+    """
+    Remove 3 comma-separated float values in scientific notation from the end of a string.
+    
+    Args:
+        text (str): Input string that may end with scientific notation values
+    
+    Returns:
+        str: String with the scientific notation values removed from the end
+    """
+    # Pattern to match 3 comma-separated scientific notation floats at the end
+    pattern = r'[,\s]*[+-]?(?:\d+\.?\d*[eE][+-]?\d+|\d*\.\d+|\d+\.\d*)[,\s]*[+-]?(?:\d+\.?\d*[eE][+-]?\d+|\d*\.\d+|\d+\.\d*)[,\s]*[+-]?(?:\d+\.?\d*[eE][+-]?\d+|\d*\.\d+|\d+\.\d*)\s*$'    
+    
+    # Remove the pattern if found at the end
+    result = re.sub(pattern, '', text)
+    
+    return result.strip()
 
 def trim_phenotype(phenotype):
     #print(params)
@@ -8,11 +27,12 @@ def trim_phenotype(phenotype):
         phenotype = phenotype.replace("tf.", "")
         #print(params['GRAMMAR'])
         if 'deep_architecture_optimizer' in params['GRAMMAR']:
-            print(phenotype)
+            #print(phenotype)
             if 'has_strides' in phenotype:
                 functions = phenotype.split(r'lambda has_strides, strides, has_kernel_size, kernel_size, has_filters, filters, has_dilation_rate, dilation_rate, has_units, units, has_pool_size, pool_size, layer_count, layer_num, shape, alpha')
             elif 'momentum' in phenotype:
-                functions = phenotype.split(r'lambda momentum, strides, kernel_size, filters, dilation_rate, units, pool_size, layer_count, layer_num, shape, alpha')
+                functions = phenotype.split(r'lambda momentum, variance, layer_wise_lr, strides, kernel_size, filters, dilation_rate, units, pool_size, layer_count, layer_num, shape, alpha')
+                functions[-1] = remove_scientific_notation_from_end(functions[-1])
             else:
                 functions = phenotype.split(r'lambda strides, kernel_size, filters, dilation_rate, units, pool_size, layer_count, layer_num, shape, alpha')
 
