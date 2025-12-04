@@ -207,13 +207,14 @@ def check_google_colab(params, logger):
         drive.mount('/content/drive')
     if 'RESUME' in params:
         population = logger.load_population(params['RESUME'])
-        if params['LOAD_ARCHIVE']:
-            archive = logger.load_archive(params['RESUME'])
-        else:
-            archive = {}
-        logger.load_random_state(params['RESUME'])
-        it = params['RESUME']
-        counter = int(np.max([archive[x]['id'] for x in archive]))
+        if population != None:
+            if params['LOAD_ARCHIVE']:
+                archive = logger.load_archive(params['RESUME'])
+            else:
+                archive = {}
+            logger.load_random_state(params['RESUME'])
+            it = params['RESUME']
+            counter = int(np.max([archive[x]['id'] for x in archive]))
 
 def reproduction(logger, population, archive, counter, it, new_population):
     while len(new_population) < params['POPSIZE']:
@@ -381,5 +382,7 @@ def initialize_pop(logger):
                 phen, tree_depth = grammar.mapping(indiv['genotype'], mapping_values)
                 indiv['phenotype'] = phen
                 indiv['mapping_values'] = mapping_values
+    if 'SINGLE_GEN' in params and params['SINGLE_GEN']:
+        params['GENERATIONS'] = it + 1
     return population, archive, counter, it
 
