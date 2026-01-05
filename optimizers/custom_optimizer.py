@@ -427,7 +427,6 @@ class CustomOptimizerLayerVar(keras.optimizers.Optimizer):
             self._beta_func = exec_env["beta_func"]
             self._sigma_func = exec_env["sigma_func"]
             self._grad_func = exec_env["grad_func"]
-            self.momentum_term = exec_env["momentum_term"]
 
         self._variables_used = {
             'layer_count': False,
@@ -443,7 +442,7 @@ class CustomOptimizerLayerVar(keras.optimizers.Optimizer):
             'pool_size': False,
         }
         
-        readable_phen, alpha_phen, beta_phen, sigma_phen, grad_phen = readable_phenotype(phen, full_return=True, debug=True)
+        readable_phen, alpha_phen, beta_phen, sigma_phen, grad_phen = readable_phenotype(phen, full_return=True)
 
         #This is an ugly way to make sure we account for cascading dependencies, we should turn this into a recursive function instead
         for key in self._variables_used.keys():
@@ -773,7 +772,7 @@ class CustomOptimizerAggregates(keras.optimizers.Optimizer):
             self._grad_func = exec_env["grad_func"]
             self.momentum_const = exec_env["momentum_const"]
             self.variance_const = exec_env["variance_const"]
-            self.layer_wise_lr_trust_const = exec_env["layer_wise_lr_trust_const"]
+            self.layer_wise_lr_const = exec_env["layer_wise_lr_const"]
 
         self._variables_used = {
             'layer_count': False,
@@ -792,7 +791,7 @@ class CustomOptimizerAggregates(keras.optimizers.Optimizer):
             'layer_wise_lr': False,
         }
         
-        readable_phen, alpha_phen, beta_phen, sigma_phen, grad_phen = readable_phenotype(phen, full_return=True, debug=True)
+        readable_phen, alpha_phen, beta_phen, sigma_phen, grad_phen = readable_phenotype(phen, full_return=True)
 
         #This is an ugly way to make sure we account for cascading dependencies, we should turn this into a recursive function instead
         for key in self._variables_used.keys():
@@ -971,12 +970,12 @@ class CustomOptimizerAggregates(keras.optimizers.Optimizer):
             training_ops.resource_apply_gradient_descent( 
                 self.variance[variable_name].handle,
                 tf.constant(1.0),
-                variance_function(grad, self.momentum[variable_name], self.variance_const))
+                variance_function(grad, self.variance[variable_name], self.variance_const))
         if self._variables_used['layer_wise_lr']:
             training_ops.resource_apply_gradient_descent( 
                 self.layer_wise_lr[variable_name].handle,
                 tf.constant(1.0),
-                layer_wise_lr_function(grad, self.layer_wise_lr[variable_name], var, self.layer_wise_lr_trust_const))
+                layer_wise_lr_function(grad, self.layer_wise_lr[variable_name], var, self.layer_wise_lr_const))
         
         if self._alpha_func != None and self._variables_used['alpha']:
             training_ops.resource_apply_gradient_descent(

@@ -22,7 +22,6 @@ def xor_check(phen):
     model.add(Activation('tanh'))
     model.add(Dense(1))
     model.add(Activation('sigmoid'))
-    model.save_weights('models/xor_model.h5')
     print('[XOR CHECK] START')
     x = np.array([[0, 0],
                 [0, 1],
@@ -57,7 +56,6 @@ def xor_check(phen):
     model.compile(optimizer=opt, loss=tf.keras.losses.MeanSquaredError(), metrics=['mse', 'binary_accuracy'])
     history = model.fit(x, y, batch_size=4, epochs=5000, verbose=0, callbacks=[My_Callback()])
     predictions = model.predict_on_batch(x)
-    model.load_weights('models/xor_model.h5')
 
 
     try:
