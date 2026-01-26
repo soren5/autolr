@@ -110,14 +110,14 @@ def load_results(root_dir):
                             indiv_data = {
                                 'experiment_name': experiment_name,
                                 'run_number': run_number,
-                                'genetic_id': x['id'],
+                                'genetic_id': x['id'] if 'id' in x else None,
                                 'generation': extract_number(json_file_path),
-                                'phenotype': x['phenotype'],
-                                'smart_phenotype': x['smart_phenotype'],
-                                'fitness': x['fitness'],
-                                'operation': x['operation'],
+                                'phenotype': x['phenotype'] if 'phenotype' in x else None,
+                                'smart_phenotype': x['smart_phenotype'] if 'smart_phenotype' in x else None,
+                                'fitness': x['fitness'] if 'fitness' in x else None,
+                                'operation': x['operation'] if 'operation' in x else None,
                                 'parents': x['parent'] if 'parent' in x else None,
-                                'genotype': x['genotype'],
+                                'genotype': x['genotype'] if 'genotype' in x else None,
 
                             }
                             if 'other_info' in x:

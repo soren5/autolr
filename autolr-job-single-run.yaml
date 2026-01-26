@@ -1,0 +1,57 @@
+apiVersion: scheduling.run.ai/v2alpha2
+kind: PodGroup
+metadata:
+  name: autolr-job
+  namespace: cisuc
+spec:
+  minMember: 1
+  queue: cisuc-regular
+  priorityClassName: medium
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: autolr-job
+  namespace: cisuc
+  labels:
+    app: autolr-job
+    kai.scheduler/queue: cisuc-regular
+    scheduling.run.ai/queue-name: cisuc-regular
+    #workload.kai-scheduler.dev/gpu-profile: "a6000-development"
+spec:
+  completions: 200
+  parallelism: 1
+  backoffLimit: 50
+  template:
+    metadata:
+      labels:
+        app: autolr-job
+        kai.scheduler/queue: cisuc-regular
+        scheduling.run.ai/queue-name: cisuc-regular
+        #workload.kai-scheduler.dev/gpu-profile: "a6000-development"
+    spec:
+      schedulerName: kai-scheduler
+      priorityClassName: medium
+      containers:
+      - name: autolr-test
+        image: registry.ml-cluster.dei.uc.pt/library/autolr-image
+        command: ["/bin/bash"]
+        args:
+        - |
+          nvidia-smi
+          python -m main --parameters=parameters/imagenet.yml
+        volumeMounts:
+        - name: dumps-volume
+          mountPath: /home/autolr/dumps
+        env:
+        - name: CUDA_VISIBLE_DEVICES
+          value: "all"
+        resources:
+          requests:
+            # Requesting 1 "slice" (12GB) defined by the profile.
+            nvidia.com/gpu: 1
+          limits:
+            nvidia.com/gpu: 1
+      restartPolicy: Never
+
