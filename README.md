@@ -1,5 +1,5 @@
 # AutoLR: An evolutionary framework for learning rate optimizers
-AutoLR is a framework based on the [SGE](https://github.com/nunolourenco/sge3 "SGE") engine capable of evolving learning rate optimizers for specific neural network architectures and problems. This repository is part of a published work, if you end up using this framework it would be appreciated that you reference the following:
+AutoLR is a framework based on the [SGE](https://github.com/nunolourenco/sge3 "SGE") engine capable of evolving learning rate optimizers for specific neural network architectures and problems. This repository is part of a published work; if you end up using this framework it would be appreciated that you reference the following:
 
 ```
 @inproceedings{carvalho2022, 
