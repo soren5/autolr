@@ -38,12 +38,8 @@ spec:
         image: registry.ml-cluster.dei.uc.pt/library/autolr-image
         command: ["/bin/bash"]
         args:
-        - |
-          nvidia-smi
-          python -m main --parameters=parameters/imagenet.yml
-        volumeMounts:
-        - name: dumps-volume
-          mountPath: /home/autolr/dumps
+        - "-c"
+        - "nvidia-smi && python -m utils.create_models && python -m main --parameters=parameters/imagenet.yml"
         env:
         - name: CUDA_VISIBLE_DEVICES
           value: "all"
