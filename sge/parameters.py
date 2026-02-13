@@ -33,6 +33,10 @@ default_params = {
     'LOAD_ARCHIVE': True,
     'CURRENT_GEN': -1,
     'SINGLE_GEN': False,
+    'MULTI_TASK': False,
+    'FAKE_FITNESS': False,
+    'NORMALIZE': True,
+    'SUBTRACT_MEAN': True,
     }
 params = default_params.copy()
 
@@ -47,6 +51,7 @@ def reset_parameters():
     params.update(default_params.copy())
 
 def manual_load_parameters(parameters):
+    reset_parameters()
     params.update(parameters)
     
 def set_parameters(arguments):

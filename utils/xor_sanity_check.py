@@ -42,7 +42,7 @@ def xor_check(phen):
             #if self.epoch % 500 == 0:
             #    print(f'[{self.epoch} {batch}]{logs}')
             if math.isnan(logs['loss']):
-                print(f"NAN loss at Epoch {self.epoch}, Batch {batch}")
+                print(f"[XOR CHECK] Failed with NAN loss at Epoch {self.epoch}, Batch {batch}")
                 self.model.stop_training = True
             if logs['binary_accuracy'] == 1.0:
                 print(f"[XOR CHECK] Solved at Epoch {self.epoch}, Batch {batch}")

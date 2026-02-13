@@ -157,11 +157,11 @@ def find_last_gen_recorded_in_folder(folder):
     last_gen = extract_number(last_gen_name)
     return int(last_gen[0])
 
-#Will find the most recent generation to load in case there are already some generations in the current experiment
-#else it will look for a parent experiment from which to load the data and change the experiment name so that now the folder of the parent expeirment is used to load the data 
-#if there is no data to load in any case it will return none
 
 def find_last_generation_to_load():
+    #Will find the most recent generation to load in case there are already some generations in the current experiment
+    #else it will look for a parent experiment from which to load the data and change the experiment name so that now the folder of the parent expeirment is used to load the data 
+    #if there is no data to load in any case it will return none
     last_gen = find_last_gen_recorded_in_folder(params["EXPERIMENT_NAME"])
     if last_gen == None and 'PARENT_EXPERIMENT' in params and params["PARENT_EXPERIMENT"] != False: 
         last_gen = find_last_gen_recorded_in_folder(params["PARENT_EXPERIMENT"])

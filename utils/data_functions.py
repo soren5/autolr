@@ -5,6 +5,43 @@ from tensorflow.keras.datasets import fashion_mnist, cifar10, mnist
 from tensorflow.keras import backend as K
 import numpy as np
 from datasets import load_dataset
+import os
+import matplotlib.pyplot as plt
+
+
+def load_dataset_from_path(path):
+    # This function loads a dataset from a directory structure where each subdirectory corresponds to a class and contains images of that class. 
+    # It returns a vector of images and a vector of one-hot encoded labels.
+
+    # Get the list of class directories
+    class_dirs = [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
+
+    # Initialize lists to store data
+    x = []
+    y = []
+    class_index = {}
+
+    # Loop through each class directory
+    for i, class_dir in enumerate(class_dirs):
+        class_index[class_dir] = i
+        class_path = os.path.join(path, class_dir)
+        # Get the list of image files in the class directory
+        image_files = [f for f in os.listdir(class_path) if f.endswith('.JPEG')]
+        
+        # Loop through each image file and store the data
+        for image_file in image_files:
+            # Load image file and convert to numpy array
+            image_path = os.path.join(class_path, image_file)
+            image = plt.imread(image_path)
+            x.append(image)
+
+            # Turn class into binary vector where class_index[class_dir] is 1 and the rest are 0
+            y_vector = np.zeros(len(class_dirs))
+            y_vector[class_index[class_dir]] = 1
+            y.append(y_vector)
+
+    # Create a numpy data set from the collected data
+    return np.array(x), np.array(y)
 
 def resize_data(args):
     """
@@ -108,96 +145,27 @@ def load_data_evolution(n_classes=10, validation_size=None, test_size=None, spli
                 'y_test': y_test}
     return dataset
 
-def load_cifar10_full(n_classes=10, validation_size=3500, test_size=3500):
-    #Confirmar mnist
-    (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 
-    x_train, x_val, y_train, y_val = train_test_split(x_train, y_train,
+def load_imagenet_100_training(validation_size=5000, test_size=1000, seed=0, normalize=True, subtract_mean=True):
+    x, y = load_dataset_from_path('datasets/imagenet_100/train')
+
+    img_rows, img_cols, channels = 64, 64, 3
+
+    x_train, x_val, y_train, y_val = train_test_split(x, y,
                                                     test_size=validation_size + test_size,
-                                                    stratify=y_train,
-                                                    random_state=0)
-
-
-
-    img_rows, img_cols, channels = 32, 32, 3
-
-    x_train = x_train.astype('float32')
-    x_val = x_val.astype('float32')
-    x_test = x_test.astype('float32')
-
-    x_train /= 255
-    x_val /= 255
-    x_test /= 255
-
-    #subraction of the mean image
-    x_mean = 0
-    for x in x_train:
-        x_mean += x
-    x_mean /= len(x_train)
-    x_train -= x_mean
-    x_val -= x_mean
-    x_test -= x_mean
-
-
-    # input image dimensions
-
-
-    if K.image_data_format() == 'channels_first':
-        x_train = x_train.reshape(x_train.shape[0], channels, img_rows, img_cols)
-        x_val = x_val.reshape(x_val.shape[0], channels, img_rows, img_cols)
-        x_test = x_test.reshape(x_test.shape[0], channels, img_rows, img_cols)
-        input_shape = (channels, img_rows, img_cols)
-    else:
-        x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, channels)
-        x_val = x_val.reshape(x_val.shape[0], img_rows, img_cols, channels)
-        x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, channels)
-        input_shape = (img_rows, img_cols, channels)
-
-    y_train = keras.utils.to_categorical(y_train, n_classes)
-    y_val = keras.utils.to_categorical(y_val, n_classes)
-    y_test = keras.utils.to_categorical(y_test, n_classes)
-
-    dataset = { 
-            'x_train': x_train,
-            'y_train': y_train,
-            'x_val': x_val,
-            'y_val': y_val,
-            'x_test': x_test,
-            'y_test': y_test}
-
-    return dataset
-
-def load_cifar10_training(n_classes=10, training_size=None, validation_size=None, test_size=None, normalize=True, subtract_mean=True):
-    if training_size != None and validation_size != None and test_size != None:
-        assert training_size + validation_size + test_size == 50000
-    if test_size == None:
-        assert training_size != None and validation_size != None
-        test_size = 50000 - training_size - validation_size
-    (x_train, y_train), (_, _) = cifar10.load_data()
-
-    x_train, x_val, y_train, y_val = train_test_split(x_train, y_train,
-                                                    test_size=validation_size + test_size,
-                                                    stratify=y_train,
-                                                    random_state=0)
+                                                    stratify=y,
+                                                    random_state=seed)
     x_val, x_test, y_val, y_test = train_test_split(x_val, y_val,
                                                     test_size=test_size,
                                                     stratify=y_val,
-                                                    random_state=0)
-
-
-
-    img_rows, img_cols, channels = 32, 32, 3
-
-    x_train = x_train.astype('float32')
-    x_val = x_val.astype('float32')
-    x_test = x_test.astype('float32')
+                                                    random_state=seed)
     
     if normalize:    
         x_train /= 255
         x_val /= 255
         x_test /= 255
 
-    #subraction of the mean image
+    #subraction of the mean training image
     if subtract_mean:
         x_mean = 0
         for x in x_train:
@@ -207,243 +175,43 @@ def load_cifar10_training(n_classes=10, training_size=None, validation_size=None
         x_val -= x_mean
         x_test -= x_mean
 
-    # input image dimensions
-
-
     if K.image_data_format() == 'channels_first':
         x_train = x_train.reshape(x_train.shape[0], channels, img_rows, img_cols)
         x_val = x_val.reshape(x_val.shape[0], channels, img_rows, img_cols)
-        x_test = x_test.reshape(x_test.shape[0], channels, img_rows, img_cols)
-        input_shape = (channels, img_rows, img_cols)
     else:
         x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, channels)
         x_val = x_val.reshape(x_val.shape[0], img_rows, img_cols, channels)
-        x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, channels)
-        input_shape = (img_rows, img_cols, channels)
 
-    y_train = keras.utils.to_categorical(y_train, n_classes)
-    y_val = keras.utils.to_categorical(y_val, n_classes)
-    y_test = keras.utils.to_categorical(y_test, n_classes)
-
-    dataset = { 
-            'x_train': x_train,
-            'y_train': y_train,
-            'x_val': x_val,
-            'y_val': y_val,
-            'x_test': x_test,
-            'y_test': y_test}
-
-    return dataset
-
-def load_fashion_mnist_full(n_classes=10, validation_size=3500):
-    (x_train, y_train), (x_test, y_test) = fashion_mnist.load_data()
-
-    x_train, x_val, y_train, y_val = train_test_split(x_train, y_train,
-                                                    test_size=validation_size,
-                                                    stratify=y_train,
-                                                    random_state=0)
-
-
-
-    img_rows, img_cols, channels = 28, 28, 1
-
-    x_train = x_train.astype('float32')
-    x_val = x_val.astype('float32')
-    x_test = x_test.astype('float32')
-
-    x_train /= 255
-    x_val /= 255
-    x_test /= 255
-
-    #subraction of the mean image
-    x_mean = 0
-    for x in x_train:
-        x_mean += x
-    x_mean /= len(x_train)
-    x_train -= x_mean
-    x_val -= x_mean
-    x_test -= x_mean
-
-
-    # input image dimensions
-
-
-    if K.image_data_format() == 'channels_first':
-        x_train = x_train.reshape(x_train.shape[0], channels, img_rows, img_cols)
-        x_val = x_val.reshape(x_val.shape[0], channels, img_rows, img_cols)
-        x_test = x_test.reshape(x_test.shape[0], channels, img_rows, img_cols)
-        input_shape = (channels, img_rows, img_cols)
-    else:
-        x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, channels)
-        x_val = x_val.reshape(x_val.shape[0], img_rows, img_cols, channels)
-        x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, channels)
-        input_shape = (img_rows, img_cols, channels)
-
-    y_train = keras.utils.to_categorical(y_train, n_classes)
-    y_val = keras.utils.to_categorical(y_val, n_classes)
-    y_test = keras.utils.to_categorical(y_test, n_classes)
-
-    dataset = { 
-            'x_train': x_train,
-            'y_train': y_train,
-            'x_val': x_val,
-            'y_val': y_val,
-            'x_test': x_test,
-            'y_test': y_test}
-
-    return dataset
-
-def reshape_fashion_mnist_training(x_train, y_train, n_classes=10, validation_size=3500, test_size=3500):
-
-    x_train, x_val, y_train, y_val = train_test_split(x_train, y_train,
-                                                    test_size=validation_size + test_size,
-                                                    stratify=y_train,
-                                                    random_state=0)
     x_val, x_test, y_val, y_test = train_test_split(x_val, y_val,
-                                                    test_size=test_size,
-                                                    stratify=y_val,
-                                                    random_state=0)
-
-    img_rows, img_cols, channels = 28, 28, 1
-
-    x_train = x_train.astype('float32')
-    x_val = x_val.astype('float32')
-    x_test = x_test.astype('float32')
-
-    x_train /= 255
-    x_val /= 255
-    x_test /= 255
-
-    #subraction of the mean image
-    x_mean = 0
-    for x in x_train:
-        x_mean += x
-    x_mean /= len(x_train)
-    x_train -= x_mean
-    x_val -= x_mean
-    x_test -= x_mean
-
-
-    # input image dimensions
-
-
-    if K.image_data_format() == 'channels_first':
-        x_train = x_train.reshape(x_train.shape[0], channels, img_rows, img_cols)
-        x_val = x_val.reshape(x_val.shape[0], channels, img_rows, img_cols)
-        x_test = x_test.reshape(x_test.shape[0], channels, img_rows, img_cols)
-        input_shape = (channels, img_rows, img_cols)
-    else:
-        x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, channels)
-        x_val = x_val.reshape(x_val.shape[0], img_rows, img_cols, channels)
-        x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, channels)
-        input_shape = (img_rows, img_cols, channels)
-
-    y_train = keras.utils.to_categorical(y_train, n_classes)
-    y_val = keras.utils.to_categorical(y_val, n_classes)
-    y_test = keras.utils.to_categorical(y_test, n_classes)
-
+                                                        test_size=test_size,
+                                                        stratify=y_val)
     dataset = { 
-            'x_train': x_train,
-            'y_train': y_train,
-            'x_val': x_val,
-            'y_val': y_val,
-            'x_test': x_test,
-            'y_test': y_test}
-
+        'x_train': x_train,
+        'y_train': y_train,
+        'x_val': x_val,
+        'y_val': y_val,
+        'x_fit': x_test,
+        'y_fit': y_test,
+    }
     return dataset
 
-def select_fashion_mnist_training(fashion, n_classes=10, validation_size=3500, test_size=3500):
-    (x_train, y_train), (_, _) = fashion
+def load_imagenet_100_full(validation_size=5000, test_size=1000, seed=0, normalize=True, subtract_mean=True):
+    x, y = load_dataset_from_path('datasets/imagenet_100/train')
+    x_test, y_test = load_dataset_from_path('datasets/imagenet_100/val')
 
-    x_train, x_val, y_train, y_val = train_test_split(x_train, y_train,
+    img_rows, img_cols, channels = 64, 64, 3
+
+    x_train, x_val, y_train, y_val = train_test_split(x, y,
                                                     test_size=validation_size + test_size,
-                                                    stratify=y_train,
-                                                    random_state=0)
-    x_val, x_test, y_val, y_test = train_test_split(x_val, y_val,
-                                                    test_size=test_size,
-                                                    stratify=y_val,
-                                                    random_state=0)
-
-    img_rows, img_cols, channels = 28, 28, 1
-
-    x_train = x_train.astype('float32')
-    x_val = x_val.astype('float32')
-    x_test = x_test.astype('float32')
-
-    x_train /= 255
-    x_val /= 255
-    x_test /= 255
-
-    #subraction of the mean image
-    x_mean = 0
-    for x in x_train:
-        x_mean += x
-    x_mean /= len(x_train)
-    x_train -= x_mean
-    x_val -= x_mean
-    x_test -= x_mean
-
-
-    # input image dimensions
-
-
-    if K.image_data_format() == 'channels_first':
-        x_train = x_train.reshape(x_train.shape[0], channels, img_rows, img_cols)
-        x_val = x_val.reshape(x_val.shape[0], channels, img_rows, img_cols)
-        x_test = x_test.reshape(x_test.shape[0], channels, img_rows, img_cols)
-        input_shape = (channels, img_rows, img_cols)
-    else:
-        x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, channels)
-        x_val = x_val.reshape(x_val.shape[0], img_rows, img_cols, channels)
-        x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, channels)
-        input_shape = (img_rows, img_cols, channels)
-
-    y_train = keras.utils.to_categorical(y_train, n_classes)
-    y_val = keras.utils.to_categorical(y_val, n_classes)
-    y_test = keras.utils.to_categorical(y_test, n_classes)
-
-    dataset = { 
-            'x_train': x_train,
-            'y_train': y_train,
-            'x_val': x_val,
-            'y_val': y_val,
-            'x_test': x_test,
-            'y_test': y_test}
-
-    return dataset
-
-def load_fashion_mnist_training(n_classes=10, training_size=None, validation_size=None, test_size=None, normalize=True, subtract_mean=True):
-
-    if training_size != None and validation_size != None and test_size != None:
-        assert training_size + validation_size + test_size == 60000
-    if test_size == None:
-        assert training_size != None and validation_size != None
-        test_size = 60000 - training_size - validation_size
-
-    (x_train, y_train), (_, _) = fashion_mnist.load_data()
-
-    x_train, x_val, y_train, y_val = train_test_split(x_train, y_train,
-                                                    test_size=validation_size + test_size,
-                                                    stratify=y_train,
-                                                    random_state=0)
-    x_val, x_test, y_val, y_test = train_test_split(x_val, y_val,
-                                                    test_size=test_size,
-                                                    stratify=y_val,
-                                                    random_state=0)
-
-    img_rows, img_cols, channels = 28, 28, 1
-
-
-    x_train = x_train.astype('float32')
-    x_val = x_val.astype('float32')
-    x_test = x_test.astype('float32')
-
+                                                    stratify=y,
+                                                    random_state=seed)
+    
     if normalize:    
         x_train /= 255
         x_val /= 255
         x_test /= 255
 
-    #subraction of the mean image
+    #subraction of the mean training image
     if subtract_mean:
         x_mean = 0
         for x in x_train:
@@ -452,250 +220,13 @@ def load_fashion_mnist_training(n_classes=10, training_size=None, validation_siz
         x_train -= x_mean
         x_val -= x_mean
         x_test -= x_mean
-
+    
     if K.image_data_format() == 'channels_first':
         x_train = x_train.reshape(x_train.shape[0], channels, img_rows, img_cols)
         x_val = x_val.reshape(x_val.shape[0], channels, img_rows, img_cols)
-        x_test = x_test.reshape(x_test.shape[0], channels, img_rows, img_cols)
-        input_shape = (channels, img_rows, img_cols)
     else:
         x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, channels)
         x_val = x_val.reshape(x_val.shape[0], img_rows, img_cols, channels)
-        x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, channels)
-        input_shape = (img_rows, img_cols, channels)
-
-    y_train = keras.utils.to_categorical(y_train, n_classes)
-    y_val = keras.utils.to_categorical(y_val, n_classes)
-    y_test = keras.utils.to_categorical(y_test, n_classes)
-
-    dataset = { 
-            'x_train': x_train,
-            'y_train': y_train,
-            'x_val': x_val,
-            'y_val': y_val,
-            'x_test': x_test,
-            'y_test': y_test}
-
-    return dataset
-
-def load_mnist_full(n_classes=10, validation_size=3500, test_size=3500):
-    (x_train, y_train), (x_test, y_test) = mnist.load_data()
-
-    x_train, x_val, y_train, y_val = train_test_split(x_train, y_train,
-                                                    test_size=validation_size + test_size,
-                                                    stratify=y_train,
-                                                    random_state=0)
-
-
-
-    img_rows, img_cols, channels = 28, 28, 1
-
-    x_train = x_train.astype('float32')
-    x_val = x_val.astype('float32')
-    x_test = x_test.astype('float32')
-
-    x_train /= 255
-    x_val /= 255
-    x_test /= 255
-
-    #subraction of the mean image
-    x_mean = 0
-    for x in x_train:
-        x_mean += x
-    x_mean /= len(x_train)
-    x_train -= x_mean
-    x_val -= x_mean
-    x_test -= x_mean
-
-
-    # input image dimensions
-
-
-    if K.image_data_format() == 'channels_first':
-        x_train = x_train.reshape(x_train.shape[0], channels, img_rows, img_cols)
-        x_val = x_val.reshape(x_val.shape[0], channels, img_rows, img_cols)
-        x_test = x_test.reshape(x_test.shape[0], channels, img_rows, img_cols)
-        input_shape = (channels, img_rows, img_cols)
-    else:
-        x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, channels)
-        x_val = x_val.reshape(x_val.shape[0], img_rows, img_cols, channels)
-        x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, channels)
-        input_shape = (img_rows, img_cols, channels)
-
-    y_train = keras.utils.to_categorical(y_train, n_classes)
-    y_val = keras.utils.to_categorical(y_val, n_classes)
-    y_test = keras.utils.to_categorical(y_test, n_classes)
-
-    dataset = { 
-            'x_train': x_train,
-            'y_train': y_train,
-            'x_val': x_val,
-            'y_val': y_val,
-            'x_test': x_test,
-            'y_test': y_test}
-
-    return dataset
-
-def load_mnist_training(n_classes=10, validation_size=3500, test_size=3500):
-
-    (x_train, y_train), (_, _) = mnist.load_data()
-
-    x_train, x_val, y_train, y_val = train_test_split(x_train, y_train,
-                                                    test_size=validation_size + test_size,
-                                                    stratify=y_train,
-                                                    random_state=0)
-    x_val, x_test, y_val, y_test = train_test_split(x_val, y_val,
-                                                    test_size=test_size,
-                                                    stratify=y_val,
-                                                    random_state=0)
-
-    img_rows, img_cols, channels = 28, 28, 1
-
-    x_train = x_train.astype('float32')
-    x_val = x_val.astype('float32')
-    x_test = x_test.astype('float32')
-
-    x_train /= 255
-    x_val /= 255
-    x_test /= 255
-
-    #subraction of the mean image
-    x_mean = 0
-    for x in x_train:
-        x_mean += x
-    x_mean /= len(x_train)
-    x_train -= x_mean
-    x_val -= x_mean
-    x_test -= x_mean
-
-
-    # input image dimensions
-
-
-    if K.image_data_format() == 'channels_first':
-        x_train = x_train.reshape(x_train.shape[0], channels, img_rows, img_cols)
-        x_val = x_val.reshape(x_val.shape[0], channels, img_rows, img_cols)
-        x_test = x_test.reshape(x_test.shape[0], channels, img_rows, img_cols)
-        input_shape = (channels, img_rows, img_cols)
-    else:
-        x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, channels)
-        x_val = x_val.reshape(x_val.shape[0], img_rows, img_cols, channels)
-        x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, channels)
-        input_shape = (img_rows, img_cols, channels)
-
-    y_train = keras.utils.to_categorical(y_train, n_classes)
-    y_val = keras.utils.to_categorical(y_val, n_classes)
-    y_test = keras.utils.to_categorical(y_test, n_classes)
-
-    dataset = { 
-            'x_train': x_train,
-            'y_train': y_train,
-            'x_val': x_val,
-            'y_val': y_val,
-            'x_test': x_test,
-            'y_test': y_test}
-
-    return dataset
-
-def load_imagenet_training(n_classes=1000, validation_size=5000, test_size=0, batch_size=64, data_length=50000, normalize=True, subtract_mean=True):
-    test_size = 0
-    train_data = keras.preprocessing.image_dataset_from_directory(
-        'imagenet/',
-        labels='inferred',
-        label_mode='categorical',
-        image_size=(224, 224),
-        batch_size=batch_size,
-        validation_split=(validation_size + test_size) / data_length,
-        subset='training',
-        shuffle=True,
-        seed=42)
-
-    validation_data = keras.preprocessing.image_dataset_from_directory(
-        'imagenet/',
-        labels='inferred',
-        label_mode='categorical',
-        image_size=(224, 224),
-        batch_size=batch_size,
-        validation_split=(validation_size + test_size) / 50000,
-        subset='validation',
-        shuffle=True,
-        seed=42)
-
-    return train_data, validation_data
-
-def load_tiny_imagenet(n_classes=200, validation_size=5000, test_size=0, batch_size=64, data_length=100000, normalize=True, subtract_mean=True):
-    train_dataset = load_dataset("zh-plus/tiny-imagenet", split='train').with_format("numpy")
-    validation_dataset = load_dataset("zh-plus/tiny-imagenet", split='valid').with_format("numpy")
-
-    # Remove grayscale images from train set
-    x_train = train_dataset['image']
-    y_train = train_dataset['label']
-    print(f'[BEFORE] x_train shape: {x_train.shape}, y_train shape: {y_train.shape}')
-
-    train_color_indices = [i for i, x in enumerate(x_train) if x.shape == (64, 64, 3)]
-    x_train = np.array([x_train[i] for i in train_color_indices])
-    y_train = np.array([y_train[i] for i in train_color_indices])
-    y_train = keras.utils.to_categorical(y_train, n_classes)
-
-    # Remove grayscale images from validation set
-    x_val = validation_dataset['image']
-    y_val = validation_dataset['label']
-    print(f'[BEFORE] x_val shape: {x_val.shape}, y_val shape: {y_val.shape}')
-    val_color_indices = [i for i, x in enumerate(x_val) if x.shape == (64, 64, 3)]
-    x_val = np.array([x_val[i] for i in val_color_indices])
-    y_val = np.array([y_val[i] for i in val_color_indices])
-    y_val = keras.utils.to_categorical(y_val, n_classes)
-
-    x_train = x_train.astype('float32')
-    x_val = x_val.astype('float32')
-
-    print(f'[AFTER] x_train shape: {x_train.shape}, y_train shape: {y_train.shape}')
-    print(f'[AFTER] x_val shape: {x_val.shape}, y_val shape: {y_val.shape}')
-
-    # --- Balance classes in train set ---
-    train_labels = np.argmax(y_train, axis=1)
-    train_class_counts = np.bincount(train_labels, minlength=n_classes)
-    min_train_count = np.min(train_class_counts)
-    print(f'[BALANCE] train class counts: {train_class_counts}, using {min_train_count} per class')
-    balanced_train_indices = []
-    for c in range(n_classes):
-        idx = np.where(train_labels == c)[0]
-        if len(idx) > min_train_count:
-            idx = np.random.choice(idx, min_train_count, replace=False)
-        balanced_train_indices.extend(idx)
-    balanced_train_indices = np.array(balanced_train_indices)
-    x_train = x_train[balanced_train_indices]
-    y_train = y_train[balanced_train_indices]
-
-    # --- Balance classes in val set ---
-    val_labels = np.argmax(y_val, axis=1)
-    val_class_counts = np.bincount(val_labels, minlength=n_classes)
-    min_val_count = np.min(val_class_counts)
-    print(f'[BALANCE] val class counts: {val_class_counts}, using {min_val_count} per class')
-    balanced_val_indices = []
-    for c in range(n_classes):
-        idx = np.where(val_labels == c)[0]
-        if len(idx) > min_val_count:
-            idx = np.random.choice(idx, min_val_count, replace=False)
-        balanced_val_indices.extend(idx)
-    balanced_val_indices = np.array(balanced_val_indices)
-    x_val = x_val[balanced_val_indices]
-    y_val = y_val[balanced_val_indices]
-
-    # ...existing code...
-
-    print(f'[POST BALANCE] x_train shape: {x_train.shape}, y_train shape: {y_train.shape}')
-    print(f'[POST BALANCE] x_val shape: {x_val.shape}, y_val shape: {y_val.shape}')
-    img_rows, img_cols, channels = 64, 64, 3
-
-    if K.image_data_format() == 'channels_first':
-        x_train = x_train.reshape(x_train.shape[0], channels, img_rows, img_cols)
-        x_val = x_val.reshape(x_val.shape[0], channels, img_rows, img_cols)
-        input_shape = (channels, img_rows, img_cols)
-    else:
-        x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, channels)
-        x_val = x_val.reshape(x_val.shape[0], img_rows, img_cols, channels)
-        input_shape = (img_rows, img_cols, channels)
 
     x_val, x_test, y_val, y_test = train_test_split(x_val, y_val,
                                                         test_size=test_size,
@@ -709,3 +240,4 @@ def load_tiny_imagenet(n_classes=200, validation_size=5000, test_size=0, batch_s
         'y_test': y_test,
         }
     return dataset
+

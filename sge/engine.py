@@ -67,17 +67,10 @@ def evaluate(ind, eval_func):
     other_info = {}
     #print(f"Registering {smart_phenotype(phen)}")
     if 'grad' in smart_phenotype(phen):
-        if "FAKE_FITNESS" in params and params['FAKE_FITNESS']:
-            print(f"USING FAKE FITNESS")
-            import numpy as np
-            import tensorflow as tf
-            quality = -(random.random() + np.random.random())/2
-            other_info = {'source': 'evaluation'}
-        else:
-            quality, other_info = eval_func.evaluate(phen, params)
+        quality, other_info = eval_func.evaluate(phen, params)
     else:
-        print('\t[GRAD CHECK] FAIL')
         quality = params['FITNESS_FLOOR']
+        print(f"Fitness: {quality} (invalid detection)")
         other_info = {'source': 'invalid detection'}
 
 
@@ -163,9 +156,10 @@ def run_evolution(evaluation_function, logger, population, archive, counter, it)
     return population
 
 def update_archive_and_fitness(evaluation_function, population, archive, it):
-    for indiv in population:
+    for i in range(len(population)):
+        indiv = population[i]
+        print(f"Individual {i}/{len(population)}")
         evaluation_function, archive, indiv = update_archive(evaluation_function, archive, indiv, it)
- 
     population, archive = update_best_fitness(population, archive)
        
     for indiv in population:

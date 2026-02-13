@@ -1,0 +1,173 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: evo-burgers-configs
+  namespace: cisuc
+data:
+  config-0.yml: |
+    algorithm:
+      seed_list: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+      predictor: 0
+      cuda: "all"
+      crossover_prob: 0.7
+      mutation_prob: 0.2
+      ind_mutation_prob: 0.2
+      num_generations: 100
+      pop_size: 50
+      tournament_size: 3
+      elitism: 1
+      lambda: 0.1
+      num_inference_steps: 50
+      guidance_scale: 7.5
+      vector_size: 15
+      height: 512
+      width: 512
+      model_id: "CompVis/stable-diffusion-v1-4"
+      experience_name: "paper_hamburgers_500_100"
+  config-1.yml: |
+    algorithm:
+      seed_list: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+      predictor: 0
+      cuda: "all"
+      crossover_prob: 0.7
+      mutation_prob: 0.2
+      ind_mutation_prob: 0.2
+      num_generations: 100
+      pop_size: 50
+      tournament_size: 3
+      elitism: 1
+      lambda: 0.1
+      num_inference_steps: 50
+      guidance_scale: 7.5
+      vector_size: 15
+      height: 512
+      width: 512
+      model_id: "CompVis/stable-diffusion-v1-4"
+      experience_name: "paper_hamburgers_500_100"
+  config-2.yml: |
+    algorithm:
+      seed_list: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+      predictor: 0
+      cuda: "all"
+      crossover_prob: 0.7
+      mutation_prob: 0.2
+      ind_mutation_prob: 0.2
+      num_generations: 100
+      pop_size: 50
+      tournament_size: 3
+      elitism: 1
+      lambda: 0.1
+      num_inference_steps: 50
+      guidance_scale: 7.5
+      vector_size: 15
+      height: 512
+      width: 512
+      model_id: "CompVis/stable-diffusion-v1-4"
+      experience_name: "paper_hamburgers_500_100"
+  config-3.yml: |
+    algorithm:
+      seed_list: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+      predictor: 0
+      cuda: "all"
+      crossover_prob: 0.7
+      mutation_prob: 0.2
+      ind_mutation_prob: 0.2
+      num_generations: 100
+      pop_size: 50
+      tournament_size: 3
+      elitism: 1
+      lambda: 0.1
+      num_inference_steps: 50
+      guidance_scale: 7.5
+      vector_size: 15
+      height: 512
+      width: 512
+      model_id: "CompVis/stable-diffusion-v1-4"
+      experience_name: "paper_hamburgers_500_100"
+  config-4.yml: |
+    algorithm:
+      seed_list: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+      predictor: 0
+      cuda: "all"
+      crossover_prob: 0.7
+      mutation_prob: 0.2
+      ind_mutation_prob: 0.2
+      num_generations: 100
+      pop_size: 50
+      tournament_size: 3
+      elitism: 1
+      lambda: 0.1
+      num_inference_steps: 50
+      guidance_scale: 7.5
+      vector_size: 15
+      height: 512
+      width: 512
+      model_id: "CompVis/stable-diffusion-v1-4"
+      experience_name: "paper_hamburgers_500_100"
+---
+apiVersion: scheduling.run.ai/v2alpha2
+kind: PodGroup
+metadata:
+  name: evo-burgers-multi-job-pg
+  namespace: cisuc
+spec:
+  minMember: 3
+  queue: cisuc-regular
+  priorityClassName: best-effort
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: evo-burgers-multi-job
+  namespace: cisuc
+  labels:
+    job-name: evo-burgers-multi-job
+    kai.scheduler/queue: cisuc-regular
+    scheduling.run.ai/queue-name: cisuc-regular
+spec:
+  completions: 3
+  parallelism: 3
+  completionMode: Indexed
+  template:
+    metadata:
+      labels:
+        job-name: evo-burgers-multi-job
+        scheduling.run.ai/queue-name: cisuc-regular
+        kai.scheduler/queue: cisuc-regular
+        kai.run.ai/queue: cisuc-regular
+      annotations:
+        kai.run.ai/queue: cisuc-regular
+        kai.scheduler/queue: cisuc-regular
+        scheduling.run.ai/queue-name: cisuc-regular
+    spec:
+      schedulerName: kai-scheduler
+      priorityClassName: best-effort
+      restartPolicy: Never
+      containers:
+      - name: evo-burgers
+        image: registry.ml-cluster.dei.uc.pt/library/evo-burgers:1.0
+        # Use the index to select the specific config file from the mounted directory
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          cp /configs/config-$JOB_COMPLETION_INDEX.yml /app/config.yml
+          mamba run -n hamburguer python token_ev_ga.py
+        volumeMounts:
+        - name: config-volume
+          mountPath: /configs
+        env:
+        - name: DEBIAN_FRONTEND
+          value: noninteractive
+        resources:
+          requests:
+            memory: "16Gi"
+            cpu: "2"
+            nvidia.com/gpu: "1"
+          limits:
+            memory: "32Gi"
+            cpu: "4"
+            nvidia.com/gpu: "1"
+      volumes:
+      - name: config-volume
+        configMap:
+          name: evo-burgers-configs  # Contains keys: config-0.yml, config-1.yml, etc.
