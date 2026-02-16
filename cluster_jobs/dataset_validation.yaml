@@ -40,7 +40,7 @@ spec:
         command: ["/bin/bash"]
         args:
         - "-c"
-        - "nvidia-smi && python -m _experiments.dataset_settings"
+        - "nvidia-smi && python -m utils.create_models && python -m _experiments.dataset_settings"
         volumeMounts:
         - name: dumps-volume
           mountPath: /home/autolr/dumps
