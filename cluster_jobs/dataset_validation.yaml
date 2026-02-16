@@ -1,7 +1,7 @@
 apiVersion: scheduling.run.ai/v2alpha2
 kind: PodGroup
 metadata:
-  name: autolr-job-exporting-results-2
+  name: dataset-validation
   namespace: cisuc
 spec:
   minMember: 1
@@ -12,7 +12,7 @@ spec:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: autolr-job-exporting-results-2
+  name:  dataset-validation
   namespace: cisuc
   labels:
     app: autolr-job
@@ -40,7 +40,7 @@ spec:
         command: ["/bin/bash"]
         args:
         - "-c"
-        - "nvidia-smi && python -m main --parameters=parameters/imagenet.yml --run=2"
+        - "nvidia-smi && python -m _experiments.dataset_settings"
         volumeMounts:
         - name: dumps-volume
           mountPath: /home/autolr/dumps

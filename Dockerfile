@@ -19,6 +19,6 @@ RUN apt-get install git -y
 RUN mkdir -p /home/autolr
 ENV APP_DIR=/home/autolr
 WORKDIR ${APP_DIR}
-ADD git@github.com:soren5/autolr.git#journal:requirements requirements 
+ADD https://github.com/soren5/autolr.git#journal:requirements requirements 
 RUN pip3 install -r requirements/requirements.txt
-ADD git@github.com:soren5/autolr.git#journal .
+ADD https://github.com/soren5/autolr.git#journal .
