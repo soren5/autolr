@@ -1,6 +1,6 @@
 FROM nunolourenco/lucy-base
-WORKDIR ${APP_DIR}
 ENV APP_DIR=/autolr
+WORKDIR ${APP_DIR}
 RUN : \
     && apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
@@ -16,11 +16,9 @@ ENV PATH=/venv/bin:$PATH
 RUN pip3 install --upgrade pip
 RUN apt-get update 
 RUN apt-get install git -y
-RUN cd /home && git clone https://github.com/soren5/autolr.git && cd /home/autolr
+RUN mkdir -p /home/autolr
 ENV APP_DIR=/home/autolr
 WORKDIR ${APP_DIR}
-RUN git checkout journal
-RUN git pull
-RUN pip3 install -r requirements.txt
-
-
+ADD git@github.com:soren5/autolr.git#journal:requirements requirements 
+RUN pip3 install -r requirements/requirements.txt
+ADD git@github.com:soren5/autolr.git#journal .

@@ -42,7 +42,7 @@ def xor_check(phen):
             #if self.epoch % 500 == 0:
             #    print(f'[{self.epoch} {batch}]{logs}')
             if math.isnan(logs['loss']):
-                print(f"NAN loss at Epoch {self.epoch}, Batch {batch}")
+                print(f"[XOR CHECK] Failed with NAN loss at Epoch {self.epoch}, Batch {batch}")
                 self.model.stop_training = True
             if logs['binary_accuracy'] == 1.0:
                 print(f"[XOR CHECK] Solved at Epoch {self.epoch}, Batch {batch}")
@@ -56,6 +56,7 @@ def xor_check(phen):
     model.compile(optimizer=opt, loss=tf.keras.losses.MeanSquaredError(), metrics=['mse', 'binary_accuracy'])
     history = model.fit(x, y, batch_size=4, epochs=5000, verbose=0, callbacks=[My_Callback()])
     predictions = model.predict_on_batch(x)
+    #model.load_weights('models/xor_model.h5')
 
 
     try:

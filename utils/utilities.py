@@ -1,4 +1,7 @@
 import os
+import contextlib
+from tensorflow import keras
+from tensorflow.keras import backend as K
 
 def delete_directory(experiment_name, runs):
     if type(runs) != list:
@@ -32,3 +35,15 @@ def _unidiff_output(expected, actual):
     diff=difflib.unified_diff(expected, actual)
 
     return ''.join(diff)
+
+@contextlib.contextmanager
+def gpu_memory_session():
+    """Context manager for proper GPU memory management"""
+    try:
+        yield
+    finally:
+        # Clear session and free memory
+        K.clear_session()
+        # Force garbage collection
+        import gc
+        gc.collect()

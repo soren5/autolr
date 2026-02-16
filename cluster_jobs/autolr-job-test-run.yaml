@@ -1,0 +1,74 @@
+apiVersion: scheduling.run.ai/v2alpha2
+kind: PodGroup
+metadata:
+  name: autolr-test-job-exporting-results
+  namespace: cisuc
+spec:
+  minMember: 1
+  queue: cisuc-regular
+  priorityClassName: medium
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: autolr-test-job-exporting-results
+  namespace: cisuc
+  labels:
+    app: autolr-test-job
+    kai.scheduler/queue: cisuc-regular
+    scheduling.run.ai/queue-name: cisuc-regular
+    #workload.kai-scheduler.dev/gpu-profile: "a6000-development"
+spec:
+  completions: 200
+  parallelism: 20
+  backoffLimit: 1
+  completionMode: Indexed
+  template:
+    metadata:
+      labels:
+        app: autolr-test-job
+        kai.scheduler/queue: cisuc-regular
+        scheduling.run.ai/queue-name: cisuc-regular
+        #workload.kai-scheduler.dev/gpu-profile: "a6000-development"
+    spec:
+      schedulerName: kai-scheduler
+      priorityClassName: medium
+      containers:
+      - name: autolr-test
+        image: registry.ml-cluster.dei.uc.pt/library/autolr-image:latest
+#        imagePullPolicy: Always   # careful with using latest tag overwriting
+        command: ["/bin/bash"]
+        args:
+        - "-c"
+        - "nvidia-smi && python -m main --parameters=parameters/imagenet.yml --run=$JOB_COMPLETION_INDEX --popsize=3 --tsize=1 --generations=3 --elitism=1 --experiment_name=dumps/test_runa"
+        volumeMounts:
+        - name: dumps-volume
+          mountPath: /home/autolr/dumps
+          #subPathExpr: bai/pfcarvalho/$(JOB_RUN_NAME)  # this is probably better achieved in the actual python scripts
+        env:
+        - name: JOB_RUN_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: CUDA_VISIBLE_DEVICES
+          value: "all"
+        resources:
+          requests:
+            # Requesting 1 "slice" (12GB) defined by the profile.
+            nvidia.com/gpu: 1
+          limits:
+            nvidia.com/gpu: 1
+      restartPolicy: Never
+      securityContext:
+        runAsGroup: 30124
+        fsGroup: 30124
+        supplementalGroups: [30121, 30122, 30123, 30124, 30125, 30126, 30127, 30128]
+      volumes:
+      - name: dumps-volume
+        nfs:
+          server: 10.3.10.253
+          path: /bai
+          readOnly: false
+        
+

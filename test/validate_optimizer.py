@@ -51,15 +51,18 @@ def evaluate_model_imagenet(phen, validation_size, batch_size, epochs, patience,
     model = tf.keras.models.clone_model(adapter.get_model())
     data_process = adapter.pre_process
 
+    if phen == None:
+        if params['OPTIMIZER'] == "ADES":
+            opt = ADES(model=model)
+        elif params['OPTIMIZER'] == 'SGD':
+            opt = SGD()
+        elif params['OPTIMIZER'] == 'RMSprop':
+            opt = RMSprop()
+        elif params['OPTIMIZER'] == 'Adam':
+            opt = Adam()
+    else:
+        opt = CustomOptimizerArchV2(model=model, phen=phen)
 
-    if params['OPTIMIZER'] == "ADES":
-        opt = ADES(model=model)
-    elif params['OPTIMIZER'] == 'SGD':
-        opt = SGD()
-    elif params['OPTIMIZER'] == 'RMSprop':
-        opt = RMSprop()
-    elif params['OPTIMIZER'] == 'Adam':
-        opt = Adam()
     opt.__name__ = params['OPTIMIZER']
 
     experiment_name = params['MODEL'] + '_' + opt.__name__ + '_' + str(time.time())
@@ -125,11 +128,13 @@ def find_params(phen_params):
 
 parameter_file = 'parameters/imagenet.yml'
 from sge.parameters import load_parameters, params
-phen_params = (None, params)
+optimizer_phenotype = None
+optimizer_phenotype = 'alpha_func, beta_func, sigma_func, grad_func = lambda has_strides, strides, has_kernel_size, kernel_size, has_filters, filters, has_dilation_rate, dilation_rate, has_units, units, has_pool_size, pool_size, layer_count, layer_num, shape, alpha, grad: grad, lambda has_strides, strides, has_kernel_size, kernel_size, has_filters, filters, has_dilation_rate, dilation_rate, has_units, units, has_pool_size, pool_size, layer_count, layer_num, shape, alpha, beta, grad: tf.math.multiply(grad, tf.math.multiply(tf.math.multiply(has_kernel_size, kernel_size), tf.math.divide_no_nan(tf.math.multiply(grad, tf.math.add(layer_count, tf.math.sqrt(tf.math.square(tf.math.multiply(has_strides, strides))))), tf.constant(9.71677118e-01, shape=shape, dtype=tf.float32)))), lambda has_strides, strides, has_kernel_size, kernel_size, has_filters, filters, has_dilation_rate, dilation_rate, has_units, units, has_pool_size, pool_size, layer_count, layer_num, shape, alpha, beta, sigma, grad: tf.math.multiply(has_strides, strides), lambda has_strides, strides, has_kernel_size, kernel_size, has_filters, filters, has_dilation_rate, dilation_rate, has_units, units, has_pool_size, pool_size, layer_count, layer_num, shape, alpha, beta, sigma, grad: tf.math.divide_no_nan(tf.math.add(tf.math.sqrt(beta), tf.math.multiply(tf.math.pow(tf.math.sqrt(tf.math.divide_no_nan(beta, tf.constant(9.99232587e-01, shape=shape, dtype=tf.float32))), tf.math.multiply(has_strides, strides)), tf.math.divide_no_nan(tf.math.multiply(tf.math.add(sigma, tf.constant(3.44451957e-02, shape=shape, dtype=tf.float32)), tf.math.add(tf.math.subtract(tf.math.multiply(has_filters, filters), tf.math.subtract(beta, beta)), alpha)), layer_num))), tf.math.negative(tf.math.pow(tf.constant(1.28252101e-02, shape=shape, dtype=tf.float32), tf.math.multiply(has_filters, filters))))'
+phen_params = (optimizer_phenotype, params)
 load_parameters(parameter_file)
 
 for _ in range(30):
-    params['OPTIMIZER'] = 'Adam'
+    params['OPTIMIZER'] = 'evolved'
 
     params['MODEL'] = 'resnet'
     train_model_tensorflow_imagenet(phen_params, None)

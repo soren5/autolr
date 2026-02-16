@@ -1,0 +1,10 @@
+{
+    "VALIDATION_SIZE": 3500,
+    "FITNESS_SIZE": 45000,
+    "BATCH_SIZE": 1000,
+    "EPOCHS": 10000,
+    "PATIENCE": 5,
+    "MODEL": "models/cifar_model.h5",
+    "NORMALIZE": false,
+    "SUBTRACT_MEAN": false
+}

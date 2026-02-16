@@ -14,7 +14,7 @@ def test_short_run():
         "PROB_CROSSOVER": 0.0,
         "PROB_MUTATION": 0.15,
         "TSIZE": 2,
-        "GRAMMAR": 'grammars/adaptive_autolr_grammar_architecture_mutate_level.txt',
+        "GRAMMAR": 'grammars/adaptive_autolr_grammar_architecture.txt',
         "EXPERIMENT_NAME": 'dumps/test_engine',
         "RUN": 1,
         "INCLUDE_GENOTYPE": True,
@@ -70,7 +70,7 @@ def test_short_run_cifar10():
         18: 0.05, 
         19: 0.15},
         "TSIZE": 2,
-        "GRAMMAR": 'grammars/adaptive_autolr_grammar_architecture_mutate_level.txt',
+        "GRAMMAR": 'grammars/adaptive_autolr_grammar_architecture.txt',
         "EXPERIMENT_NAME": 'dumps/test_engine',
         "MODEL": 'models/cifar_model.h5',
         "RUN": 1,
@@ -87,7 +87,7 @@ def test_short_run_cifar10():
         "PREPOPULATE": False,
         "PATIENCE": 0,
     }
-    from evaluators.adaptive_optimizer_evaluator_f_race import train_model_tensorflow_cifar10
+    from evaluators.evaluate_fmnist import train_model_tensorflow_cifar10
     evaluation_function = Optimizer_Evaluator_Tensorflow(train_model=train_model_tensorflow_cifar10)
     sge.evolutionary_algorithm(parameters=parameters, evaluation_function=evaluation_function)
 
@@ -126,7 +126,7 @@ def test_short_run_mnist():
         18: 0.05, 
         19: 0.15},
         "TSIZE": 2,
-        "GRAMMAR": 'grammars/adaptive_autolr_grammar_architecture_mutate_level.txt',
+        "GRAMMAR": 'grammars/adaptive_autolr_grammar_architecture.txt',
         "MODEL": 'models/mnist_model.h5',
         "EXPERIMENT_NAME": 'dumps/test_engine',
         "RUN": 1,
@@ -143,7 +143,7 @@ def test_short_run_mnist():
         "PREPOPULATE": False,
         "PATIENCE": 0,
     }
-    from evaluators.adaptive_optimizer_evaluator_f_race import train_model_tensorflow_mnist
+    from evaluators.evaluate_fmnist import train_model_tensorflow_mnist
     evaluation_function = Optimizer_Evaluator_Tensorflow(train_model=train_model_tensorflow_mnist)
     sge.evolutionary_algorithm(parameters=parameters, evaluation_function=evaluation_function)
 

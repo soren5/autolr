@@ -1,0 +1,10 @@
+{
+    "VALIDATION_SIZE": 3500,
+    "FITNESS_SIZE": 55000,
+    "BATCH_SIZE": 1000,
+    "EPOCHS": 10000,
+    "PATIENCE": 5,
+    "MODEL": "models/mnist_model.h5",
+    "NORMALIZE": true,
+    "SUBTRACT_MEAN": true
+}

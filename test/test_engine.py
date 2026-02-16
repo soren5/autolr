@@ -39,8 +39,9 @@ def test_default_parameters(base_fixture):
     import sge    
     from main import Optimizer_Evaluator_Tensorflow
     from utils import create_models
+    from sge.parameters import params
     create_models.create_models()
-    evaluation_function = Optimizer_Evaluator_Tensorflow()
+    evaluation_function = Optimizer_Evaluator_Tensorflow(params)
 
     sge.evolutionary_algorithm(evaluation_function=evaluation_function)
 
@@ -54,28 +55,34 @@ def test_engine(base_fixture):
         "SEED": 0,                
         "PROB_CROSSOVER": 0.0,
         "PROB_MUTATION": {
-        0: 0.0, 
-        1: 0.01, 
-        2: 0.01, 
-        3: 0.01, 
-        4: 0.05, 
-        5: 0.15, 
-        6: 0.01, 
-        7: 0.01, 
-        8: 0.01, 
-        9: 0.05, 
-        10: 0.15, 
-        11: 0.01, 
-        12: 0.01, 
-        13: 0.01, 
-        14: 0.05, 
-        15: 0.15, 
-        16: 0.01, 
-        17: 0.01, 
-        18: 0.05, 
-        19: 0.15},
+        0: 0.0,
+        1: 0.01,
+        2: 0.01,
+        3: 0.01,
+        4: 0.05,
+        5: 0.15,
+        6: 0.15,
+        7: 0.01,
+        8: 0.01,
+        9: 0.01,
+        10: 0.05,
+        11: 0.15,
+        12: 0.15,
+        13: 0.01,
+        14: 0.01,
+        15: 0.01,
+        16: 0.05,
+        17: 0.15,
+        18: 0.15,
+        19: 0.01,
+        20: 0.01,
+        21: 0.01,
+        22: 0.05,
+        23: 0.15,
+        24: 0.15,
+        },
         "TSIZE": 2,
-        "GRAMMAR": 'grammars/adaptive_autolr_grammar_architecture_mutate_level.txt',
+        "GRAMMAR": 'grammars/adaptive_autolr_grammar_architecture.txt',
         "EXPERIMENT_NAME": 'dumps/test_engine',
         "RUN": 1,
         "INCLUDE_GENOTYPE": True,
@@ -86,9 +93,11 @@ def test_engine(base_fixture):
         "FAKE_FITNESS": True,
         "FITNESS_FLOOR": 0,
     }
-    from sge.parameters import manual_load_parameters
+    from sge.parameters import manual_load_parameters, params
     manual_load_parameters(parameters=parameters)
-    sge.evolutionary_algorithm(parameters=parameters)
+    from fitness_functions.fitness_functions import Optimizer_Evaluator_Tensorflow
+    evaluator = Optimizer_Evaluator_Tensorflow(params)
+    sge.evolutionary_algorithm(parameters=parameters, evaluation_function=evaluator)
     ut.delete_directory(parameters['EXPERIMENT_NAME'], "run_1")
 
 def test_mutation_errors(base_fixture):
@@ -99,16 +108,16 @@ def test_mutation_errors(base_fixture):
     from utils import create_models
 
     create_models.create_models()
-    evaluation_function = Optimizer_Evaluator_Tensorflow()
 
     with open("parameters/adaptive_autolr.yml", 'r') as ymlfile:
         parameters = yaml.load(ymlfile, Loader=yaml.FullLoader)
     parameters['PROB_MUTATION'] = {0: 0.2, 1:0.2}
     parameters['FAKE_FITNESS'] = True
 
-    from sge.parameters import manual_load_parameters
+    from sge.parameters import manual_load_parameters, params
     manual_load_parameters(parameters=parameters)
 
+    evaluation_function = Optimizer_Evaluator_Tensorflow(params)
     try:
         sge.evolutionary_algorithm(parameters=parameters, evaluation_function=evaluation_function)
     except AssertionError:
@@ -126,7 +135,7 @@ def test_mutation_errors(base_fixture):
 
 def test_parameters(base_fixture):
     import sge, os
-    from sge.parameters import manual_load_parameters
+    from sge.parameters import manual_load_parameters, params
     parameters = {
         "SELECTION_TYPE": "tournament",
         "POPSIZE": 10,
@@ -135,7 +144,7 @@ def test_parameters(base_fixture):
         "PROB_CROSSOVER": 0.0,
         "PROB_MUTATION": 0.1,
         "TSIZE": 3,
-        "GRAMMAR": 'grammars/adaptive_autolr_grammar_architecture_mutate_level.txt',
+        "GRAMMAR": 'grammars/adaptive_autolr_grammar_architecture.txt',
         "EXPERIMENT_NAME": 'test_parameter',
         "RUN": 1,
         "INCLUDE_GENOTYPE": True,
@@ -153,13 +162,16 @@ def test_parameters(base_fixture):
         "FAKE_FITNESS": True,
     }
     manual_load_parameters(parameters=parameters)
-    sge.evolutionary_algorithm(parameters=parameters, evaluation_function=None)
+    from fitness_functions.fitness_functions import Optimizer_Evaluator_Tensorflow
+    evaluator = Optimizer_Evaluator_Tensorflow(params)
+    sge.evolutionary_algorithm(parameters=parameters, evaluation_function=evaluator)
     ut.delete_directory(parameters['EXPERIMENT_NAME'], "run_1")
     
 def test_archive(base_fixture):
     """I devised this test to discover if there are reproducility problems with the archive.
     The only problem is if we take an archive from the future and use it in an earlier generation.
-    This will not yield the same result as fitness evaluation burns random seed numbers (to map the genotype)."""
+    This will not yield the same result as fitness evaluation burns random seed numbers (to map the genotype).
+    2026: That's great man, i'm just going to force pass then. We will probably delete this later"""
     import sge
     import tensorflow as tf
     from sge.parameters import manual_load_parameters
@@ -171,7 +183,7 @@ def test_archive(base_fixture):
         "PROB_CROSSOVER": 0.0,
         "PROB_MUTATION": 0.9,
         "TSIZE": 3,
-        "GRAMMAR": 'grammars/adaptive_autolr_grammar_architecture_mutate_level.txt',
+        "GRAMMAR": 'grammars/adaptive_autolr_grammar_architecture.txt',
         "EXPERIMENT_NAME": 'dumps/test_archive',
         "RUN": 1,
         "INCLUDE_GENOTYPE": True,
@@ -183,7 +195,6 @@ def test_archive(base_fixture):
         "SEED": 4,
     }
     from utils.smart_phenotype import smart_phenotype
-
     #manual_load_parameters(parameters=parameters)
     fitness = TensorflowFitnessGenerator()
     pop1 = sge.evolutionary_algorithm(parameters=parameters, evaluation_function=fitness)
@@ -211,7 +222,7 @@ def test_archive_id(base_fixture):
         "PROB_CROSSOVER": 0.0,
         "PROB_MUTATION": 0.001,
         "TSIZE": 3,
-        "GRAMMAR": 'grammars/adaptive_autolr_grammar_architecture_mutate_level.txt',
+        "GRAMMAR": 'grammars/adaptive_autolr_grammar_architecture.txt',
         "EXPERIMENT_NAME": 'dumps/test_archive',
         "RUN": 1,
         "INCLUDE_GENOTYPE": True,
@@ -343,7 +354,7 @@ if __name__ == "__main__":
     #test_reevaluation(base_fixture)
     #test_archive_id(base_fixture)
     #test_archive(base_fixture)
-    #test_parameters(base_fixture)
-    #test_mutation_errors(base_fixture)
-    #test_engine(base_fixture)
+    test_parameters(base_fixture)
+    test_mutation_errors(base_fixture)
+    test_engine(base_fixture)
     test_layer_type_architecture(base_fixture)
