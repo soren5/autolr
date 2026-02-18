@@ -10,37 +10,46 @@ from tensorflow.keras.optimizers import Adam
 
 
 configurations = [
-    #{'task': 'FMNIST', "all_false": True},
-    #{'task': 'FMNIST', "all_false": False},
+    #{'task': 'FMNIST', "pre_process": True},
+    #{'task': 'FMNIST', "pre_process": False},
 
-    #{'task': 'CIFAR10', "all_false": True},
-    #{'task': 'CIFAR10', "all_false": False},
+    #{'task': 'CIFAR10', "pre_process": True},
+    {'task': 'CIFAR10', "pre_process": False},
 
-    {'task': 'Tiny-Imagenet', "all_false": True},
-    {'task': 'Tiny-Imagenet', "all_false": False},
+    #{'task': 'Tiny-Imagenet', "pre_process": True},
+    #{'task': 'Tiny-Imagenet', "pre_process": False},
 ]
-num_repetitions = 10
+num_repetitions = 30
 
 
 def main(i):
-    with open("parameters/multi_task.yml", 'r') as ymlfile:
-        parameters = yaml.load(ymlfile, Loader=yaml.FullLoader)
-        reset_parameters()
-        manual_load_parameters(parameters)
         params['FAKE_FITNESS'] = False
         for run in range(i, i + num_repetitions):
             for config in configurations:
-                if config['task'] == 'Tiny-Imagenet':
-                    evaluator = TINY_IMAGENET_Evaluator(params, task_name=f"{config['task'].lower()}_{config['all_false']}")
-                elif config['task'] == 'CIFAR10':
-                    evaluator = CIFAR10_Evaluator(params, task_name=f"{config['task'].lower()}_{config['all_false']}")
-                elif config['task'] == 'FMNIST':
-                    evaluator = FMNIST_Evaluator(params, task_name=f"{config['task'].lower()}_{config['all_false']}")
-                    optimizer = Adam()
-                    optimizer.name = f'Adam + {config["task"]} + {config["all_false"]}'
+                with open("parameters/multi_task.yml", 'r') as ymlfile:
+                    parameters = yaml.load(ymlfile, Loader=yaml.FullLoader)
+                    reset_parameters()
+                    manual_load_parameters(parameters)
+                if config['pre_process']:
+                    params['FMNIST_CONFIG'] = 'parameters/dataset_parameters/FMNIST_CONFIG.JSON'
+                    params['CIFAR10_CONFIG'] = 'parameters/dataset_parameters/CIFAR10_CONFIG.json'
+                    params['TINY_IMAGENET_CONFIG'] = 'parameters/dataset_parameters/TINY_IMAGENET_CONFIG.json'
+                else:
+                    params['FMNIST_CONFIG'] = 'parameters/dataset_parameters/FMNIST_CONFIG_all_false.json'
+                    params['CIFAR10_CONFIG'] = 'parameters/dataset_parameters/CIFAR10_CONFIG_all_false.json'
+                    params['TINY_IMAGENET_CONFIG'] = 'parameters/dataset_parameters/TINY_IMAGENET_CONFIG_all_false.json'
 
-                    evaluator.run = run
-                    evaluator.evaluate_optimizer(optimizer)
+                if config['task'] == 'Tiny-Imagenet':
+                    evaluator = TINY_IMAGENET_Evaluator(params, task_name=f"{config['task'].lower()}_{config['pre_process']}")
+                elif config['task'] == 'CIFAR10':
+                    evaluator = CIFAR10_Evaluator(params, task_name=f"{config['task'].lower()}_{config['pre_process']}")
+                elif config['task'] == 'FMNIST':
+                    evaluator = FMNIST_Evaluator(params, task_name=f"{config['task'].lower()}_{config['pre_process']}")
+                optimizer = Adam()
+                optimizer.name = f'Adam + {config["task"]} + {config["pre_process"]}'
+
+                evaluator.run = run
+                evaluator.evaluate_optimizer(optimizer)
 
 if __name__ == '__main__':
     # Get the first argument passed on to the script and use it as the starting number for runs
