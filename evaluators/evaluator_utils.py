@@ -65,22 +65,25 @@ class Evaluator():
     def _init_logs_(self, params):
         # Logs are written to two folders, self.log_path/logs (for .log files) and self.log_path/csv (for .csv files)
         # Check if these directories exist and if not, create them
+        print(f"Initializing logs for {self.task_name} evaluator, log path: {self.log_path}")
         if not os.path.exists(self.log_path):
             os.makedirs(self.log_path)
         if not os.path.exists(f"{self.log_path}/csv"):
             os.makedirs(f"{self.log_path}/csv")
         if not os.path.exists(f"{self.log_path}/logs"):
             os.makedirs(f"{self.log_path}/logs")
+        print(f"Created log directories: {self.log_path}/logs and {self.log_path}/csv")
 
         # Check if log file already exists, if it does, make a copy of it with a timestamp to avoid overwriting previous logs, add a z to the name so it is clear that this log is a backup and not the current log
         if os.path.exists(f"{self.log_path}/logs/run_{self.run}_{self.task_name}_log.log"):
             timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
             os.rename(f"{self.log_path}/logs/run_{self.run}_{self.task_name}_log.log", f"{self.log_path}/logs/z_run_{self.run}_{self.task_name}_log_{timestamp}.log")
-        
+            print(f"Backed up existing log file to: {self.log_path}/logs/z_run_{self.run}_{self.task_name}_log_{timestamp}.log")
         # Do the same for the training log file, but with a different name to avoid confusion
         if os.path.exists(f"{self.log_path}/csv/run_{self.run}_{self.task_name}_training_log.csv"):
             timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
             os.rename(f"{self.log_path}/csv/run_{self.run}_{self.task_name}_training_log.csv", f"{self.log_path}/csv/z_run_{self.run}_{self.task_name}_training_log_{timestamp}.csv")
+            print(f"Backed up existing training log file to: {self.log_path}/csv/z_run_{self.run}_{self.task_name}_training_log_{timestamp}.csv")
 
         with open(f"{self.log_path}/logs/run_{self.run}_{self.task_name}_log.log", "a") as f:
             f.write(f"[{self.task_name} evaluator init]: Running with parameters: {params}\n") 

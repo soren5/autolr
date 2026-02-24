@@ -11,10 +11,10 @@ from tensorflow.keras.optimizers import Adam
 
 configurations = [
     #{'task': 'FMNIST', "pre_process": True},
-    #{'task': 'FMNIST', "pre_process": False},
+    {'task': 'FMNIST', "pre_process": False},
 
-    #{'task': 'CIFAR10', "pre_process": True},
-    {'task': 'CIFAR10', "pre_process": False},
+    {'task': 'CIFAR10', "pre_process": True},
+    #{'task': 'CIFAR10', "pre_process": False},
 
     #{'task': 'Tiny-Imagenet', "pre_process": True},
     #{'task': 'Tiny-Imagenet', "pre_process": False},
