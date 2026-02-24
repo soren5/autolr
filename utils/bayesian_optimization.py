@@ -271,7 +271,7 @@ mnist_params = {
     "PATIENCE": 5,
     "VALIDATION_SIZE": 3500,
     "FITNESS_SIZE": 50000,
-    "MODEL": os.path.join(default_params.get('MODEL_DIR', 'models'), 'mnist_model.h5'),
+    "MODEL": os.path.join(default_params.get('MODELS_DIR', 'models'), 'mnist_model.h5'),
 }
 
 cifar_params = {
@@ -281,7 +281,7 @@ cifar_params = {
     "PATIENCE": 5,
     "VALIDATION_SIZE": 3500,
     "FITNESS_SIZE": 40000,
-    "MODEL": os.path.join(default_params.get('MODEL_DIR', 'models'), 'cifar_model.h5'),
+    "MODEL": os.path.join(default_params.get('MODELS_DIR', 'models'), 'cifar_model.h5'),
 }
 #1.3 Best Phenotype
 #phenotype = "alpha_func, beta_func, sigma_func, grad_func = lambda shape,  alpha, grad: tf.math.add(alpha, tf.constant(4.70911357e-03, shape=shape, dtype=tf.float32)), lambda shape,  alpha, beta, grad: tf.math.multiply(tf.math.add(tf.math.add(grad, grad), tf.math.add(tf.constant(9.98279874e-01, shape=shape, dtype=tf.float32), tf.math.sqrt(tf.math.square(tf.math.negative(tf.math.multiply(tf.constant(9.94242714e-01, shape=shape, dtype=tf.float32), tf.math.divide_no_nan(grad, grad))))))), grad), lambda shape,  alpha, beta, sigma, grad: tf.constant(9.99720385e-01, shape=shape, dtype=tf.float32), lambda shape,  alpha, beta, sigma, grad: tf.math.multiply(beta, alpha)"

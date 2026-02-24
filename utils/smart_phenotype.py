@@ -77,8 +77,8 @@ def smart_phenotype(phenotype, debug=False):
         print(functions)
     try:
         alpha_func_string = functions[1][8:-2]
-        beta_func_string = functions[2][14:-2] 
-        sigma_func_string =functions[3][21:-2] 
+        beta_func_string = functions[2][14:-2].replace('alpha', alpha_func_string)
+        sigma_func_string =functions[3][21:-2].replace('alpha', alpha_func_string).replace('beta', beta_func_string)
         grad_func_string = functions[-1][21:].replace('alpha', alpha_func_string).replace('beta', beta_func_string).replace('sigma', sigma_func_string)
     except IndexError:
         raise Exception("Error splitting genotype. Check that grammar name matches type of optimizer.")
@@ -118,3 +118,22 @@ def readable_phenotype(phenotype, debug=False, full_return=False):
         return readable_phenotype_string, alpha_func_string, beta_func_string, sigma_func_string, grad_func_string
     else:
         return readable_phenotype_string
+
+def advanced_readable_phenotype(phenotype, debug=False):
+    readable_phen, alpha_func_string, beta_func_string, sigma_func_string, grad_func_string = readable_phenotype(phenotype, debug=debug, full_return=True)
+    
+    redundant_patterns = {
+        'alpha': ['alpha = alpha - add(alpha, grad)'],
+        'sigma': ['sigma = sigma - add(sigma, grad)'],
+        'beta': ['beta = beta - add(beta, grad)'],
+    }
+    for param, patterns in redundant_patterns.items():
+        for pattern in patterns:
+            if pattern in readable_phen:
+                #print("Starting to remove redundant pattern.")
+                #print(f"Before: {readable_phen}")
+                readable_phen = readable_phen.replace(pattern, '')
+                readable_phen = readable_phen.replace(param, 'grad')
+                readable_phen = readable_phen.strip()
+                #print(f"After: {readable_phen}")
+    return readable_phen

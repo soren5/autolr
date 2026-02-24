@@ -41,7 +41,7 @@ default_params = {
     #'DUMPS_DIR': os.environ.get('DUMPS_DIR', '/home/autolr/dumps'), dumps is only ever defined in experiment_name, just change that instead
     'LOGS_DIR': os.environ.get('LOGS_DIR', 'logs'),
     'DATA_DIR': os.environ.get('DATA_DIR', 'data'),
-    'MODEL_DIR': os.environ.get('MODEL_DIR', 'models'),
+    'MODELS_DIR': os.environ.get('MODELS_DIR', 'models'),
     }
 params = default_params.copy()
 

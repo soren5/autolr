@@ -1,11 +1,10 @@
 import os
 import json
 from tensorflow import keras
-# This ONE LINE fixes all subsequent file/directory operations
-os.umask(0o002)
+from sge.parameters import params
 def create_models():
+    models_dir = params.get('MODELS_DIR', 'models')
     directory = os.path.join(os.getcwd(), "models", "json")
-
 
     for filename in os.scandir(directory):
         path = os.path.join(directory, filename)

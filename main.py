@@ -14,9 +14,9 @@ if __name__ == "__main__":
 
     set_parameters(sys.argv[1:])   
 
-    model_dir = params.get('MODEL_DIR', 'models')
-    cifar_model_path = os.path.join(model_dir, 'cifar_model.h5')
-    mnist_model_path = os.path.join(model_dir, 'mnist_model.h5')
+    models_dir = params.get('MODELS_DIR', 'models')
+    cifar_model_path = os.path.join(models_dir, 'cifar_model.h5')
+    mnist_model_path = os.path.join(models_dir, 'mnist_model.h5')
 
     if False:
         evaluation_function = Optimizer_Evaluator_Torch()

@@ -38,6 +38,7 @@ def main(i):
                     params['CIFAR10_CONFIG'] = 'parameters/dataset_parameters/CIFAR10_CONFIG_all_false.json'
                     params['TINY_IMAGENET_CONFIG'] = 'parameters/dataset_parameters/TINY_IMAGENET_CONFIG_all_false.json'
 
+                print(params)
                 if config['task'] == 'Tiny-Imagenet':
                     evaluator = TINY_IMAGENET_Evaluator(params, task_name=f"{config['task'].lower()}_{config['pre_process']}")
                 elif config['task'] == 'CIFAR10':
