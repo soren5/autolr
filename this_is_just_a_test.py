@@ -1,6 +1,3 @@
-import os
-# This ONE LINE fixes all subsequent file/directory operations
-os.umask(0o002)
 # try to create a file in the root of the project 
 with open('test_file.txt', 'w') as f:
     f.write('This is just a test file to check if the file watcher is working correctly.\n')
