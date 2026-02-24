@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from models.keras_model_adapters.resnet_adapter import ResNet_Interface
 
 class TINY_IMAGENET_Dataset:
-    def __init__(self, validation_size=3500, fitness_size=3500, seed=0, normalize=True, subtract_mean=True, path='data/tiny_imagenet'):
+    def __init__(self, validation_size=3500, fitness_size=3500, seed=0, normalize=True, subtract_mean=True, path=None):
         # Tensorflow does not give us y in one-hot encoding, so we need to convert it ourselves
         self.n_classes = 200
         self.validation_size = validation_size
@@ -16,8 +16,12 @@ class TINY_IMAGENET_Dataset:
         self.seed = seed
         self.normalize = normalize
         self.subtract_mean = subtract_mean
-        self.path = path
         self.img_rows, self.img_cols, self.channels = 64, 64, 3
+        if path is None:
+            from parameters import params
+            self.path = os.path.join(params['DATA_DIR'], 'tiny_imagenet')
+        else:
+            self.path = path
 
 
     def load_data_for_evolution(self):

@@ -48,6 +48,7 @@ class Evaluator():
 
         self.configuration_file = configuration_file
         self.task_name = task_name
+        self.log_path = params['LOGS_DIR'] #By default, this is autolr/logs, but it will check for an environment variable to override it, this is useful for running on the cluster to account for nfs
 
         self._init_dataset_(validation_size, fitness_size, self.run, normalize, subtract_mean)
         self._init_model_(model_path)
@@ -62,26 +63,35 @@ class Evaluator():
         raise NotImplementedError("This method should be implemented in the subclass")
 
     def _init_logs_(self, params):
+        # Logs are written to two folders, self.log_path/logs (for .log files) and self.log_path/csv (for .csv files)
+        # Check if these directories exist and if not, create them
+        if not os.path.exists(self.log_path):
+            os.makedirs(self.log_path)
+        if not os.path.exists(f"{self.log_path}/csv"):
+            os.makedirs(f"{self.log_path}/csv")
+        if not os.path.exists(f"{self.log_path}/logs"):
+            os.makedirs(f"{self.log_path}/logs")
+
         # Check if log file already exists, if it does, make a copy of it with a timestamp to avoid overwriting previous logs, add a z to the name so it is clear that this log is a backup and not the current log
-        if os.path.exists(f"logs/run_{self.run}_{self.task_name}_log.log"):
+        if os.path.exists(f"{self.log_path}/logs/run_{self.run}_{self.task_name}_log.log"):
             timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-            os.rename(f"logs/run_{self.run}_{self.task_name}_log.log", f"logs/z_run_{self.run}_{self.task_name}_log_{timestamp}.log")
+            os.rename(f"{self.log_path}/logs/run_{self.run}_{self.task_name}_log.log", f"{self.log_path}/logs/z_run_{self.run}_{self.task_name}_log_{timestamp}.log")
         
         # Do the same for the training log file, but with a different name to avoid confusion
-        if os.path.exists(f"logs/run_{self.run}_{self.task_name}_training_log.csv"):
+        if os.path.exists(f"{self.log_path}/csv/run_{self.run}_{self.task_name}_training_log.csv"):
             timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-            os.rename(f"logs/run_{self.run}_{self.task_name}_training_log.csv", f"logs/z_run_{self.run}_{self.task_name}_training_log_{timestamp}.csv")
+            os.rename(f"{self.log_path}/csv/run_{self.run}_{self.task_name}_training_log.csv", f"{self.log_path}/csv/z_run_{self.run}_{self.task_name}_training_log_{timestamp}.csv")
 
-        with open(f"logs/run_{self.run}_{self.task_name}_log.log", "a") as f:
+        with open(f"{self.log_path}/logs/run_{self.run}_{self.task_name}_log.log", "a") as f:
             f.write(f"[{self.task_name} evaluator init]: Running with parameters: {params}\n") 
 
     def evaluate(self, phen):
         # Open (or create) logs/mnist_log.log to track the evaluation
-        with open(f"logs/run_{self.run}_{self.task_name}_log.log", "a") as f:
+        with open(f"{self.log_path}/logs/run_{self.run}_{self.task_name}_log.log", "a") as f:
             f.write(f"[{self.task_name} evaluate start]: Running optimizer with key {smart_phenotype(phen)}\n Full phenotype:\n {readable_phenotype(phen)}\n")
         
         # Open training log file for the evaluator, add a line with the phenotype being evaluated
-        self.csv_log_file = f"logs/run_{self.run}_{self.task_name}_training_log.csv"
+        self.csv_log_file = f"{self.log_path}/csv/run_{self.run}_{self.task_name}_training_log.csv"
         with open(self.csv_log_file, "a") as f:
             f.write(f"phenotype: {smart_phenotype(phen)}\n")
 
@@ -90,18 +100,18 @@ class Evaluator():
             fake=self.fake_fitness)
         
         # Log the fitness result and return it
-        with open(f"logs/run_{self.run}_{self.task_name}_log.log", "a") as f:
+        with open(f"{self.log_path}/logs/run_{self.run}_{self.task_name}_log.log", "a") as f:
             f.write(f"[{self.task_name} evaluate end]: Fitness: {fitness}\n\n\n")
             
         return fitness, results
     
     def evaluate_optimizer(self, optimizer):
         # Open (or create) logs/mnist_log.log to track the evaluation
-        with open(f"logs/run_{self.run}_{self.task_name}_log.log", "a") as f:
+        with open(f"{self.log_path}/logs/run_{self.run}_{self.task_name}_log.log", "a") as f:
             f.write(f"[{self.task_name} evaluate start]: Running optimizer {optimizer.name}\n")
         
         # Open training log file for the evaluator, add a line with the phenotype being evaluated
-        self.csv_log_file = f"logs/run_{self.run}_{self.task_name}_training_log.csv"
+        self.csv_log_file = f"{self.log_path}/csv/run_{self.run}_{self.task_name}_training_log.csv"
         with open(self.csv_log_file, "a") as f:
             f.write(f"optimizer: {optimizer.name}\n")
 
@@ -111,7 +121,7 @@ class Evaluator():
             optimizer=optimizer)
         
         # Log the fitness result and return it
-        with open(f"logs/run_{self.run}_{self.task_name}_log.log", "a") as f:
+        with open(f"{self.log_path}/logs/run_{self.run}_{self.task_name}_log.log", "a") as f:
             f.write(f"[{self.task_name} evaluate end]: Fitness: {fitness}\n\n\n")
             
         return fitness, results

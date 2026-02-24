@@ -6,7 +6,7 @@ import os
 import numpy as np
 
 class IMAGENET_100_Dataset:
-    def __init__(self, validation_size=3500, fitness_size=3500, seed=0, normalize=True, subtract_mean=True, path='data/imagenet_100'):
+    def __init__(self, validation_size=3500, fitness_size=3500, seed=0, normalize=True, subtract_mean=True, path=None):
         # Tensorflow does not give us y in one-hot encoding, so we need to convert it ourselves
         self.n_classes = 100
         self.validation_size = validation_size
@@ -15,6 +15,11 @@ class IMAGENET_100_Dataset:
         self.normalize = normalize
         self.subtract_mean = subtract_mean
         self.img_rows, self.img_cols, self.channels = 224, 224, 3
+        if path is None:
+            from parameters import params
+            self.path = os.path.join(params['DATA_DIR'], 'imagenet_100')
+        else:
+            self.path = path
 
 
     def load_data_for_evolution(self):

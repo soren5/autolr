@@ -1,4 +1,5 @@
 import argparse
+import os
 import yaml
 
 """"Algorithm Parameters"""
@@ -37,6 +38,9 @@ default_params = {
     'FAKE_FITNESS': False,
     'NORMALIZE': True,
     'SUBTRACT_MEAN': True,
+    #'DUMPS_DIR': os.environ.get('DUMPS_DIR', '/home/autolr/dumps'), dumps is only ever defined in experiment_name, just change that instead
+    'LOGS_DIR': os.environ.get('LOGS_DIR', '/home/autolr/logs'),
+    'DATA_DIR': os.environ.get('DATA_DIR', '/home/autolr/data'),
     }
 params = default_params.copy()
 
