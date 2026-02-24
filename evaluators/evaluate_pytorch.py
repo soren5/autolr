@@ -2,6 +2,7 @@ import csv
 from utils.data_functions import load_fashion_mnist_training
 
 import torch
+import os
 import torchvision
 import torchvision.transforms as transforms
 from optimizers.custom_optimizer import CustomOptimizerTorch
@@ -13,6 +14,7 @@ import sys
 import numpy as np
 import datetime
 experiment_time = datetime.datetime.now()
+from sge.parameters import params
 
 def train_model_torch(phen, params, net, train_loader, validation_loader, fitness_loader):
     epochs = params['EPOCHS']
@@ -117,6 +119,7 @@ def train_model_torch(phen, params, net, train_loader, validation_loader, fitnes
     return total_accuracy / 100, {}
 
 if __name__ == "__main__":
+    model_dir = params.get('MODEL_DIR', 'models')
     params = {
     'POPSIZE': 50,
     'GENERATIONS': 3,
@@ -132,7 +135,7 @@ if __name__ == "__main__":
     'VERBOSE': True,
     'MIN_TREE_DEPTH': 6,
     'MAX_TREE_DEPTH': 17,
-    'MODEL': 'models/mnist_model.h5',
+    'MODEL': os.path.join(model_dir, 'mnist_model.h5'),
     'VALIDATION_SIZE': 3500,
     'FITNESS_SIZE': 35000,
     'BATCH_SIZE': 1000,

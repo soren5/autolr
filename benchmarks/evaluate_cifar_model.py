@@ -42,6 +42,8 @@ import pandas as pd
 import os
 os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 cwd_path = os.getcwd()
+from sge.parameters import params
+model_dir = params.get('MODEL_DIR', 'models')
 
 
 def get_metric_dictionary(score):
@@ -74,12 +76,12 @@ def evaluate_cifar_model(dataset=None, model=None, optimizer=None, batch_size=10
     validation_size = len(dataset['x_val'])
 
     if model == None:
-        n_model = load_model('models/cifar_model.h5', compile=False)
+        n_model = load_model(os.path.join(model_dir, 'cifar_model.h5'), compile=False)
         print(n_model.summary())
         model = n_model
 
     model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-        filepath=os.path.join(cwd_path, f'models/checkpoints/cifar_model_checkpoint_{experiment_name}.h5'),
+        filepath=os.path.join(model_dir, 'checkpoints', f'cifar_model_checkpoint_{experiment_name}.h5'),
         save_weights_only=True,
         monitor='val_accuracy',
         mode='max',
@@ -106,7 +108,7 @@ def evaluate_cifar_model(dataset=None, model=None, optimizer=None, batch_size=10
 
         metric_dictionary = get_metric_dictionary(score)
         if save_best_only:
-            model.load_weights(os.path.join(cwd_path, f'models/checkpoints/cifar_model_checkpoint_{experiment_name}.h5'))
+            model.load_weights(os.path.join(model_dir, 'checkpoints', f'cifar_model_checkpoint_{experiment_name}.h5'))
         test_score = model.evaluate(dataset['x_test'], dataset['y_test'], batch_size=batch_size, verbose=verbose, callbacks=[keras.callbacks.History()])
         result = [test_score[-1], metric_dictionary]
 
@@ -126,9 +128,9 @@ def resume_cifar_model(dataset=None, optimizer=None, batch_size=1000, epochs=100
     config.gpu_options.allow_growth = True
     session = InteractiveSession(config=config)
 
-    n_model = load_model('models/cifar_model.h5', compile=False)
+    n_model = load_model(os.path.join(model_dir, 'cifar_model.h5'), compile=False)
     model = n_model 
-    model.load_weights(os.path.join(cwd_path, f'models/checkpoints/cifar_model_checkpoint.h5'))
+    model.load_weights(os.path.join(model_dir, 'checkpoints', 'cifar_model_checkpoint.h5'))
     evaluate_cifar_model(model=model, optimizer=optimizer, epochs=epochs, verbose=verbose)
 
 

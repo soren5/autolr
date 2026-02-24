@@ -6,6 +6,7 @@ from tensorflow.keras import Sequential
 from tensorflow.compat.v1 import ConfigProto
 from tensorflow.compat.v1 import InteractiveSession
 import numpy as np
+from sge.parameters import params
 config = ConfigProto()
 config.gpu_options.allow_growth = True
 session = InteractiveSession(config=config)
@@ -133,6 +134,7 @@ class VGG16_Interface:
 
 
 def try_model():
+  model_dir = params.get('MODEL_DIR', 'models')
   from tensorflow.keras.utils import to_categorical
   from sklearn.model_selection import train_test_split    
   from tensorflow.keras.applications.vgg16 import preprocess_input as preproc
@@ -160,10 +162,10 @@ def try_model():
   #y_train = to_categorical(y_train)
 
   x_train = preproc(x_train)
-  model.save_weights('models/weights')
+  model.save_weights(os.path.join(model_dir, 'weights'))
   def create_baye_opt(model, x_train, y_train):
     def baye_opt(lr):
-      model.load_weights('models/weights')
+      model.load_weights(os.path.join(model_dir, 'weights'))
       optimizer = SGD(lr)
       model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
       score = model.fit(x_train, y_train,

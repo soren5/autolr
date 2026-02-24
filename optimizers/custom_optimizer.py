@@ -1,6 +1,5 @@
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.python.training import training_ops
 import torch
 import numpy as np
 from utils.smart_phenotype import readable_phenotype, get_optimizer_type
@@ -230,6 +229,9 @@ class CustomOptimizer(keras.optimizers.Optimizer):
         return parameters
 
     def _resource_apply_dense(self, grad, var, apply_state=None):
+        if self.training_ops == None:
+            from tensorflow.python.training import training_ops
+            self.training_ops = training_ops
         #print("_resource_apply_dense")
         variable_name = var.name
         #print(f"#: {variable_name}")
@@ -243,24 +245,24 @@ class CustomOptimizer(keras.optimizers.Optimizer):
 
         # For optimizers with aggregators, we need to run the aggregators before the rest of the procedure
         if self._variables_used['momentum']:
-            training_ops.resource_apply_gradient_descent( 
+            self.training_ops.resource_apply_gradient_descent( 
                 self._momentum[variable_name].handle,
                 tf.constant(1.0),
                 momentum_function(grad, self._momentum[variable_name], self.momentum_const))
         if self._variables_used['variance']:
-            training_ops.resource_apply_gradient_descent( 
+            self.training_ops.resource_apply_gradient_descent( 
                 self._variance[variable_name].handle,
                 tf.constant(1.0),
                 variance_function(grad, self._variance[variable_name], self.variance_const))
         if self._variables_used['layer_wise_lr']:
-            training_ops.resource_apply_gradient_descent( 
+            self.training_ops.resource_apply_gradient_descent( 
                 self._layer_wise_lr[variable_name].handle,
                 tf.constant(1.0),
                 layer_wise_lr_function(grad, self._layer_wise_lr[variable_name], var, self.layer_wise_lr_const))
 
         if self._alpha_func != None:
             # We unroll the parameters for alpha function
-            training_ops.resource_apply_gradient_descent(
+            self.training_ops.resource_apply_gradient_descent(
                         self._alpha_dict[variable_name].handle, 
                         tf.constant(1.0), 
                         self._alpha_func(
@@ -273,7 +275,7 @@ class CustomOptimizer(keras.optimizers.Optimizer):
         # These function specific parameters are always present at the end before the gradient, regardless of optimizer type
         if self._beta_func != None:
             beta_parameters = parameters[:-1] + [self._beta_dict[variable_name]] + [parameters[-1]]
-            training_ops.resource_apply_gradient_descent(
+            self.training_ops.resource_apply_gradient_descent(
                             self._beta_dict[variable_name].handle, 
                             tf.constant(1.0), 
                             self._beta_func(
@@ -283,7 +285,7 @@ class CustomOptimizer(keras.optimizers.Optimizer):
 
         if self._sigma_func!= None:
             sigma_parameters = parameters[:-1] + [self._beta_dict[variable_name], self._sigma_dict[variable_name]] + [parameters[-1]]
-            training_ops.resource_apply_gradient_descent(
+            self.training_ops.resource_apply_gradient_descent(
                                 self._sigma_dict[variable_name].handle, 
                                 tf.constant(1.0), 
                                 self._sigma_func(
@@ -291,7 +293,7 @@ class CustomOptimizer(keras.optimizers.Optimizer):
                                 ), use_locking=self._use_locking)
 
         weight_parameters = parameters[:-1] + [self._beta_dict[variable_name], self._sigma_dict[variable_name]] + [parameters[-1]]
-        updated_weights = training_ops.resource_apply_gradient_descent(
+        updated_weights = self.training_ops.resource_apply_gradient_descent(
                 var.handle, 
                 tf.constant(1.0), 
                 self._grad_func(
@@ -300,6 +302,10 @@ class CustomOptimizer(keras.optimizers.Optimizer):
                 use_locking=self._use_locking)
 
         return updated_weights
+    # More recent tensorflow versions require the update step to be defined separately
+    def update_step(self, gradient, variable, learning_rate):
+        # TODO
+        pass
 
 class CustomOptimizerArch(keras.optimizers.Optimizer):
     def __init__(self,

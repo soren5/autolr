@@ -14,15 +14,19 @@ if __name__ == "__main__":
 
     set_parameters(sys.argv[1:])   
 
+    model_dir = params.get('MODEL_DIR', 'models')
+    cifar_model_path = os.path.join(model_dir, 'cifar_model.h5')
+    mnist_model_path = os.path.join(model_dir, 'mnist_model.h5')
+
     if False:
         evaluation_function = Optimizer_Evaluator_Torch()
-        if 'MODEL' in params and params['MODEL'] == 'models/cifar_model.h5': 
+        if 'MODEL' in params and params['MODEL'] == cifar_model_path: 
             from evaluators.adaptive_optimizer_evaluator_f_race import train_model_tensorflow_cifar10
             evaluation_function = Optimizer_Evaluator_Tensorflow(train_model=train_model_tensorflow_cifar10)
-        elif 'MODEL' in params and params['MODEL'] == 'models/mnist_model.h5' and params['DATASET'] == 'fmnist':    
+        elif 'MODEL' in params and params['MODEL'] == mnist_model_path and params['DATASET'] == 'fmnist':    
             from evaluators.adaptive_optimizer_evaluator_f_race import train_model_tensorflow_fmnist 
             evaluation_function = Optimizer_Evaluator_Tensorflow(train_model_tensorflow_fmnist)
-        elif 'MODEL' in params and params['MODEL'] == 'models/mnist_model.h5' and params['DATASET'] == 'mnist':    
+        elif 'MODEL' in params and params['MODEL'] == mnist_model_path and params['DATASET'] == 'mnist':    
             from evaluators.adaptive_optimizer_evaluator_f_race import train_model_tensorflow_mnist 
             evaluation_function = Optimizer_Evaluator_Tensorflow(train_model_tensorflow_mnist)
     from sge.parameters import params

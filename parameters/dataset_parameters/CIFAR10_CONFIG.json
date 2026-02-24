@@ -4,7 +4,7 @@
     "BATCH_SIZE": 1000,
     "EPOCHS": 10000,
     "PATIENCE": 5,
-    "MODEL": "models/cifar_model.h5",
+    "MODEL": "cifar_model.h5",
     "NORMALIZE": true,
     "SUBTRACT_MEAN": true
 }

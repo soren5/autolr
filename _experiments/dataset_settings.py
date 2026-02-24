@@ -8,7 +8,6 @@ from evaluators.evaluate_tiny_imagenet import TINY_IMAGENET_Evaluator
 from sge.parameters import reset_parameters, manual_load_parameters, params
 from tensorflow.keras.optimizers import Adam
 
-
 configurations = [
     #{'task': 'FMNIST', "pre_process": True},
     {'task': 'FMNIST', "pre_process": False},

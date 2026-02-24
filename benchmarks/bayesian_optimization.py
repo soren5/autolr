@@ -8,7 +8,9 @@ from optimizers.evolved.ades import ADES
 import math
 from utils.bayesian_optimization import *
 from optimizers.custom_optimizer import CustomOptimizerArch
+from sge.parameters import params
 cwd_path = os.getcwd()
+model_dir = params.get('MODEL_DIR', 'models')
 
 def optimize_generic(phenotype, name, n_iter, init_points):
     constants, probes = get_constants_and_probe(phenotype)
@@ -48,7 +50,7 @@ def create_evaluate_generic(phenotype, optimizer_name, model_name, evaluate_mode
                 phenotype.replace(key, f"tf.constant({value}, shape=shape, dtype=tf.float32)")
 
 
-        model = load_model(f'models/{model_name}.h5', compile=False)
+        model = load_model(os.path.join(model_dir, f"{model_name}.h5"), compile=False)
         optimizer = optimizer_class(phen=phenotype, model=model)
         print("Going to evaluate")
         result = evaluate_model_function(optimizer=optimizer, model=model, verbose=0, epochs=1000, experiment_name=f'{optimizer_name}_bo_{model_name}_results')

@@ -8,7 +8,9 @@ from optimizers.evolved.ades import ADES
 import math
 from utils.bayesian_optimization import *
 from optimizers.custom_optimizer import CustomOptimizerArch
+from sge.parameters import params
 cwd_path = os.getcwd()
+model_dir = params.get('MODEL_DIR', 'models')
 
 def evaluate_adam(learning_rate, beta_1, beta_2):
     optimizer = Adam(learning_rate=learning_rate, beta_1=beta_1, beta_2=beta_2)
@@ -65,7 +67,7 @@ def evaluate_ades(beta_1, beta_2):
     from tensorflow.keras.models import load_model
     import tensorflow as tf
     import numpy as np
-    model = load_model('models/cifar_model.h5', compile=False)
+    model = load_model(os.path.join(model_dir, 'cifar_model.h5'), compile=False)
     alpha_dict = {}
     for layer in model.layers:
         for trainable_weight in layer._trainable_weights:
@@ -90,7 +92,7 @@ def evaluate_sign(beta_1):
     from tensorflow.keras.models import load_model
     import tensorflow as tf
     import numpy as np
-    model = load_model('models/cifar_model.h5', compile=False)
+    model = load_model(os.path.join(model_dir, 'cifar_model.h5'), compile=False)
     optimizer = Sign(beta_1=beta_1)
     result = evaluate_cifar_model(optimizer=optimizer, model=model, verbose=2, epochs=100, experiment_name='sign_bo_cifar_results')
 
@@ -264,7 +266,7 @@ def create_evaluate_generic(phenotype, name):
                 phenotype.replace(key, f"tf.constant({value}, shape=shape, dtype=tf.float32)")
 
 
-        model = load_model('models/cifar_model.h5', compile=False)
+        model = load_model(os.path.join(model_dir, 'cifar_model.h5'), compile=False)
         optimizer = CustomOptimizerArch(phen=phenotype, model=model)
         print("Going to evaluate")
         result = evaluate_cifar_model(optimizer=optimizer, model=model, verbose=0, epochs=1000, experiment_name=f'{name}_bo_cifar_results')

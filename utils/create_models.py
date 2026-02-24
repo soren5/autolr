@@ -1,7 +1,8 @@
 import os
 import json
 from tensorflow import keras
-
+# This ONE LINE fixes all subsequent file/directory operations
+os.umask(0o002)
 def create_models():
     directory = os.path.join(os.getcwd(), "models", "json")
 

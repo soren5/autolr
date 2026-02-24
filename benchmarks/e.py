@@ -4,6 +4,8 @@ import csv
 import tensorflow as tf
 import os
 cwd_path = os.getcwd()
+from sge.parameters import params
+model_dir = params.get('MODEL_DIR', 'models')
 
 #Import custom optimizer
 from optimizers.custom_optimizer import CustomOptimizer
@@ -80,7 +82,7 @@ def evaluate_fashion_mnist_model(dataset=None, model=None, optimizer=None, batch
     validation_size = len(dataset['x_val'])
 
     if model == None:
-        n_model = load_model('models/mnist_model.h5', compile=False)
+        n_model = load_model(os.path.join(model_dir, 'mnist_model.h5'), compile=False)
         model = n_model
 
     try:
@@ -94,7 +96,7 @@ def evaluate_fashion_mnist_model(dataset=None, model=None, optimizer=None, batch
         pass
 
     model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-        filepath=os.path.join(cwd_path,f'models/checkpoints/fashion_mnist_model_checkpoint_{experiment_name}.h5'),
+        filepath=os.path.join(model_dir, 'checkpoints', f'fashion_mnist_model_checkpoint_{experiment_name}.h5'),
         save_weights_only=True,
         monitor='val_accuracy',
         mode='max',
@@ -120,7 +122,7 @@ def evaluate_fashion_mnist_model(dataset=None, model=None, optimizer=None, batch
 
         metric_dictionary = get_metric_dictionary(score)
         if save_best_only:
-            model.load_weights(os.path.join(cwd_path, f'models/checkpoints/fashion_mnist_model_checkpoint_{experiment_name}.h5'))
+            model.load_weights(os.path.join(model_dir, 'checkpoints', f'fashion_mnist_model_checkpoint_{experiment_name}.h5'))
         test_score = model.evaluate(dataset['x_test'], dataset['y_test'], batch_size=batch_size, verbose=verbose, callbacks=[keras.callbacks.History()])
         result = [test_score[-1], metric_dictionary]
 
@@ -142,9 +144,9 @@ def resume_fashion_mnist_model(dataset=None, optimizer=None, batch_size=1000, ep
     config.gpu_options.allow_growth = True
     session = InteractiveSession(config=config)
 
-    n_model = load_model('models/mnist_model.h5', compile=False)
+    n_model = load_model(os.path.join(model_dir, 'mnist_model.h5'), compile=False)
     model = n_model 
-    model.load_weights(os.path.join(cwd_path, f'models/checkpoints/mnist_model_checkpoint.h5'))
+    model.load_weights(os.path.join(model_dir, 'checkpoints', 'mnist_model_checkpoint.h5'))
     evaluate_fashion_mnist_model(model=model, optimizer=optimizer, epochs=epochs, verbose=verbose)
 
 

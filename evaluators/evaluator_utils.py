@@ -35,7 +35,7 @@ class Evaluator():
             config_path = None
         
         # Get the parameters from find_params, which will handle both single and multi-task cases
-        validation_size, fitness_size, batch_size, epochs, patience, model_path, normalize, subtract_mean = self.find_params(config_path, params)
+        validation_size, fitness_size, batch_size, epochs, patience, model_file, normalize, subtract_mean = self.find_params(config_path, params)
         
         # Store the parameters in the object for later use
         self.batch_size = batch_size
@@ -51,11 +51,12 @@ class Evaluator():
         self.log_path = params['LOGS_DIR'] #By default, this is autolr/logs, but it will check for an environment variable to override it, this is useful for running on the cluster to account for nfs
 
         self._init_dataset_(validation_size, fitness_size, self.run, normalize, subtract_mean)
-        self._init_model_(model_path)
+        self._init_model_(os.path.join(params['MODEL_DIR'], model_file))
         self._init_logs_(params)
 
     def _init_model_(self, model_path):
         # This will pass if the model path is valid and the model can be loaded
+
         self.model = load_model(model_path, compile=False)
         self.model_initial_weights = self.model.get_weights()
  

@@ -83,7 +83,7 @@ class XOR_Evaluator(Evaluator):
                             ])
         
         predictions = model.predict_on_batch(self.dataset.x)
-        #model.load_weights('models/xor_model.h5')
+        #model.load_weights('xor_model.h5')
 
         try:
             binary_predictions = np.array([[round(pred[0])] for pred in predictions], dtype=np.float32)
