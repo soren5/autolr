@@ -13,7 +13,7 @@ default_params = {
     'SELECTION_TYPE': 'tournament',
     'TSIZE': 2,
     'GRAMMAR': 'grammars/adaptive_autolr_grammar_architecture.txt',
-    'EXPERIMENT_NAME': "dumps/example",
+    'EXPERIMENT_NAME': "example",
     'RUN': 1,
     'INCLUDE_GENOTYPE': True,
     'SAVE_STEP': 1,
@@ -38,7 +38,7 @@ default_params = {
     'FAKE_FITNESS': False,
     'NORMALIZE': True,
     'SUBTRACT_MEAN': True,
-    #'DUMPS_DIR': os.environ.get('DUMPS_DIR', '/home/autolr/dumps'), dumps is only ever defined in experiment_name, just change that instead
+    'DUMPS_DIR': os.environ.get('DUMPS_DIR', 'dumps'), #This represents a change in expected behavior, before, we expects 'dumps' as a part of EXPERIMENT_NAME
     'LOGS_DIR': os.environ.get('LOGS_DIR', 'logs'),
     'DATA_DIR': os.environ.get('DATA_DIR', 'data'),
     'MODELS_DIR': os.environ.get('MODELS_DIR', 'models'),

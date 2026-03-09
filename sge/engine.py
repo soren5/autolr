@@ -241,7 +241,8 @@ def use_google_colab_in_reproduction():
         driver.flush_and_unmount()
         driver.Driver.mount('/content/drive')
         import os
-        print(os.listdir(f"{params['EXPERIMENT_NAME']}/run_{params['RUN']}"))
+        path = os.path.join(params['DUMPS_DIR'], params['EXPERIMENT_NAME'], f"run_{params['RUN']}")
+        print(os.listdir(path))
 
 def save_data_new_pop(logger, population, archive, it):
     logger.save_archive(it, archive)
