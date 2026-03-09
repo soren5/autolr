@@ -235,16 +235,16 @@ class Optimizer_Evaluator_Multi_Task:
             other_info['fmnist'] = fmnist_results[1]
             other_info['source'] = 'fmnist_evaluation'
             
-            #if fitness > 0.8:
-            if True:
+            if fitness > 0.8:
+            #if True:
                 #Evaluate CIFAR
                 cifar_results = self.cifar_evaluator.evaluate(phen)
                 fitness = cifar_results[0] + 1.0
                 other_info['cifar'] = cifar_results[1]
                 other_info['source'] = 'cifar_evaluation'
 
-                #if fitness > 1.8:
-                if True:
+                if fitness > 1.7:
+                #if True:
                     #Evaluate Imagenet
                     tiny_imagenet_results = self.tiny_imagenet_evaluator.evaluate(phen)
                     fitness = tiny_imagenet_results[0] + 2.0
@@ -254,7 +254,7 @@ class Optimizer_Evaluator_Multi_Task:
             if np.isnan(fitness):
                 print("NAN fitness, returning FITNESS_FLOOR")
                 fitness = params['FITNESS_FLOOR']
-            print(f"Fitness: {fitness}")
+            print(f"Fitness: {fitness:.4f} (fmnist: {fmnist_results[0]:.4f}, cifar: {cifar_results[0]:.4f}, tiny_imagenet: {tiny_imagenet_results[0]:.4f})")
         else:
             fitness = params['FITNESS_FLOOR']
             other_info = {'source': 'degenerate detection'}
