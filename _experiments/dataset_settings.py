@@ -30,7 +30,7 @@ def main(i):
                     reset_parameters()
                     manual_load_parameters(parameters)
                 if config['pre_process']:
-                    params['FMNIST_CONFIG'] = 'parameters/dataset_parameters/FMNIST_CONFIG.JSON'
+                    params['FMNIST_CONFIG'] = 'parameters/dataset_parameters/FMNIST_CONFIG.json'
                     params['CIFAR10_CONFIG'] = 'parameters/dataset_parameters/CIFAR10_CONFIG.json'
                     params['TINY_IMAGENET_CONFIG'] = 'parameters/dataset_parameters/TINY_IMAGENET_CONFIG.json'
                 else:
