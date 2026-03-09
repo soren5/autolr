@@ -1,5 +1,5 @@
 RUN: 1
-EXPERIMENT_NAME: 'dumps/deep_architecture_optimizer'
+EXPERIMENT_NAME: 'multi_task_experiment'
 GRAMMAR: 'grammars/deep_architecture_optimizer.txt'
 MIN_TREE_DEPTH: 6
 MAX_TREE_DEPTH: 40

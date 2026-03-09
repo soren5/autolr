@@ -10,8 +10,6 @@ import re
 import os.path
 from os import path
 
-path_to_save = os.path.join(params['DUMPS_DIR'], params['EXPERIMENT_NAME'], f"run_{params['RUN']}")
-path_to_parent_experiment = os.path.join(params['DUMPS_DIR'], params['PARENT_EXPERIMENT'], f"run_{params['RUN']}") if 'PARENT_EXPERIMENT' in params and params['PARENT_EXPERIMENT'] != False else None
 
 def evolution_progress(generation, pop):
     fitness_samples = [i['fitness'] for i in pop]
@@ -47,6 +45,7 @@ def elicit_progress(generation, pop):
             if len(indiv['parent']) >= 2:
                 parent_2 = indiv['parent'][1]
         data += f"{generation} {indiv['id']} {translate_operation_to_elicit(indiv['operation'])} {parent_1} {parent_2} {indiv['fitness'] * -1}\n"
+        path_to_save = os.path.join(params['DUMPS_DIR'], params['EXPERIMENT_NAME'], f"run_{params['RUN']}")
         with open(os.path.join(path_to_save, 'elicit_report.txt'), 'a') as f:
             f.write(data)  
 
@@ -56,6 +55,7 @@ def save_random_state(it):
     #tf_seed = random.randint(0, sys.maxsize)
     #tf.random.set_seed(tf_seed)
     numpy_state = np.random.get_state()
+    path_to_save = os.path.join(params['DUMPS_DIR'], params['EXPERIMENT_NAME'], f"run_{params['RUN']}")
     with open(os.path.join(path_to_save, f'builtinstate_{it}'), 'wb') as f:
         pickle.dump(builtin_state, f)
     with open(os.path.join(path_to_save, f'numpystate_{it}'), 'wb') as f:
@@ -68,6 +68,9 @@ def load_random_state(it):
     import sys
 
     #find files in correct folder
+    path_to_save = os.path.join(params['DUMPS_DIR'], params['EXPERIMENT_NAME'], f"run_{params['RUN']}")
+    path_to_parent_experiment = os.path.join(params['DUMPS_DIR'], params['PARENT_EXPERIMENT'], f"run_{params['RUN']}") if 'PARENT_EXPERIMENT' in params and params['PARENT_EXPERIMENT'] != False else None
+    
     f = os.path.join(path_to_save, f'builtinstate_{it}')
     g = os.path.join(path_to_save, f'numpystate_{it}')
 
@@ -89,23 +92,29 @@ def load_random_state(it):
 
 
 def save_progress_to_file(data):
+    path_to_save = os.path.join(params['DUMPS_DIR'], params['EXPERIMENT_NAME'], f"run_{params['RUN']}")
     with open(os.path.join(path_to_save, '_progress_report.csv'), 'a') as f:
         f.write(data + '\n')
 
 
 def save_step(generation, population):
+    path_to_save = os.path.join(params['DUMPS_DIR'], params['EXPERIMENT_NAME'], f"run_{params['RUN']}")
     with open(os.path.join(path_to_save, f'iteration_{generation}.json'), 'w') as f:
         json.dump(population, f)
 
 def save_population(generation, population):
+    path_to_save = os.path.join(params['DUMPS_DIR'], params['EXPERIMENT_NAME'], f"run_{params['RUN']}")
     with open(os.path.join(path_to_save, f'population_{generation}.json'), 'w') as f:
         json.dump(population, f)
 
 def load_population(generation):
+    path_to_save = os.path.join(params['DUMPS_DIR'], params['EXPERIMENT_NAME'], f"run_{params['RUN']}")
+    path_to_parent_experiment = os.path.join(params['DUMPS_DIR'], params['PARENT_EXPERIMENT'], f"run_{params['RUN']}") if 'PARENT_EXPERIMENT' in params and params['PARENT_EXPERIMENT'] != False else None
+    
     #find file in correct folder
     f = os.path.join(path_to_save, f'population_{generation}.json')
     if(not path.isfile(f)):
-        f = os.path.join(params["PARENT_EXPERIMENT"], f'run_{params["RUN"]}', f'population_{generation}.json')
+        f = os.path.join(path_to_parent_experiment, f'population_{generation}.json') if path_to_parent_experiment is not None else f
     
     #laod file
     if(path.isfile(f)):
@@ -116,11 +125,14 @@ def load_population(generation):
     return population
 
 def save_archive(generation, archive):
+    path_to_save = os.path.join(params['DUMPS_DIR'], params['EXPERIMENT_NAME'], f"run_{params['RUN']}")
     with open(os.path.join(path_to_save, f'z-archive_{generation}.json'), 'w') as f:
         json.dump(archive, f)
 
 
 def load_archive(generation):
+    path_to_save = os.path.join(params['DUMPS_DIR'], params['EXPERIMENT_NAME'], f"run_{params['RUN']}")
+    path_to_parent_experiment = os.path.join(params['DUMPS_DIR'], params['PARENT_EXPERIMENT'], f"run_{params['RUN']}") if 'PARENT_EXPERIMENT' in params and params['PARENT_EXPERIMENT'] != False else None
     #find file in correct folder
     f = os.path.join(path_to_save, f'z-archive_{generation}.json')
     if(not path.isfile(f)):
@@ -135,12 +147,14 @@ def load_archive(generation):
     return archive
 
 def save_parameters():
+    path_to_save = os.path.join(params['DUMPS_DIR'], params['EXPERIMENT_NAME'], f"run_{params['RUN']}")
     params_lower = dict((k.lower(), v) for k, v in params.items())
     c = json.dumps(params_lower)
     open(os.path.join(path_to_save, '_parameters.json'), 'a').write(c)
 
 
 def prepare_dumps():
+    path_to_save = os.path.join(params['DUMPS_DIR'], params['EXPERIMENT_NAME'], f"run_{params['RUN']}")
     try:
         os.makedirs(path_to_save)
     except FileExistsError as e:
@@ -167,6 +181,7 @@ def find_last_generation_to_load():
     #Will find the most recent generation to load in case there are already some generations in the current experiment
     #else it will look for a parent experiment from which to load the data and change the experiment name so that now the folder of the parent expeirment is used to load the data 
     #if there is no data to load in any case it will return none
+    path_to_parent_experiment = os.path.join(params['DUMPS_DIR'], params['PARENT_EXPERIMENT'], f"run_{params['RUN']}") if 'PARENT_EXPERIMENT' in params and params['PARENT_EXPERIMENT'] != False else None
     last_gen = find_last_gen_recorded_in_folder(params["EXPERIMENT_NAME"])
     if last_gen == None and path_to_parent_experiment is not None: 
         last_gen = find_last_gen_recorded_in_folder(path_to_parent_experiment)

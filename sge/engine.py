@@ -7,6 +7,11 @@ from xml.etree.ElementTree import tostring
 from sge.grammar import grammar
 import copy
 from datetime import datetime
+from sge.parameters import (
+    params,
+    set_parameters,
+    manual_load_parameters
+)
 from sge.logger import find_last_generation_to_load
 from sge.operators.recombination import crossover
 from sge.operators.mutation import mutate_level, mutate
@@ -15,11 +20,6 @@ import time
 import statistics
 from scipy import stats
 import numpy as np
-from sge.parameters import (
-    params,
-    set_parameters,
-    manual_load_parameters
-)
 from utils.genotypes import *
 from utils.smart_phenotype import smart_phenotype, single_task_key, readable_phenotype
 
