@@ -52,9 +52,6 @@ class FMNIST_Dataset:
             x = np.load(os.path.join(self.path, 'x.npy'))
             y = np.load(os.path.join(self.path, 'y.npy'))
 
-
-        (x, y), (_, _) = fmnist.load_data()
-
         # Preprocess the data
         x = x.astype('float32')
 
