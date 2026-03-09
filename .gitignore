@@ -188,3 +188,4 @@ notebooks/
 .r
 .Rds
 .csv
+.code-workspace

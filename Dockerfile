@@ -1,4 +1,4 @@
-FROM nunolourenco/lucy-base
+FROM --platform=linux/amd64 nunolourenco/lucy-base
 ENV APP_DIR=/autolr
 WORKDIR ${APP_DIR}
 RUN : \
