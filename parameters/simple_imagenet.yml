@@ -1,0 +1,37 @@
+RUN: 1
+EXPERIMENT_NAME: 'simple_imagenet'
+GRAMMAR: 'grammars/deep_architecture_optimizer.txt'
+MIN_TREE_DEPTH: 6
+MAX_TREE_DEPTH: 40
+POPSIZE: 100
+GENERATIONS: 200
+ELITISM: 1   
+TSIZE: 2
+PROB_CROSSOVER: 0.01
+MODEL: 'resnet'
+VALIDATION_SIZE: 7000
+FITNESS_SIZE: 3000
+BATCH_SIZE: 64
+EPOCHS: 100
+PROB_MUTATION: {
+    0: 0.0,   #start
+    1: 0.01,  #alpha_expr
+    2: 0.01,  #alpha_func
+    3: 0.01,  #alpha_terminal
+    4: 0.05,  #alpha_var_const
+    5: 0.15,  #alpha_const
+    6: 0.01,  #beta_expr
+    7: 0.01,  #beta_func
+    8: 0.01,  #beta_terminal
+    9: 0.05,  #beta_var_const
+    10: 0.15, #beta_const
+    11: 0.01, #sigma_expr
+    12: 0.01, #sigma_func
+    13: 0.01, #sigma_terminal
+    14: 0.05, #sigma_var_const
+    15: 0.15, #sigma_const
+    16: 0.01, #grad_expr
+    17: 0.01, #grad_func
+    18: 0.01, #grad_terminal
+    19: 0.15, #grad_const
+}
