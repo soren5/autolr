@@ -183,3 +183,8 @@ imagenet/*
 *.zip
 *.jpeg
 .hugging_face_token
+cluster_jobs/
+notebooks/
+.r
+.Rds
+.csv
