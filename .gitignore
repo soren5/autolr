@@ -185,7 +185,7 @@ imagenet/*
 .hugging_face_token
 cluster_jobs/
 notebooks/
-.r
-.Rds
-.csv
-.code-workspace
+*.R
+*.Rds
+*.csv
+*.code-workspace
