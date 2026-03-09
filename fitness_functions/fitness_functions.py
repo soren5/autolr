@@ -228,6 +228,8 @@ class Optimizer_Evaluator_Multi_Task:
     def evaluate(self, phen, params):
         #print(f"\n\n\nTesting phenotype {smart_phenotype(phen)}:\n{readable_phenotype(phen)}")
         #if xor_check(phen):
+        fmnist_results = cifar_results = tiny_imagenet_results = (0.0, {})  # Default results in case we skip evaluation
+
         if True:
             other_info = {}
             fmnist_results = self.fmnist_evaluator.evaluate(phen)
