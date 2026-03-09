@@ -189,3 +189,7 @@ notebooks/
 *.Rds
 *.csv
 *.code-workspace
+gputestapple.py
+autolr.code-workspace
+utils/r_plots/r_plots/.Rhistory
+utils/plots_R.R

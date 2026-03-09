@@ -23,10 +23,10 @@ create_and_move_to_plots_subdir <- function(){
 read_and_save_all_data <- function(){
   
   ###load the files for the different setups
-  FM =  read.csv2("FM/FM_fmni.csv", sep = ",", header = T)
-  FMX =  read.csv2("FMX/FMX_fmni.csv", sep = ",", header = T)
-  OM =  read.csv2("OM/OM_fmni.csv", sep = ",", header = T)
-  OMX =  read.csv2("OMX/OMX_fmni.csv", sep = ",", header = T)
+  FM =  read.csv2("/Users/soren/desktop_back_up/_Organized_Results/STEFANO_FULL_RESULTS_EXTRA/FM_fmni.csv", sep = ",", header = T)
+  FMX =  read.csv2("/Users/soren/desktop_back_up/_Organized_Results/STEFANO_FULL_RESULTS_EXTRA/FMX_fmni.csv", sep = ",", header = T)
+  OM =  read.csv2("/Users/soren/desktop_back_up/_Organized_Results/STEFANO_FULL_RESULTS_EXTRA/OM_fmni.csv", sep = ",", header = T)
+  OMX =  read.csv2("/Users/soren/desktop_back_up/_Organized_Results/STEFANO_FULL_RESULTS_EXTRA/OMX_fmni.csv", sep = ",", header = T)
   
   #bind the dataframes in a unique dataframe
   all_data = rbind(FM,FMX,OM,OMX)
@@ -45,6 +45,7 @@ read_and_save_post_hoc <- function(){
   #Save
   saveRDS(post_hoc, "post_hoc.Rds")
 }
+
 
 ### Make boxplots for unique phenotypes above accuracy
 maxe_unique_t_test_boxplot <- function(all_data, accuracy = 0.5){
@@ -165,7 +166,7 @@ fitness_best_over_time_across_setups <- function(all_data){
   ggsave("fitness of best solutions over time per run across setups.jpg")
   ggsave("fitness of best solutions over time per run across setups.pdf")
 }
-fitness_best_over_time_across_setups(all_data )
+fitness_best_over_time_across_setups(all_data)
 ###Plot final best fitness 
 make_fitness_t_test_boxplot = function(all_data){
   
