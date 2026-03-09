@@ -18,7 +18,7 @@ class TINY_IMAGENET_Dataset:
         self.subtract_mean = subtract_mean
         self.img_rows, self.img_cols, self.channels = 64, 64, 3
         if path is None:
-            from parameters import params
+            from sge.parameters import params
             self.path = os.path.join(params['DATA_DIR'], 'tiny_imagenet')
         else:
             self.path = path

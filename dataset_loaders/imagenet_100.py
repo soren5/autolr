@@ -16,7 +16,7 @@ class IMAGENET_100_Dataset:
         self.subtract_mean = subtract_mean
         self.img_rows, self.img_cols, self.channels = 224, 224, 3
         if path is None:
-            from parameters import params
+            from sge.parameters import params
             self.path = os.path.join(params['DATA_DIR'], 'imagenet_100')
         else:
             self.path = path
