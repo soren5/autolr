@@ -9,24 +9,25 @@ class CustomOptimizer(keras.optimizers.Optimizer):
                             name="CustomOptimizer",
                             phen=None,
                             model=None,
-                            grad_func=None,
-                            alpha=None,
-                            alpha_func=None,
-                            beta=None,
-                            beta_func=None,
-                            sigma=None,
-                            sigma_func=None,
                             **kwargs):
 
         super(CustomOptimizer, self).__init__(name, **kwargs)
+        self.optimizer_type = get_optimizer_type(phen)
+
         if phen == None:
             raise Exception("Phenotype is None")
         if model == None:
             raise Exception("Model is None")
 
-        self.optimizer_type = get_optimizer_type(phen)
+        # Sometimes "model" is not a tensorflow model but a set of variables.
+        # In that case we need a different init procedure.
+        # We can check this by checking if the model has layers, if it doesn't we assume it is a set of variables.
+        if hasattr(model, 'layers'):  
+            # This is a tensorflow model, we can initialize the variables in the normal way
+            self._init_all_optimizer_variables_for_tf_model(phen, model)
+        else:
+            self._init_all_optimizer_variables_for_non_model(phen, model)
 
-        self._init_all_optimizer_variables(phen, model)
         
         exec_env = {"tf": tf}
         exec(phen, exec_env)
@@ -35,6 +36,7 @@ class CustomOptimizer(keras.optimizers.Optimizer):
         self._beta_func = exec_env["beta_func"] if self._variables_used['beta'] else None
         self._sigma_func = exec_env["sigma_func"] if self._variables_used['sigma'] else None
         self._grad_func = exec_env["grad_func"]
+        self.training_ops = None
 
     def _get_variables_used(self, phen):
         readable_phen, alpha_phen, beta_phen, sigma_phen, grad_phen = readable_phenotype(phen, full_return=True)
@@ -76,7 +78,7 @@ class CustomOptimizer(keras.optimizers.Optimizer):
         else:
             variable_dict[trainable_weight.name] = None
 
-    def _init_all_optimizer_variables(self, phen, model):
+    def _init_all_optimizer_variables_for_tf_model(self, phen, model):
         self._variables_used = {
             'layer_count': False,
             'layer_num': False,
@@ -149,6 +151,80 @@ class CustomOptimizer(keras.optimizers.Optimizer):
             for layer in model.layers:
                 for trainable_weight in layer._trainable_weights:
                     self._init_optimizer_variable('layer_count', self._layer_count, trainable_weight, constant_value=depth)
+    
+    def _init_all_optimizer_variables_for_non_model(self, phen, variables):
+        # For this case, layer_count and layer_depth are technically not applicable
+        # However, we can still set them to be the number of variables and the index of the variable respectively
+        # this way optimizers that use these variables can still be applied to non-model variables
+        # The other model-specific variables are set to 0, so any architectural behavior is disabled.
+
+        self._variables_used = {
+            'layer_count': False,
+            'layer_num': False,
+            'alpha': False,
+            'beta': False,
+            'sigma': False,
+            'strides': False,
+            'kernel_size': False,
+            'filters': False,
+            'dilation_rate': False,
+            'units': False,
+            'pool_size': False,
+            'momentum': False,
+            'variance': False,
+            'layer_wise_lr': False,
+        }
+
+        self._alpha_dict = {}
+        self._beta_dict = {}
+        self._sigma_dict = {}
+        self._depth_dict = {}
+        self._layer_count = {}
+
+        self._momentum = {}
+        self._variance = {}
+        self._layer_wise_lr = {}
+            
+        self._strides = {}
+        self._kernel = {}
+        self._filters = {}
+        self._dilation_rate = {}
+
+        self._pool_size = {}
+
+        self._units = {}
+        
+        self._get_variables_used(phen)
+
+        for i, var in zip(range(len(variables)), variables):
+            # Auxiliary variables
+            self._init_optimizer_variable('alpha', self._alpha_dict, var)
+            self._init_optimizer_variable('beta', self._beta_dict, var)
+            self._init_optimizer_variable('sigma', self._sigma_dict, var)
+
+            # Depth
+            self._init_optimizer_variable('layer_num', self._depth_dict, var, constant_value=i)
+            self._init_optimizer_variable('layer_count', self._layer_count, var, constant_value=len(variables))
+
+             # Convolutional variables   
+            self._init_optimizer_variable('strides', self._strides, var, 0.0)
+            self._init_optimizer_variable('kernel_size', self._kernel, var, 0.0)
+            self._init_optimizer_variable('filters', self._filters, var, 0.0)
+            self._init_optimizer_variable('dilation_rate', self._dilation_rate, var, 0.0)
+
+            # Dense variables
+            self._init_optimizer_variable('units', self._units, var, 0.0)
+            
+            # Pooling variables
+            self._init_optimizer_variable('pool_size', self._pool_size, var, 0.0)
+
+            # Aggregate variables
+            self._init_optimizer_variable('momentum', self._momentum, var)
+            self._init_optimizer_variable('variance', self._variance, var)
+
+            # While most aggregates work, this one is especially model dependent so it must also be set to 0
+            self._init_optimizer_variable('layer_wise_lr', self._layer_wise_lr, var, constant_value=0.0)
+
 
     def check_slots(self):
         return self._alpha_dict == None and self._beta_dict == None and self._sigma_dict == None
