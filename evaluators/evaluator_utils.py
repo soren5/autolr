@@ -8,6 +8,8 @@ import random
 import os
 import datetime
 from keras.models import load_model
+import gc
+from tensorflow.python.client import device_lib
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
@@ -96,11 +98,8 @@ class Evaluator():
         with open(f"{self.log_path}/logs/run_{self.run}_{self.task_name}_log.log", "a") as f:
             f.write(f"[{self.task_name} evaluate start]: Running optimizer with key {smart_phenotype(phen)}\n Full phenotype:\n {readable_phenotype(phen)}\n")
             # Get gpu memory info and log it, this is useful to check if the gpu memory is being used correctly, and to debug out of memory errors on the cluster
-            gpus = tf.config.experimental.list_physical_devices('GPU')
-            if gpus:
-                for gpu in gpus:
-                    details = tf.config.experimental.get_device_details(gpu)
-                    f.write(f"GPU details: {details}\n")
+            mem_info = tf.config.experimental.get_memory_info('GPU:0')
+            print(f"[{self.task_name} evaluate start]: Memory usage (current/peak): {mem_info['current'] / 1e9:.2f} GB / {mem_info['peak'] / 1e9:.2f} GB")
         
         # Open training log file for the evaluator, add a line with the phenotype being evaluated
         self.csv_log_file = f"{self.log_path}/csv/run_{self.run}_{self.task_name}_training_log.csv"
@@ -115,12 +114,20 @@ class Evaluator():
         with open(f"{self.log_path}/logs/run_{self.run}_{self.task_name}_log.log", "a") as f:
             f.write(f"[{self.task_name} evaluate end]: Fitness: {fitness}\n\n\n")
             # Get gpu memory info and log it, this is useful to check if the gpu memory is being used correctly, and to debug out of memory errors on the cluster
-            gpus = tf.config.experimental.list_physical_devices('GPU')
-            if gpus:
-                for gpu in gpus:
-                    details = tf.config.experimental.get_device_details(gpu)
-                    f.write(f"GPU details: {details}\n")
-            
+            mem_info = tf.config.experimental.get_memory_info('GPU:0')
+            print(f"[{self.task_name} evaluate end]: Memory usage (current/peak): {mem_info['current'] / 1e9:.2f} GB / {mem_info['peak'] / 1e9:.2f} GB")
+            print(f"[{self.task_name} evaluate end]: Starting cleanup to free memory for next evaluation")
+            # Clear TensorFlow's internal state
+            tf.keras.backend.clear_session()
+
+            # Force Python garbage collection
+            gc.collect()
+
+            # Optional: Reset the GPU memory allocator
+
+            device_lib.list_local_devices()  # This can help reset device state
+            mem_info = tf.config.experimental.get_memory_info('GPU:0')
+            print(f"[{self.task_name} evaluate end]: Cleanup complete. Memory usage after cleanup (current/peak): {mem_info['current'] / 1e9:.2f} GB / {mem_info['peak'] / 1e9:.2f} GB")
         return fitness, results
     
     def evaluate_optimizer(self, optimizer):
