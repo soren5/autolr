@@ -48,7 +48,8 @@ class Evaluator():
 
         self.configuration_file = configuration_file
         self.task_name = task_name
-        self.log_path = params['LOGS_DIR'] #By default, this is autolr/logs, but it will check for an environment variable to override it, this is useful for running on the cluster to account for nfs
+
+        self.log_path = os.path.join(params['LOGS_DIR'], params['EXPERIMENT_NAME']) #By default, this is autolr/logs, but it will check for an environment variable to override it, this is useful for running on the cluster to account for nfs
 
         self._init_dataset_(validation_size, fitness_size, self.run, normalize, subtract_mean)
         self._init_model_(os.path.join(params['MODELS_DIR'], model_file))
