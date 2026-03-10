@@ -8,7 +8,9 @@ from keras.models import Sequential
 from tensorflow.keras import backend as K
 from tensorflow.keras.optimizers import SGD, Adam, RMSprop
 
-from optimizers.custom_optimizer import (CustomOptimizerAggregates,
+from optimizers.custom_optimizer import CustomOptimizer
+
+from optimizers.deprecated_custom_optimizers import (CustomOptimizerAggregates,
                                          CustomOptimizerArch,
                                          CustomOptimizerLayerVar)
 from sge.grammar import grammar
