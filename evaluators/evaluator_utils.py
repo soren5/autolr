@@ -91,9 +91,16 @@ class Evaluator():
             f.write(f"[{self.task_name} evaluator init]: Running with parameters: {params}\n") 
 
     def evaluate(self, phen):
+
         # Open (or create) logs/mnist_log.log to track the evaluation
         with open(f"{self.log_path}/logs/run_{self.run}_{self.task_name}_log.log", "a") as f:
             f.write(f"[{self.task_name} evaluate start]: Running optimizer with key {smart_phenotype(phen)}\n Full phenotype:\n {readable_phenotype(phen)}\n")
+            # Get gpu memory info and log it, this is useful to check if the gpu memory is being used correctly, and to debug out of memory errors on the cluster
+            gpus = tf.config.experimental.list_physical_devices('GPU')
+            if gpus:
+                for gpu in gpus:
+                    details = tf.config.experimental.get_device_details(gpu)
+                    f.write(f"GPU details: {details}\n")
         
         # Open training log file for the evaluator, add a line with the phenotype being evaluated
         self.csv_log_file = f"{self.log_path}/csv/run_{self.run}_{self.task_name}_training_log.csv"
@@ -107,6 +114,12 @@ class Evaluator():
         # Log the fitness result and return it
         with open(f"{self.log_path}/logs/run_{self.run}_{self.task_name}_log.log", "a") as f:
             f.write(f"[{self.task_name} evaluate end]: Fitness: {fitness}\n\n\n")
+            # Get gpu memory info and log it, this is useful to check if the gpu memory is being used correctly, and to debug out of memory errors on the cluster
+            gpus = tf.config.experimental.list_physical_devices('GPU')
+            if gpus:
+                for gpu in gpus:
+                    details = tf.config.experimental.get_device_details(gpu)
+                    f.write(f"GPU details: {details}\n")
             
         return fitness, results
     
