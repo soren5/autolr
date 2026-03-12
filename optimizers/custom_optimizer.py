@@ -339,9 +339,9 @@ class CustomOptimizer(keras.optimizers.Optimizer):
             self.training_ops.resource_apply_gradient_descent(
                         self._alpha_dict[variable_name].handle, 
                         tf.constant(1.0), 
-                        self._alpha_func(
+                        tf.multiply(self._alpha_func(
                             *parameters
-                        ), 
+                        ), tf.ones_like(var)), 
                         use_locking=self._use_locking)
 
         # In the remaining functions it gets a bit hacky
@@ -352,9 +352,9 @@ class CustomOptimizer(keras.optimizers.Optimizer):
             self.training_ops.resource_apply_gradient_descent(
                             self._beta_dict[variable_name].handle, 
                             tf.constant(1.0), 
-                            self._beta_func(
+                            tf.multiply(self._beta_func(
                                 *beta_parameters
-                            ), 
+                            ), tf.ones_like(var)), 
                             use_locking=self._use_locking)
 
         if self._sigma_func!= None:
@@ -362,9 +362,10 @@ class CustomOptimizer(keras.optimizers.Optimizer):
             self.training_ops.resource_apply_gradient_descent(
                                 self._sigma_dict[variable_name].handle, 
                                 tf.constant(1.0), 
-                                self._sigma_func(
+                                tf.multiply(self._sigma_func(
                                     *sigma_parameters
-                                ), use_locking=self._use_locking)
+                                ), tf.ones_like(var)), 
+                                use_locking=self._use_locking)
 
         weight_parameters = parameters[:-1] + [self._beta_dict[variable_name], self._sigma_dict[variable_name]] + [parameters[-1]]
         updated_weights = self.training_ops.resource_apply_gradient_descent(
