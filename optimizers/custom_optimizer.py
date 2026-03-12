@@ -1,6 +1,5 @@
 import tensorflow as tf
 from tensorflow import keras
-import torch
 import numpy as np
 from utils.smart_phenotype import readable_phenotype, get_optimizer_type
 
@@ -224,7 +223,6 @@ class CustomOptimizer(keras.optimizers.Optimizer):
 
             # While most aggregates work, this one is especially model dependent so it must also be set to 0
             self._init_optimizer_variable('layer_wise_lr', self._layer_wise_lr, var, constant_value=0.0)
-
 
     def check_slots(self):
         return self._alpha_dict == None and self._beta_dict == None and self._sigma_dict == None

@@ -1,6 +1,6 @@
 RUN: 1
 EXPERIMENT_NAME: 'simple_imagenet'
-GRAMMAR: 'grammars/deep_architecture_optimizer.txt'
+GRAMMAR: 'grammars/basic_optimizer.txt'
 MIN_TREE_DEPTH: 6
 MAX_TREE_DEPTH: 40
 POPSIZE: 100
