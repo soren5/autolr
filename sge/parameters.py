@@ -187,6 +187,11 @@ def set_parameters(arguments):
             dest="PARENT_EXPERIMENT",
             type=str,
             help="specifies in whihc folder to look for the parent run population and state (same run number), to use seed the current run (which must not have started already)")
+    parser.add_argument('--single_gen',
+        dest="SINGLE_GEN",
+        type=bool,
+        help="If true, only one generation is run, and the program ends.")
+    
 
     
     

@@ -121,7 +121,7 @@ def readable_phenotype(phenotype, debug=False, full_return=False):
 
 def advanced_readable_phenotype(phenotype, debug=False):
     readable_phen, alpha_func_string, beta_func_string, sigma_func_string, grad_func_string = readable_phenotype(phenotype, debug=debug, full_return=True)
-    
+    """
     redundant_patterns = {
         'alpha': ['alpha = alpha - add(alpha, grad)'],
         'sigma': ['sigma = sigma - add(sigma, grad)'],
@@ -136,4 +136,5 @@ def advanced_readable_phenotype(phenotype, debug=False):
                 readable_phen = readable_phen.replace(param, 'grad')
                 readable_phen = readable_phen.strip()
                 #print(f"After: {readable_phen}")
+    """ 
     return readable_phen
