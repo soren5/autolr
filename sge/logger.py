@@ -182,7 +182,9 @@ def find_last_generation_to_load():
     #else it will look for a parent experiment from which to load the data and change the experiment name so that now the folder of the parent expeirment is used to load the data 
     #if there is no data to load in any case it will return none
     path_to_parent_experiment = os.path.join(params['DUMPS_DIR'], params['PARENT_EXPERIMENT'], f"run_{params['RUN']}") if 'PARENT_EXPERIMENT' in params and params['PARENT_EXPERIMENT'] != False else None
-    last_gen = find_last_gen_recorded_in_folder(params["EXPERIMENT_NAME"])
+    path_to_save = os.path.join(params['DUMPS_DIR'], params['EXPERIMENT_NAME'], f"run_{params['RUN']}")
+    print('Looking for last generation to load in folder: ', path_to_save)
+    last_gen = find_last_gen_recorded_in_folder(path_to_save)
     if last_gen == None and path_to_parent_experiment is not None: 
         last_gen = find_last_gen_recorded_in_folder(path_to_parent_experiment)
     return last_gen
