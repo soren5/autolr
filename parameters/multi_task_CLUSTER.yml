@@ -1,0 +1,46 @@
+RUN: 1
+EXPERIMENT_NAME: 'multi_task_experiment'
+GRAMMAR: 'grammars/deep_architecture_optimizer.txt'
+MIN_TREE_DEPTH: 6
+MAX_TREE_DEPTH: 40
+POPSIZE: 100
+GENERATIONS: 100
+ELITISM: 1   
+TSIZE: 2
+PROB_CROSSOVER: 0.01
+MODEL: 'resnet'
+MULTI_TASK: True
+FMNIST_CONFIG: 'parameters/dataset_parameters/FMNIST_CONFIG.json'
+CIFAR10_CONFIG: 'parameters/dataset_parameters/CIFAR10_CONFIG.json'
+TINY_IMAGENET_CONFIG: 'parameters/dataset_parameters/TINY_IMAGENET.json'
+PROB_MUTATION: {
+  0: 0.0, #start
+  1: 0.01, #alpha_expr
+  2: 0.01, #alpha_func 
+  3: 0.01, #alpha_terminal
+  4: 0.05, #alpha_var_const
+  5: 0.15, #alpha_arch
+  6: 0.15, #alpha_layer_var
+  7: 0.15, #alpha_const
+  8: 0.01, #beta_expr
+  9: 0.01, #beta_func
+  10: 0.01, #beta_terminal
+  11: 0.05, #beta_var_const
+  12: 0.15, #beta_arch
+  13: 0.15, #beta_layer_var
+  14: 0.15, #beta_const
+  15: 0.01, #sigma_expr
+  16: 0.01, #sigma_func
+  17: 0.01, #sigma_terminal
+  18: 0.05, #sigma_var_const
+  19: 0.15, #sigma_arch
+  20: 0.15, #sigma_layer_var
+  21: 0.15, #sigma_const
+  22: 0.01, #grad_expr
+  23: 0.01, #grad_func
+  24: 0.01, #grad_terminal
+  25: 0.05, #grad_var_const
+  26: 0.15, #grad_arch
+  27: 0.15, #grad_layer_var
+  28: 0.15, #grad_const
+}
