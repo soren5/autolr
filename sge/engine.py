@@ -1,4 +1,3 @@
-from lib2to3.pgen2 import driver
 from math import isclose
 from operator import inv
 import random
@@ -221,7 +220,6 @@ def reproduction(logger, population, archive, counter, it, new_population):
         archive, counter, new_population, new_indiv = update_archive_with_new_indiv(archive, counter, new_population, new_indiv)
     it, population = go_to_next_generation(it, new_population)
     save_data_new_pop(logger, population, archive, it)
-    use_google_colab_in_reproduction()
     return logger, population, archive, counter, it, new_population
 
 def selection(population):
@@ -236,13 +234,6 @@ def go_to_next_generation(it, new_population):
     it += 1
     return it, population
 
-def use_google_colab_in_reproduction():
-    if "COLAB" in params and params["COLAB"]:
-        driver.flush_and_unmount()
-        driver.Driver.mount('/content/drive')
-        import os
-        path = os.path.join(params['DUMPS_DIR'], params['EXPERIMENT_NAME'], f"run_{params['RUN']}")
-        print(os.listdir(path))
 
 def save_data_new_pop(logger, population, archive, it):
     logger.save_archive(it, archive)
@@ -352,6 +343,7 @@ def initialize_pop(logger):
     if 'RESUME' in params:
         if params["RESUME"] == "Last":
             last_gen = find_last_generation_to_load()
+            print(f"Resuming from last generation: {last_gen}")
         elif type(params["RESUME"]) == int:
             if params["RESUME"] != 0: 
                 last_gen = params['RESUME']
