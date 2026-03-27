@@ -13,8 +13,8 @@ class Rastringin_Evaluator(Evaluator):
     
     def evaluate(self, phen):
         # Use a copy of self.start_point for each optimizer to avoid in-place modifications that affect other optimizers
-        x_var = tf.Variable(self.start_point[0], dtype=tf.float32)
-        y_var = tf.Variable(self.start_point[1], dtype=tf.float32)
+        x_var = tf.Variable(self.start_point[0], dtype=tf.float32, name='x')
+        y_var = tf.Variable(self.start_point[1], dtype=tf.float32, name='y')
         evaluation_start_point = [x_var, y_var]
         path = []
 
@@ -59,8 +59,6 @@ class Rastringin_Evaluator(Evaluator):
         y_var = tf.Variable(self.start_point[1], dtype=tf.float32)
         evaluation_start_point = [x_var, y_var]
         path = []
-
-
         diverged = False
         best_loss = float('inf')
         path.append(np.array([x_var.numpy().item(), y_var.numpy().item()]))
