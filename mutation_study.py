@@ -1,5 +1,5 @@
 import pandas as pd
-
+import os
 from evaluators.evaluate_rastringin import Rastringin_Evaluator
 from evaluators.evaluate_fmnist import FMNIST_Evaluator
 import numpy as np
