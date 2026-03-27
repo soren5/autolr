@@ -1,6 +1,4 @@
 import pandas as pd
-import os
-os.chdir('/Users/soren/Work/autolr')
 
 from evaluators.evaluate_rastringin import Rastringin_Evaluator
 from evaluators.evaluate_fmnist import FMNIST_Evaluator
