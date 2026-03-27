@@ -12,6 +12,7 @@ class CustomOptimizer(keras.optimizers.Optimizer):
 
         super(CustomOptimizer, self).__init__(name, **kwargs)
         self.optimizer_type = get_optimizer_type(phen)
+        self.phen = phen
 
         if phen == None:
             raise Exception("Phenotype is None")
@@ -196,6 +197,7 @@ class CustomOptimizer(keras.optimizers.Optimizer):
         self._get_variables_used(phen)
 
         for i, var in zip(range(len(variables)), variables):
+            var._name = f"var_{i}:0"  # We need to give the variables names so we can store the optimizer variables in dicts keyed by variable name
             # Auxiliary variables
             self._init_optimizer_variable('alpha', self._alpha_dict, var)
             self._init_optimizer_variable('beta', self._beta_dict, var)
@@ -368,15 +370,17 @@ class CustomOptimizer(keras.optimizers.Optimizer):
                                 use_locking=self._use_locking)
 
         weight_parameters = parameters[:-1] + [self._beta_dict[variable_name], self._sigma_dict[variable_name]] + [parameters[-1]]
+        #print(self._alpha_dict, var.name)
         updated_weights = self.training_ops.resource_apply_gradient_descent(
                 var.handle, 
                 tf.constant(1.0), 
-                self._grad_func(
+                tf.multiply(self._grad_func(
                     *weight_parameters
-                ), 
+                ), tf.ones_like(var)), 
                 use_locking=self._use_locking)
 
         return updated_weights
+        
     # More recent tensorflow versions require the update step to be defined separately
     def update_step(self, gradient, variable, learning_rate):
         # TODO
