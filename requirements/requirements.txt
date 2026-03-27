@@ -1,5 +1,4 @@
 absl-py==2.3.0
-altgraph @ file:///System/Volumes/Data/SWE/Apps/DT/BuildRoots/BuildRoot7/ActiveBuildRoot/Library/Caches/com.apple.xbs/Sources/python3/python3-133.100.1.1/altgraph-0.17.2-py2.py3-none-any.whl
 astunparse==1.6.3
 certifi==2025.6.15
 chardet==5.2.0
@@ -13,7 +12,6 @@ flake8==7.3.0
 flatbuffers==25.2.10
 fonttools==4.60.2
 fsspec==2025.5.1
-future @ file:///System/Volumes/Data/SWE/Apps/DT/BuildRoots/BuildRoot7/ActiveBuildRoot/Library/Caches/com.apple.xbs/Sources/python3/python3-133.100.1.1/future-0.18.2-py3-none-any.whl
 gast==0.6.0
 google-pasta==0.2.0
 grpcio==1.73.1
@@ -24,7 +22,6 @@ importlib_resources==6.5.2
 keras==3.10.0
 kiwisolver==1.4.7
 libclang==18.1.1
-macholib @ file:///System/Volumes/Data/SWE/Apps/DT/BuildRoots/BuildRoot7/ActiveBuildRoot/Library/Caches/com.apple.xbs/Sources/python3/python3-133.100.1.1/macholib-1.15.2-py2.py3-none-any.whl
 Markdown==3.8.2
 markdown-it-py==3.0.0
 MarkupSafe==3.0.2
@@ -53,7 +50,6 @@ pytz==2025.2
 requests==2.32.4
 rich==14.0.0
 seaborn==0.13.2
-six @ file:///System/Volumes/Data/SWE/Apps/DT/BuildRoots/BuildRoot7/ActiveBuildRoot/Library/Caches/com.apple.xbs/Sources/python3/python3-133.100.1.1/six-1.15.0-py2.py3-none-any.whl
 tensorboard==2.16.2
 tensorboard-data-server==0.7.2
 tensorflow==2.16.2
