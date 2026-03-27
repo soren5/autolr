@@ -35,6 +35,9 @@ class Evaluator():
         else:
             # We are in single task, no config file is needed
             config_path = None
+            
+        self.configuration_file = configuration_file
+        self.task_name = task_name
         
         # Get the parameters from find_params, which will handle both single and multi-task cases
         validation_size, fitness_size, batch_size, epochs, patience, model_file, normalize, subtract_mean = self.find_params(config_path, params)
@@ -48,8 +51,7 @@ class Evaluator():
         self.run = params['RUN']
         self.fake_fitness = params['FAKE_FITNESS']
 
-        self.configuration_file = configuration_file
-        self.task_name = task_name
+
 
         self.log_path = os.path.join(params['LOGS_DIR'], params['EXPERIMENT_NAME']) #By default, this is autolr/logs, but it will check for an environment variable to override it, this is useful for running on the cluster to account for nfs
 
@@ -156,6 +158,7 @@ class Evaluator():
             json_path = config_file
             with open(json_path, 'r') as f:
                 import json
+                print(f"Loading parameters for {self.task_name} evaluator from config file: {json_path}")
                 fmnist_params = json.load(f)
                 validation_size = fmnist_params['VALIDATION_SIZE']
                 fitness_size = fmnist_params['FITNESS_SIZE']
@@ -166,6 +169,7 @@ class Evaluator():
                 normalize = fmnist_params['NORMALIZE']
                 subtract_mean = fmnist_params['SUBTRACT_MEAN']
         else:
+            print(f"Loading parameters for {self.task_name} evaluator from default parameters")
             validation_size = params['VALIDATION_SIZE']
             fitness_size =params['FITNESS_SIZE'] 
             batch_size = params['BATCH_SIZE']
