@@ -23,7 +23,7 @@ with open("parameters/base.yml", 'r') as ymlfile:
     parameters['EXPERIMENT_NAME'] = "mutation_study_fm"
     parameters['GRAMMAR'] = "grammars/original_optimizer.txt"
     #parameters['DATA_DIR'] = "/Users/soren/desktop_back_up/_Organized_Results/"
-    parameters['FAKE_FITNESS'] = True
+    parameters['FAKE_FITNESS'] = False
 manual_load_parameters(parameters=parameters)
 
 
