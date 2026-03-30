@@ -81,6 +81,7 @@ def mass_mutate_from_dataframe(
         grammar,
         archive,
         df,
+        evaluator,
         counter_limit=1000):
     
     # Initialize an empty list to store rows
@@ -127,8 +128,6 @@ def mass_mutate_from_dataframe(
 
     # Create a dictionary where the keys are non-terminals and the values are the solutions
     while counter < counter_limit:
-        evaluator = FMNIST_Evaluator(params)
-
  
         # Look for the smallest value in the mutation_counts dictionary and get the corresponding mutation target as the least represented mutation target.
         least_represented_mutation_target = sorted(mutation_counts.items(), key=lambda x: x[1])[0][0]
@@ -358,8 +357,9 @@ good_df = df[df['fitness'] >= 0.5]
 # only top 100 from each
 bad_df = bad_df.sort_values(by='fitness', ascending=False).head(100)
 good_df = good_df.sort_values(by='fitness', ascending=False).head(100)
-mutation_registry_df, archive = mass_mutate_from_dataframe(mutation_registry_df, grammar, archive, bad_df, counter_limit=100000)
-mutation_registry_df, archive = mass_mutate_from_dataframe(mutation_registry_df, grammar, archive, good_df, counter_limit=100000)
+evaluator = FMNIST_Evaluator(params)
+mutation_registry_df, archive = mass_mutate_from_dataframe(mutation_registry_df, grammar, archive, bad_df, evaluator, counter_limit=100000)
+mutation_registry_df, archive = mass_mutate_from_dataframe(mutation_registry_df, grammar, archive, good_df, evaluator, counter_limit=100000)
 
 thresholds = [0.0, 0.5, 1.0]
 for i in range(len(thresholds)-1):
