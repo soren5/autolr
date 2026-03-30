@@ -360,8 +360,8 @@ good_df = df[df['fitness'] >= 0.5]
 #bad_df = bad_df.sort_values(by='fitness', ascending=False).head(100)
 #good_df = good_df.sort_values(by='fitness', ascending=False).head(100)
 evaluator = FMNIST_Evaluator(params)
-mutation_registry_df, archive = mass_mutate_from_dataframe(mutation_registry_df, grammar, archive, bad_df, evaluator, counter_limit=100000)
-mutation_registry_df, archive = mass_mutate_from_dataframe(mutation_registry_df, grammar, archive, good_df, evaluator, counter_limit=100000)
+mutation_registry_df, archive = mass_mutate_from_dataframe(mutation_registry_df, grammar, archive, bad_df, evaluator, counter_limit=100)
+mutation_registry_df, archive = mass_mutate_from_dataframe(mutation_registry_df, grammar, archive, good_df, evaluator, counter_limit=100)
 
 thresholds = [0.0, 0.5, 1.0]
 for i in range(len(thresholds)-1):
