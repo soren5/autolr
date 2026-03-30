@@ -226,9 +226,9 @@ def mass_mutate_from_dataframe(
         mutation_counts[least_represented_mutation_target] += 1
         counter += 1
     mutation_registry_df = pd.concat([mutation_registry_df, pd.DataFrame(mutation_registry_rows)], ignore_index=True)
-    mutation_registry_df.to_csv('mutation_registry_df.csv', index=False)
+    mutation_registry_df.to_csv(os.path.join(params['DUMPS_DIR'], params['EXPERIMENT_NAME'], 'mutation_registry_df.csv'), index=False)
     import pickle
-    with open('mutation_archive.pkl', 'wb') as f:
+    with open(os.path.join(params['DUMPS_DIR'], params['EXPERIMENT_NAME'], 'mutation_archive.pkl'), 'wb') as f:
         pickle.dump(archive, f)
     print(f"Saved mutation registry and archive at iteration {counter}")
     print(f"Archive/evaluations: {archive_accesses}/{counter-archive_accesses}")
