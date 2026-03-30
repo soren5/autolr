@@ -23,7 +23,7 @@ with open("parameters/base.yml", 'r') as ymlfile:
     parameters['EXPERIMENT_NAME'] = "mutation_study_fm"
     parameters['GRAMMAR'] = "grammars/original_optimizer.txt"
     #parameters['DATA_DIR'] = "/Users/soren/desktop_back_up/_Organized_Results/"
-    #parameters['FAKE_FITNESS'] = True
+    parameters['FAKE_FITNESS'] = True
 manual_load_parameters(parameters=parameters)
 
 
@@ -82,7 +82,7 @@ def mass_mutate_from_dataframe(
         archive,
         df,
         evaluator,
-        counter_limit=1000):
+        counter_limit=100):
     
     # Initialize an empty list to store rows
     mutation_registry_rows = []
@@ -92,6 +92,7 @@ def mass_mutate_from_dataframe(
     size_of_genes = grammar.count_number_of_options_in_production()
 
     valid_solutions_for_mutation_target = {}
+
     # Go through all solutions and get their valid mutation targets.
     for ix, row in df[~df['genotype'].isna()].iterrows():
         genotype = ast.literal_eval(row['genotype'])
@@ -111,6 +112,7 @@ def mass_mutate_from_dataframe(
 
 
     not_represented_mutation_targets = []
+
     # Check if all the mutation targets in valid_mutation_targets are represented in the mutation_registry_df.
     for phen_id, mutation_targets in valid_mutation_targets.items():
         for mutation_target in mutation_targets:
@@ -127,7 +129,8 @@ def mass_mutate_from_dataframe(
             mutation_counts[mutation_target] = 0
 
     # Create a dictionary where the keys are non-terminals and the values are the solutions
-    while counter < counter_limit:
+    # Repeat while the lowest value in mutation_counts is less than counter limit
+    while sorted(mutation_counts.items(), key=lambda x: x[1])[0][1] < counter_limit:
  
         # Look for the smallest value in the mutation_counts dictionary and get the corresponding mutation target as the least represented mutation target.
         least_represented_mutation_target = sorted(mutation_counts.items(), key=lambda x: x[1])[0][0]
@@ -241,7 +244,7 @@ def plot_fitness_by_mutation_target(mutation_registry_df, grammar, extra_stuff_f
     # In the y axis, I want the fitness in 2d space.
     # Additionally, i want all data points to be plotted as well, so I can see the distribution of the data and not just the summary statistics of the box plot.
     # The fitness in 2d space of the original solution should be included as a reference line in the box plot.
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(18, 6))
     mutation_registry_df['fitness_difference'] = mutation_registry_df['original_fitness'] - mutation_registry_df['fitness'] 
 
     # Get mutation targets sorted as they are in the grammar
@@ -354,9 +357,8 @@ i = 0
 #df['fitness'] = -df['fitness']
 bad_df = df[df['fitness'] < 0.5]
 good_df = df[df['fitness'] >= 0.5]
-# only top 100 from each
-bad_df = bad_df.sort_values(by='fitness', ascending=False).head(100)
-good_df = good_df.sort_values(by='fitness', ascending=False).head(100)
+#bad_df = bad_df.sort_values(by='fitness', ascending=False).head(100)
+#good_df = good_df.sort_values(by='fitness', ascending=False).head(100)
 evaluator = FMNIST_Evaluator(params)
 mutation_registry_df, archive = mass_mutate_from_dataframe(mutation_registry_df, grammar, archive, bad_df, evaluator, counter_limit=100000)
 mutation_registry_df, archive = mass_mutate_from_dataframe(mutation_registry_df, grammar, archive, good_df, evaluator, counter_limit=100000)
