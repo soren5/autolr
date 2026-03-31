@@ -12,59 +12,69 @@ from utils.smart_phenotype import readable_phenotype, smart_phenotype, advanced_
 import seaborn as sns
 import matplotlib.pyplot as plt
 import ast
-
-def init_mutation_study():
-
-    return grammar, mutation_registry_df, archive, df
-reset_parameters()
-grammar._reset_grammar()
-with open("parameters/base.yml", 'r') as ymlfile:
-    parameters = yaml.load(ymlfile, Loader=yaml.FullLoader)
-    parameters['EXPERIMENT_NAME'] = "mutation_study_fm"
-    parameters['GRAMMAR'] = "grammars/original_optimizer.txt"
-    #parameters['DATA_DIR'] = "/Users/soren/desktop_back_up/_Organized_Results/"
-    parameters['FAKE_FITNESS'] = False
-manual_load_parameters(parameters=parameters)
-
-
-# Check if dumps_dir + experiment_name exists, if it doesn't, create it.
-if not os.path.exists(os.path.join(params['DUMPS_DIR'], params['EXPERIMENT_NAME'])):
-    os.makedirs(os.path.join(params['DUMPS_DIR'], params['EXPERIMENT_NAME']))
-
-
-
-df = pd.read_csv(os.path.join(params['DATA_DIR'], 'mutation_study_cache.csv'))
-
-# Check if /mutation_registry.csv exists, if it does, load it into a dataframe, if it doesn't, create an empty dataframe with the appropriate columns
-if os.path.exists(os.path.join(params['DATA_DIR'], 'mutation_registry_df.csv')):
-    mutation_registry_df = pd.read_csv(os.path.join(params['DATA_DIR'], 'mutation_registry_df.csv'))
-else:
-    mutation_registry_df = pd.DataFrame(
-        columns=[
-            'original_phen_id', 
-            'original_fitness', 
-            'original_phenotype', 
-            'original_genotype', 
-            'mutation_target', 
-            'mutation_log', 
-            'original_other_info', 
-            'phenotype', 
-            'genotype', 
-            'fitness', 
-            'other_info'
-            ])
-valid_mutation_targets = {}
-# get a dictionary with keys and non-terminals and values as the number of options in the production rule for that non-terminal
-size_of_genes = grammar.count_number_of_options_in_production()
-df = df.groupby('phen_id').first().reset_index()
 # Load the archive from a pickle file if it exists
 import os
 import pickle
-if os.path.exists('mutation_archive.pkl'):
-    with open('mutation_archive.pkl', 'rb') as f:
-        archive = pickle.load(f)
-else:
-    archive = {}
+
+def init_mutation_study():
+
+    reset_parameters()
+    grammar._reset_grammar()
+    with open("parameters/base.yml", 'r') as ymlfile:
+        parameters = yaml.load(ymlfile, Loader=yaml.FullLoader)
+        parameters['EXPERIMENT_NAME'] = "mutation_study"
+        parameters['GRAMMAR'] = "grammars/original_optimizer.txt"
+        #parameters['GRAMMAR'] = "grammars/basic_optimizer.txt"
+        #parameters['DATA_DIR'] = "/Users/soren/desktop_back_up/_Organized_Results/"
+        #parameters['FAKE_FITNESS'] = True
+    manual_load_parameters(parameters=parameters)
+
+
+    # Check if dumps_dir + experiment_name exists, if it doesn't, create it.
+    if not os.path.exists(os.path.join(params['DUMPS_DIR'], params['EXPERIMENT_NAME'])):
+        os.makedirs(os.path.join(params['DUMPS_DIR'], params['EXPERIMENT_NAME']))
+
+
+
+    df = pd.read_csv(os.path.join(params['DATA_DIR'], 'mutation_study_cache.csv'))
+
+    # Check if /mutation_registry.csv exists, if it does, load it into a dataframe, if it doesn't, create an empty dataframe with the appropriate columns
+    if os.path.exists(os.path.join(params['DATA_DIR'], 'mutation_registry_df.csv')):
+        mutation_registry_df = pd.read_csv(os.path.join(params['DATA_DIR'], 'mutation_registry_df.csv'))
+    else:
+        mutation_registry_df = pd.DataFrame(
+            columns=[
+                'original_phen_id', 
+                'original_fitness', 
+                'original_phenotype', 
+                'original_genotype', 
+                'mutation_target', 
+                'mutation_log', 
+                'original_other_info', 
+                'phenotype', 
+                'genotype', 
+                'fitness', 
+                'other_info'
+                ])
+    valid_mutation_targets = {}
+    # get a dictionary with keys and non-terminals and values as the number of options in the production rule for that non-terminal
+    size_of_genes = grammar.count_number_of_options_in_production()
+    df = df.groupby('phen_id').first().reset_index()
+
+    if os.path.exists('mutation_archive.pkl'):
+        with open('mutation_archive.pkl', 'rb') as f:
+            archive = pickle.load(f)
+    else:
+        archive = {}
+    grammar._reset_grammar()
+        
+    grammar.set_path(params['GRAMMAR'])
+    grammar.read_grammar()
+    grammar.set_max_tree_depth(1000000)
+    grammar.set_min_init_tree_depth(params['MIN_TREE_DEPTH'])
+
+    return grammar, mutation_registry_df, archive, df
+
 
 def assert_remap(remapped_phenotype, chosen_phenotype):
     remapped_phenotype = remapped_phenotype.replace(', shape=shape', '').replace(', dtype=float32', '').replace(', dtype=tf.float32', '')
@@ -75,6 +85,7 @@ def assert_remap(remapped_phenotype, chosen_phenotype):
         print(e)
         print("Chosen solution phenotype after cleaning: ", chosen_phenotype)
         print("Remapped        phenotype after cleaning: ", remapped_phenotype)
+        raise AssertionError("Remapped phenotype does not match original phenotype")
 
 def mass_mutate_from_dataframe(
         mutation_registry_df, 
@@ -92,6 +103,7 @@ def mass_mutate_from_dataframe(
     size_of_genes = grammar.count_number_of_options_in_production()
 
     valid_solutions_for_mutation_target = {}
+    valid_mutation_targets = {}
 
     # Go through all solutions and get their valid mutation targets.
     for ix, row in df[~df['genotype'].isna()].iterrows():
@@ -192,7 +204,7 @@ def mass_mutate_from_dataframe(
         # Map the mutated individual to get its phenotype
         mapping_values = [0 for i in mutated_indiv['genotype']]
         
-        mutated_phen, tree_depth = grammar.mapping(mutated_indiv['genotype'], mutated_indiv['mapping_values'])
+        mutated_phen, tree_depth = grammar.mapping(mutated_indiv['genotype'], mapping_values)
         mutated_indiv['mapping_values'] = mapping_values
         mutated_indiv['tree_depth'] = tree_depth
         mutated_indiv['operation'] = 'mutation'
@@ -263,7 +275,6 @@ def plot_fitness_by_mutation_target(mutation_registry_df, grammar, extra_stuff_f
     plt.tight_layout()
     plt.savefig(os.path.join(params['DUMPS_DIR'], params['EXPERIMENT_NAME'], f'_loss_by_mutation_target{file_name_suffix}.png'))
     #plt.show()
-
 
 def plot_effectiveness_by_mutation_target(mutation_registry_df, grammar, extra_stuff_for_title="", file_name_suffix=""):
     # I want to make a plot that shows the percentage of mutations were effective, divergent and redundant for each mutation target.
@@ -343,15 +354,9 @@ def plot_effectiveness_by_mutation_target(mutation_registry_df, grammar, extra_s
 #unique_mutation_registry_df = mutation_registry_df.drop_duplicates(subset=['mutation_log'], keep='first')
 #plot_effectiveness_by_mutation_target(unique_mutation_registry_df, grammar)
 
+grammar, mutation_registry_df, archive, df = init_mutation_study()
 
 df = df[df['setup'] == 'adaptiveTest']
-grammar._reset_grammar()
-    
-grammar.set_path(params['GRAMMAR'])
-grammar.read_grammar()
-grammar.set_max_tree_depth(1000000)
-grammar.set_min_init_tree_depth(params['MIN_TREE_DEPTH'])
-
 i = 0
 
 #df['fitness'] = -df['fitness']
