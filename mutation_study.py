@@ -146,9 +146,6 @@ def mass_mutate_from_dataframe(
  
         # Look for the smallest value in the mutation_counts dictionary and get the corresponding mutation target as the least represented mutation target.
         least_represented_mutation_target = sorted(mutation_counts.items(), key=lambda x: x[1])[0][0]
-        if mutation_counts[least_represented_mutation_target] >= 100:
-            print(f"Sufficient samples")
-            break
             
             #print(f"Least represented mutation target: {least_represented_mutation_target} with count {mutation_counts[least_represented_mutation_target]}")
 
