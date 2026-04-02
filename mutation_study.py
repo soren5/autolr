@@ -237,7 +237,11 @@ def mass_mutate_from_dataframe(
             'other_info': mutated_other_info
         })
 
-        mutation_counts[least_represented_mutation_target] += 1
+        # We only need more samples from terminals at this point.
+        if 'terminal' in least_represented_mutation_target:
+            mutation_counts[least_represented_mutation_target] += 1
+        else:
+            mutation_counts[least_represented_mutation_target] += counter_limit
         counter += 1
     mutation_registry_df = pd.concat([mutation_registry_df, pd.DataFrame(mutation_registry_rows)], ignore_index=True)
     mutation_registry_df.to_csv(os.path.join(params['DUMPS_DIR'], params['EXPERIMENT_NAME'], 'mutation_registry_df.csv'), index=False)
@@ -365,8 +369,9 @@ good_df = df[df['fitness'] >= 0.5]
 #bad_df = bad_df.sort_values(by='fitness', ascending=False).head(100)
 #good_df = good_df.sort_values(by='fitness', ascending=False).head(100)
 evaluator = FMNIST_Evaluator(params)
-mutation_registry_df, archive = mass_mutate_from_dataframe(mutation_registry_df, grammar, archive, bad_df, evaluator, counter_limit=100)
-mutation_registry_df, archive = mass_mutate_from_dataframe(mutation_registry_df, grammar, archive, good_df, evaluator, counter_limit=100)
+#evaluator = Rastringin_Evaluator(params)
+mutation_registry_df, archive = mass_mutate_from_dataframe(mutation_registry_df, grammar, archive, bad_df, evaluator, counter_limit=300)
+mutation_registry_df, archive = mass_mutate_from_dataframe(mutation_registry_df, grammar, archive, good_df, evaluator, counter_limit=300)
 
 thresholds = [0.0, 0.5, 1.0]
 for i in range(len(thresholds)-1):
