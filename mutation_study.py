@@ -16,6 +16,7 @@ import ast
 import os
 import pickle
 
+mutation_registry_name = 'mutation_registry_df_fm.csv'
 def init_mutation_study():
 
     reset_parameters()
@@ -23,8 +24,8 @@ def init_mutation_study():
     with open("parameters/base.yml", 'r') as ymlfile:
         parameters = yaml.load(ymlfile, Loader=yaml.FullLoader)
         parameters['EXPERIMENT_NAME'] = "mutation_study"
-        parameters['GRAMMAR'] = "grammars/original_optimizer.txt"
-        #parameters['GRAMMAR'] = "grammars/basic_optimizer.txt"
+        #parameters['GRAMMAR'] = "grammars/original_optimizer.txt"
+        parameters['GRAMMAR'] = "grammars/basic_optimizer.txt"
         #parameters['DATA_DIR'] = "/Users/soren/desktop_back_up/_Organized_Results/"
         #parameters['FAKE_FITNESS'] = True
     manual_load_parameters(parameters=parameters)
@@ -36,11 +37,11 @@ def init_mutation_study():
 
 
 
-    df = pd.read_csv(os.path.join(params['DATA_DIR'], 'mutation_study_cache.csv'))
+    df = pd.read_csv(os.path.join(params['DATA_DIR'], 'mutation_study_cache_fm.csv'))
 
     # Check if /mutation_registry.csv exists, if it does, load it into a dataframe, if it doesn't, create an empty dataframe with the appropriate columns
-    if os.path.exists(os.path.join(params['DATA_DIR'], 'mutation_registry_df.csv')):
-        mutation_registry_df = pd.read_csv(os.path.join(params['DATA_DIR'], 'mutation_registry_df.csv'))
+    if os.path.exists(os.path.join(params['DATA_DIR'], mutation_registry_name)):
+        mutation_registry_df = pd.read_csv(os.path.join(params['DATA_DIR'], mutation_registry_name))
     else:
         mutation_registry_df = pd.DataFrame(
             columns=[
@@ -104,6 +105,7 @@ def mass_mutate_from_dataframe(
 
     valid_solutions_for_mutation_target = {}
     valid_mutation_targets = {}
+    last_row_index = df[~df['genotype'].isna()].index[-1]
 
     # Go through all solutions and get their valid mutation targets.
     for ix, row in df[~df['genotype'].isna()].iterrows():
@@ -121,6 +123,8 @@ def mass_mutate_from_dataframe(
                 valid_solutions_for_mutation_target[nt] = []
 
             valid_solutions_for_mutation_target[nt].append({'phen_id': row['phen_id'], 'phenotype': row['phenotype'], 'genotype': row['genotype'], 'fitness': row['fitness']})
+        if ix % 5000 == 0:
+            print(f"Processed {ix}/{last_row_index} solutions to determine valid mutation targets.")
 
 
     not_represented_mutation_targets = []
@@ -235,13 +239,16 @@ def mass_mutate_from_dataframe(
         })
 
         # We only need more samples from terminals at this point.
-        if 'terminal' in least_represented_mutation_target:
-            mutation_counts[least_represented_mutation_target] += 1
-        else:
-            mutation_counts[least_represented_mutation_target] += counter_limit
+        #if 'terminal' in least_represented_mutation_target:
+        #    mutation_counts[least_represented_mutation_target] += 1
+        #else:
+        #    mutation_counts[least_represented_mutation_target] += counter_limit
+        mutation_counts[least_represented_mutation_target] += 1
         counter += 1
+        if counter % 10 == 0:
+            print(f"Counter: {counter}, Mutation counts: {mutation_counts}")
     mutation_registry_df = pd.concat([mutation_registry_df, pd.DataFrame(mutation_registry_rows)], ignore_index=True)
-    mutation_registry_df.to_csv(os.path.join(params['DUMPS_DIR'], params['EXPERIMENT_NAME'], 'mutation_registry_df.csv'), index=False)
+    mutation_registry_df.to_csv(os.path.join(params['DUMPS_DIR'], params['EXPERIMENT_NAME'], mutation_registry_name), index=False)
     import pickle
     with open(os.path.join(params['DUMPS_DIR'], params['EXPERIMENT_NAME'], 'mutation_archive.pkl'), 'wb') as f:
         pickle.dump(archive, f)
@@ -357,7 +364,7 @@ def plot_effectiveness_by_mutation_target(mutation_registry_df, grammar, extra_s
 
 grammar, mutation_registry_df, archive, df = init_mutation_study()
 
-df = df[df['setup'] == 'adaptiveTest']
+df = df[df['setup'] == 'facilitated_mutation_base']
 i = 0
 
 #df['fitness'] = -df['fitness']
