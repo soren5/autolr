@@ -138,3 +138,11 @@ def advanced_readable_phenotype(phenotype, debug=False):
                 #print(f"After: {readable_phen}")
     """ 
     return readable_phen
+
+def abstract_constants(phenotype, debug=False):
+    constant_pattern = r'\s*([0-9]*\.?[0-9]+(?:[eE][+-]?[0-9]+)?)'
+    constants = re.findall(constant_pattern, phenotype)
+    abstracted_phen = phenotype
+    for i, constant in enumerate(constants):
+        abstracted_phen = abstracted_phen.replace(constant, f'CONST_{i}')
+    return abstracted_phen

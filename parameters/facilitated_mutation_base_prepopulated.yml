@@ -1,5 +1,5 @@
 RUN: 1
-EXPERIMENT_NAME: 'facilitated_mutation_base'
+EXPERIMENT_NAME: 'facilitated_mutation_base_prepopulated'
 GRAMMAR: 'grammars/basic_optimizer.txt'
 MIN_TREE_DEPTH: 6
 MAX_TREE_DEPTH: 17
@@ -13,6 +13,7 @@ MODEL: 'mnist_model.h5'
 VALIDATION_SIZE: 3500
 FITNESS_SIZE: 55000
 BATCH_SIZE: 1000
+PREPOPULATE: adam
 PROB_MUTATION: {
 0: 0.0, # start
 1: 0.01, # alpha_expr

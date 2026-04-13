@@ -34,14 +34,15 @@ def make_initial_population():
 
 def initialize_population(solutions=[]):
     population = list(make_initial_population())
-    for i in range(len(solutions)):
-        population[i] = {"genotype": solutions[i], "fitness": None, "parent": "X", 'operation': "initialization"}
+    archive = {}
+    for ii in range(len(solutions)):
+        population[ii] = {"genotype": solutions[ii], 'id': ii, 'tree_depth': 0, 'fitness': None, 'operation': "initialization"}
     for i in range(len(population)):
-        population[i]['id'] = i
+        population[i]['id'] = i + ii
     return population
 
-def start_population_from_scratch():
-    population = initialize_population()
+def start_population_from_scratch(solutions=[]):
+    population = initialize_population(solutions)
     archive = {}
     for indiv in population:
         indiv["evaluations"] = [] 
@@ -367,19 +368,19 @@ def initialize_pop(logger):
     else:
         if 'PREPOPULATE' in params and params['PREPOPULATE']:
             genes_dict={
-                'all': [get_adam_genotype(), get_momentum_genotype(), get_rmsprop_genotype()],
-                'adam': [get_adam_genotype()],
-                'rmsprop': [get_rmsprop_genotype()],
-                'momentum': [get_momentum_genotype()],
+                #'all': [get_adam_genotype(params['GRAMMAR']), get_momentum_genotype(), get_rmsprop_genotype()],
+                'adam': [get_adam_genotype(params['GRAMMAR'])],
+                #'rmsprop': [get_rmsprop_genotype()],
+                #'momentum': [get_momentum_genotype()],
             }
-            population = initialize_population(genes_dict[params["GENES"]])
+            population, archive, counter, it = start_population_from_scratch(genes_dict[params["PREPOPULATE"]])
         else:
             population, archive, counter, it = start_population_from_scratch()  
-            for indiv in population:
-                mapping_values = [0 for i in indiv['genotype']]
-                phen, tree_depth = grammar.mapping(indiv['genotype'], mapping_values)
-                indiv['phenotype'] = phen
-                indiv['mapping_values'] = mapping_values
+        for indiv in population:
+            mapping_values = [0 for i in indiv['genotype']]
+            phen, tree_depth = grammar.mapping(indiv['genotype'], mapping_values)
+            indiv['phenotype'] = phen
+            indiv['mapping_values'] = mapping_values
     if 'SINGLE_GEN' in params and params['SINGLE_GEN']:
         params['GENERATIONS'] = it + 1
     return population, archive, counter, it
