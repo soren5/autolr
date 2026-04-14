@@ -13,6 +13,7 @@ MODEL: 'mnist_model.h5'
 VALIDATION_SIZE: 3500
 FITNESS_SIZE: 55000
 BATCH_SIZE: 1000
+PATIENCE: 5
 PROB_MUTATION: {
 0: 0.0, # start
 1: 0.01, # alpha_expr

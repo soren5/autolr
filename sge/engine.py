@@ -35,6 +35,7 @@ def make_initial_population():
 def initialize_population(solutions=[]):
     population = list(make_initial_population())
     archive = {}
+    ii = 0
     for ii in range(len(solutions)):
         population[ii] = {"genotype": solutions[ii], 'id': ii, 'tree_depth': 0, 'fitness': None, 'operation': "initialization"}
     for i in range(len(population)):
