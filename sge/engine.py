@@ -342,6 +342,7 @@ def update_archive(evaluation_function, archive, indiv, it):
     return evaluation_function, archive, indiv
 
 def initialize_pop(logger):
+    successful_resume = False
     if 'RESUME' in params:
         if params["RESUME"] == "Last":
             last_gen = find_last_generation_to_load()
@@ -363,10 +364,9 @@ def initialize_pop(logger):
                 archive = {}
             counter = int(np.max([x['id'] for x in population]))
             it = last_gen
-        else:
-            population, archive, counter, it = start_population_from_scratch()
+            successful_resume = True
     
-    else:
+    if not successful_resume:
         if 'PREPOPULATE' in params and params['PREPOPULATE']:
             genes_dict={
                 #'all': [get_adam_genotype(params['GRAMMAR']), get_momentum_genotype(), get_rmsprop_genotype()],
