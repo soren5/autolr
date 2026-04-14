@@ -37,7 +37,7 @@ def initialize_population(solutions=[]):
     archive = {}
     ii = 0
     for ii in range(len(solutions)):
-        population[ii] = {"genotype": solutions[ii], 'id': ii, 'tree_depth': 0, 'fitness': None, 'operation': "initialization"}
+        population[ii] = {"genotype": solutions[ii], 'id': ii, 'tree_depth': 0, 'fitness': None, 'operation': "prepopulation"}
     for i in range(len(population)):
         population[i]['id'] = i + ii
     return population
