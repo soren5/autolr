@@ -6,7 +6,7 @@ class Optimizer_Evaluator_Tensorflow:
         if evaluator is None:
             # If we have no evaluator, let's infer it from the model in params
             if 'cifar' in params['MODEL']:
-                from evaluators.evaluate_cifar import CIFAR10_Evaluator
+                from evaluators.evaluate_cifar10 import CIFAR10_Evaluator
                 evaluator = CIFAR10_Evaluator(params)
             elif 'resnet' in params['MODEL']:
                 from evaluators.evaluate_tiny_imagenet import TINY_IMAGENET_Evaluator
@@ -214,41 +214,42 @@ class Optimizer_Evaluator_Torch:
         return -value, other_info
     def init_evaluation(self, params):
         pass
-class Optimizer_Evaluator_Multi_Task:
+class Optimizer_Evaluator_FMNIST_CIFAR10_TIN:
     def __init__(self, params):  #should give a function 
         from evaluators.evaluate_fmnist import FMNIST_Evaluator
         self.fmnist_evaluator = FMNIST_Evaluator(params, configuration_file='FMNIST_CONFIG', task_name='fmnist')
 
-        from evaluators.evaluate_cifar import CIFAR10_Evaluator
-        self.cifar_evaluator = CIFAR10_Evaluator(params, configuration_file='CIFAR10_CONFIG', task_name='cifar10')
+        from evaluators.evaluate_cifar10 import CIFAR10_Evaluator
+        self.cifar10_evaluator = CIFAR10_Evaluator(params, configuration_file='CIFAR10_CONFIG', task_name='cifar10')
 
         from evaluators.evaluate_tiny_imagenet import TINY_IMAGENET_Evaluator
         self.tiny_imagenet_evaluator = TINY_IMAGENET_Evaluator(params, configuration_file='TINY_IMAGENET_CONFIG', task_name='tiny_imagenet')
     
-    def evaluate(self, phen, params):
+    def evaluate(self, phen, params, opt=None):
         #print(f"\n\n\nTesting phenotype {smart_phenotype(phen)}:\n{readable_phenotype(phen)}")
         #if xor_check(phen):
-        fmnist_results = cifar_results = tiny_imagenet_results = (0.0, {})  # Default results in case we skip evaluation
+        fmnist_results = cifar10_results = tiny_imagenet_results = (0.0, {})  # Default results in case we skip evaluation
 
+        if opt is not None:
+            print(f"WARNING: Evaluating an optimizer, if this is an evolution experiment it is compromised.")
         if True:
             other_info = {}
-            fmnist_results = self.fmnist_evaluator.evaluate(phen)
+            fmnist_results = self.fmnist_evaluator.evaluate(phen) if opt is None else self.fmnist_evaluator.evaluate_optimizer(opt)
             fitness = fmnist_results[0]
             other_info['fmnist'] = fmnist_results[1]
             other_info['source'] = 'fmnist_evaluation'
             
-            if fitness > 0.8:
+            if fitness > params['FMNIST_THRESHOLD']:
             #if True:
                 #Evaluate CIFAR
-                cifar_results = self.cifar_evaluator.evaluate(phen)
-                fitness = cifar_results[0] + 1.0
-                other_info['cifar'] = cifar_results[1]
-                other_info['source'] = 'cifar_evaluation'
+                cifar10_results = self.cifar10_evaluator.evaluate(phen) if opt is None else self.cifar10_evaluator.evaluate_optimizer(opt)
+                fitness = cifar10_results[0] + 1.0
+                other_info['cifar10'] = cifar10_results[1]
+                other_info['source'] = 'cifar10_evaluation'
 
-                if fitness > 1.7:
-                #if True:
+                if fitness > 1.0 + params['CIFAR10_THRESHOLD']:
                     #Evaluate Imagenet
-                    tiny_imagenet_results = self.tiny_imagenet_evaluator.evaluate(phen)
+                    tiny_imagenet_results = self.tiny_imagenet_evaluator.evaluate(phen) if opt is None else self.tiny_imagenet_evaluator.evaluate_optimizer(opt)
                     fitness = tiny_imagenet_results[0] + 2.0
                     other_info['tiny_imagenet'] = tiny_imagenet_results[1]
                     other_info['source'] = 'tiny_imagenet_evaluation'
@@ -256,7 +257,7 @@ class Optimizer_Evaluator_Multi_Task:
             if np.isnan(fitness):
                 print("NAN fitness, returning FITNESS_FLOOR")
                 fitness = params['FITNESS_FLOOR']
-            print(f"Fitness: {fitness:.4f} (fmnist: {fmnist_results[0]:.4f}, cifar: {cifar_results[0]:.4f}, tiny_imagenet: {tiny_imagenet_results[0]:.4f})")
+            print(f"Fitness: {fitness:.4f} (fmnist: {fmnist_results[0]:.4f}, cifar10: {cifar10_results[0]:.4f}, tiny_imagenet: {tiny_imagenet_results[0]:.4f})")
         else:
             fitness = params['FITNESS_FLOOR']
             other_info = {'source': 'degenerate detection'}
@@ -271,3 +272,52 @@ class Optimizer_Evaluator_Multi_Task:
         pass
     def init_evaluation(self, params):
         pass
+
+class Optimizer_Evaluator_FMNIST_CIFAR10_CIFAR100_TIN():
+    def __init__(self, params):  #should give a function 
+        from evaluators.evaluate_fmnist import FMNIST_Evaluator
+        self.fmnist_evaluator = FMNIST_Evaluator(params, configuration_file='FMNIST_CONFIG', task_name='fmnist')
+
+        from evaluators.evaluate_cifar10 import CIFAR10_Evaluator
+        self.cifar10_evaluator = CIFAR10_Evaluator(params, configuration_file='CIFAR10_CONFIG', task_name='cifar10')
+
+        from evaluators.evaluate_cifar100 import CIFAR100_Evaluator
+        self.cifar100_evaluator = CIFAR100_Evaluator(params, configuration_file='CIFAR100_CONFIG', task_name='cifar100')
+
+        from evaluators.evaluate_tiny_imagenet import TINY_IMAGENET_Evaluator
+        self.tiny_imagenet_evaluator = TINY_IMAGENET_Evaluator(params, configuration_file='TINY_IMAGENET_CONFIG', task_name='tiny_imagenet')
+    
+    def evaluate(self, phen, params, opt=None):
+        #print(f"\n\n\nTesting phenotype {smart_phenotype(phen)}:\n{readable_phenotype(phen)}")
+        #if xor_check(phen):
+        fmnist_results = cifar10_results = cifar100_results = tiny_imagenet_results = (0.0, {})  # Default results in case we skip evaluation
+
+        if opt is not None:
+            print(f"WARNING: Evaluating an optimizer, if this is an evolution experiment it is compromised.")
+        if True:
+            other_info = {}
+            fmnist_results = self.fmnist_evaluator.evaluate(phen) if opt is None else self.fmnist_evaluator.evaluate_optimizer(opt)
+            fitness = fmnist_results[0]
+            other_info['fmnist'] = fmnist_results[1]
+            other_info['source'] = 'fmnist_evaluation'
+            
+            if fitness > params['FMNIST_THRESHOLD']:
+            #if True:
+                #Evaluate CIFAR
+                cifar10_results = self.cifar10_evaluator.evaluate(phen) if opt is None else self.cifar10_evaluator.evaluate_optimizer(opt)
+                fitness = cifar10_results[0] + 1.0
+                other_info['cifar10'] = cifar10_results[1]
+                other_info['source'] = 'cifar10_evaluation'
+                if fitness > 1.0 + params['CIFAR10_THRESHOLD']:
+                    #Evaluate CIFAR100
+                    cifar100_results = self.cifar100_evaluator.evaluate(phen) if opt is None else self.cifar100_evaluator.evaluate_optimizer(opt)
+                    fitness = cifar100_results[0] + 2.0
+                    other_info['cifar100'] = cifar100_results[1]
+                    other_info['source'] = 'cifar100_evaluation'
+
+                    if fitness > 2.0 + params['CIFAR100_THRESHOLD']:
+                        #Evaluate Imagenet
+                        tiny_imagenet_results = self.tiny_imagenet_evaluator.evaluate(phen) if opt is None else self.tiny_imagenet_evaluator.evaluate_optimizer(opt)
+                        fitness = tiny_imagenet_results[0] + 3.0
+                        other_info['tiny_imagenet'] = tiny_imagenet_results[1]
+                        other_info['source'] = 'tiny_imagenet_evaluation'

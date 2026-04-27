@@ -45,12 +45,15 @@ class Evaluator():
         # Store the parameters in the object for later use
         self.batch_size = batch_size
         self.epochs = epochs
+
+        # Early Stop parameters
         self.patience = patience
         self.validation_size = validation_size
+        self.min_delta = params['MIN_DELTA']
+        self.validation_metric = params['VALIDATION_METRIC']
 
         self.run = params['RUN']
         self.fake_fitness = params['FAKE_FITNESS']
-
 
 
         self.log_path = os.path.join(params['LOGS_DIR'], params['EXPERIMENT_NAME']) #By default, this is autolr/logs, but it will check for an environment variable to override it, this is useful for running on the cluster to account for nfs
@@ -202,7 +205,7 @@ class Evaluator():
     
         model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 
-        early_stop = keras.callbacks.EarlyStopping(monitor='val_accuracy', min_delta=0.01, patience=self.patience, restore_best_weights=True)
+        early_stop = keras.callbacks.EarlyStopping(monitor=self.validation_metric, min_delta=self.min_delta, patience=self.patience, restore_best_weights=True)
         terminate_on_nan = keras.callbacks.TerminateOnNaN()
         csv_logger = keras.callbacks.CSVLogger(self.csv_log_file, append=True)
 

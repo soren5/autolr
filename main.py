@@ -31,12 +31,12 @@ if __name__ == "__main__":
             evaluation_function = Optimizer_Evaluator_Tensorflow(train_model_tensorflow_mnist)
     from sge.parameters import params
     if params['MULTI_TASK']:
-        evaluator = Optimizer_Evaluator_Multi_Task(params)
+        evaluator = Optimizer_Evaluator_FMNIST_CIFAR10_TIN(params)
     else:
         evaluator = Optimizer_Evaluator_Tensorflow(params)
         # Infer evaluator from model path
         if 'cifar' in params['MODEL']:
-            from evaluators.evaluate_cifar import CIFAR10_Evaluator
+            from evaluators.evaluate_cifar10 import CIFAR10_Evaluator
             evaluator = Optimizer_Evaluator_Tensorflow(params, evaluator=CIFAR10_Evaluator)
         elif 'resnet' in params['MODEL']:
             from evaluators.evaluate_tiny_imagenet import TINY_IMAGENET_Evaluator

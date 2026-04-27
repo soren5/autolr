@@ -3,22 +3,22 @@ from itertools import product
 
 import yaml
 from evaluators.evaluate_fmnist import FMNIST_Evaluator
-from evaluators.evaluate_cifar import CIFAR10_Evaluator
+from evaluators.evaluate_cifar10 import CIFAR10_Evaluator
 from evaluators.evaluate_tiny_imagenet import TINY_IMAGENET_Evaluator
 from sge.parameters import reset_parameters, manual_load_parameters, params
 from tensorflow.keras.optimizers import Adam
 
 configurations = [
     #{'task': 'FMNIST', "pre_process": True},
-    {'task': 'FMNIST', "pre_process": False},
+    #{'task': 'FMNIST', "pre_process": False},
 
-    {'task': 'CIFAR10', "pre_process": True},
+    #{'task': 'CIFAR10', "pre_process": True},
     #{'task': 'CIFAR10', "pre_process": False},
 
-    #{'task': 'Tiny-Imagenet', "pre_process": True},
+    {'task': 'Tiny-Imagenet', "pre_process": True},
     #{'task': 'Tiny-Imagenet', "pre_process": False},
 ]
-num_repetitions = 30
+num_repetitions = 15
 
 
 def main(i):
@@ -27,6 +27,7 @@ def main(i):
             for config in configurations:
                 with open("parameters/multi_task.yml", 'r') as ymlfile:
                     parameters = yaml.load(ymlfile, Loader=yaml.FullLoader)
+                    parameters['EXPERIMENT_NAME'] = "adam_optimizer_tin_test_using_dataset_settings"
                     reset_parameters()
                     manual_load_parameters(parameters)
                 if config['pre_process']:

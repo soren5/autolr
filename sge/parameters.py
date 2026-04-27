@@ -29,7 +29,6 @@ default_params = {
     'EPOCHS': 5,
     'SEED': None,
     'PREPOPULATE': False,
-    'PATIENCE': False,
     'FITNESS_FLOOR': 0,
     'LOAD_ARCHIVE': True,
     'CURRENT_GEN': -1,
@@ -42,7 +41,17 @@ default_params = {
     'LOGS_DIR': os.environ.get('LOGS_DIR', 'logs'),
     'DATA_DIR': os.environ.get('DATA_DIR', 'data'),
     'MODELS_DIR': os.environ.get('MODELS_DIR', 'models'),
+    
+    # Early stop settings, only used if patience is a positive integer
+    'PATIENCE': False,
+    'VALIDATION_METRIC': 'val_accuracy',
+    'MIN_DELTA': 0.0,
+    # Multi task thresholds, only used when MULTI_TASK is True
+    'FMNIST_THRESHOLD': 0.8,
+    'CIFAR10_THRESHOLD': 0.7,
+    'CIFAR100_THRESHOLD': 0.5,
     }
+
 params = default_params.copy()
 
 def load_parameters(file_name="parameters/adaptive_autolr.yml"):
