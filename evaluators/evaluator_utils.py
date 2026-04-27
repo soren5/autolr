@@ -202,7 +202,7 @@ class Evaluator():
     
         model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 
-        early_stop = keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=self.patience, restore_best_weights=True)
+        early_stop = keras.callbacks.EarlyStopping(monitor='val_accuracy', min_delta=0.01, patience=self.patience, restore_best_weights=True)
         terminate_on_nan = keras.callbacks.TerminateOnNaN()
         csv_logger = keras.callbacks.CSVLogger(self.csv_log_file, append=True)
 
