@@ -37,7 +37,7 @@ def main(i):
                 if config['pre_process']:
                     params['FMNIST_CONFIG'] = 'parameters/dataset_parameters/FMNIST_CONFIG.json'
                     params['CIFAR10_CONFIG'] = 'parameters/dataset_parameters/CIFAR10_CONFIG.json'
-                    params['CIFAR10_CONFIG'] = 'parameters/dataset_parameters/CIFAR100_CONFIG.json'
+                    params['CIFAR100_CONFIG'] = 'parameters/dataset_parameters/CIFAR100_CONFIG.json'
                     params['TINY_IMAGENET_CONFIG'] = 'parameters/dataset_parameters/TINY_IMAGENET_CONFIG.json'
                 else:
                     params['FMNIST_CONFIG'] = 'parameters/dataset_parameters/FMNIST_CONFIG_all_false.json'
