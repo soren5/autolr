@@ -47,7 +47,7 @@ def main(i):
                 print(params)
                 if config['task'] == 'Tiny-Imagenet':
                     evaluator = TINY_IMAGENET_Evaluator(params, task_name=f"{config['task'].lower()}_{config['pre_process']}")
-                elif config['task'] == 'CIFAR1000':
+                elif config['task'] == 'CIFAR100':
                     evaluator = CIFAR100_Evaluator(params, task_name=f"{config['task'].lower()}_{config['pre_process']}")
                 elif config['task'] == 'CIFAR10':
                     evaluator = CIFAR10_Evaluator(params, task_name=f"{config['task'].lower()}_{config['pre_process']}")
