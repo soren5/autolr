@@ -1,5 +1,5 @@
 RUN: 1
-EXPERIMENT_NAME: 'base_fm_early_stop_min_delta'
+EXPERIMENT_NAME: 'fm_min_delta'
 GRAMMAR: 'grammars/basic_optimizer.txt'
 MIN_TREE_DEPTH: 6
 MAX_TREE_DEPTH: 17
