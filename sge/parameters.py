@@ -12,7 +12,7 @@ default_params = {
     'PROB_MUTATION': 0.15,
     'SELECTION_TYPE': 'tournament',
     'TSIZE': 2,
-    'GRAMMAR': 'grammars/adaptive_autolr_grammar_architecture.txt',
+    'GRAMMAR': 'grammars/basic_optimizer.txt',
     'EXPERIMENT_NAME': "example",
     'RUN': 1,
     'INCLUDE_GENOTYPE': True,
@@ -20,7 +20,7 @@ default_params = {
     'VERBOSE': True,
     'MIN_TREE_DEPTH': 6,
     'MAX_TREE_DEPTH': 17,
-    'MODEL': 'models/mnist_model.h5',
+    'MODEL': 'mnist_model.h5',
     'DATASET': 'fmnist',
     'TRAINING_SIZE': 3500,
     'VALIDATION_SIZE': 3500,
@@ -37,7 +37,8 @@ default_params = {
     'FAKE_FITNESS': False,
     'NORMALIZE': True,
     'SUBTRACT_MEAN': True,
-    'DUMPS_DIR': os.environ.get('DUMPS_DIR', 'dumps'), #This represents a change in expected behavior, before, we expects 'dumps' as a part of EXPERIMENT_NAME
+    
+    'DUMPS_DIR': os.environ.get('DUMPS_DIR', 'dumps'),
     'LOGS_DIR': os.environ.get('LOGS_DIR', 'logs'),
     'DATA_DIR': os.environ.get('DATA_DIR', 'data'),
     'MODELS_DIR': os.environ.get('MODELS_DIR', 'models'),
@@ -46,6 +47,7 @@ default_params = {
     'PATIENCE': False,
     'VALIDATION_METRIC': 'val_accuracy',
     'MIN_DELTA': 0.0,
+    
     # Multi task thresholds, only used when MULTI_TASK is True
     'FMNIST_THRESHOLD': 0.8,
     'CIFAR10_THRESHOLD': 0.7,
