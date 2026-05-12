@@ -14,6 +14,7 @@ def create_models():
             model = keras.models.model_from_json(model_json)
             path = os.path.join(os.getcwd(), "models", filename.name[:-5] + ".h5")
             model.save(path)
+            print(f"Saved model to {path}")
             
 if __name__ == "__main__":
     create_models()
