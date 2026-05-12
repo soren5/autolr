@@ -31,7 +31,7 @@ if __name__ == "__main__":
             evaluation_function = Optimizer_Evaluator_Tensorflow(train_model_tensorflow_mnist)
     from sge.parameters import params
     if params['MULTI_TASK']:
-        evaluator = Optimizer_Evaluator_FMNIST_CIFAR10_TIN(params)
+        evaluator = Optimizer_Evaluator_FMNIST_CIFAR10_CIFAR100_TIN(params)
     else:
         evaluator = Optimizer_Evaluator_Tensorflow(params)
         # Infer evaluator from model path
