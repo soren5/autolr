@@ -84,12 +84,12 @@ def run_parameters(parameters):
 
 def run_parameters_multi_task(parameters):
     from sge.parameters import manual_load_parameters, params
-    from fitness_functions.fitness_functions import Optimizer_Evaluator_Multi_Task
+    from fitness_functions.fitness_functions import Optimizer_Evaluator_FMNIST_CIFAR10_TIN
     import sge
 
     manual_load_parameters(parameters=parameters)
 
-    evaluation_function = Optimizer_Evaluator_Multi_Task(params)
+    evaluation_function = Optimizer_Evaluator_FMNIST_CIFAR10_TIN(params)
 
     sge.evolutionary_algorithm(parameters=parameters, evaluation_function=evaluation_function)
 
