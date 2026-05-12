@@ -49,6 +49,7 @@ def trim_phenotype(phenotype, debug=False):
         functions = phenotype.split(r'lambda size, alpha')
     else:
         phenotype = phenotype.replace(", shape=shape, dtype=tf.float32", "")
+        phenotype = phenotype.replace(", dtype=tf.float32", "")
         phenotype = phenotype.replace("tf.math.", "")
         phenotype = phenotype.replace("tf.", "")
 
