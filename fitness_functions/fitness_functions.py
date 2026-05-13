@@ -363,3 +363,5 @@ class Optimizer_Evaluator_FMNIST_CIFAR10_CIFAR100_TIN():
                         fitness = tiny_imagenet_results[0] + 3.0
                         other_info['tiny_imagenet'] = tiny_imagenet_results[1]
                         other_info['source'] = 'tiny_imagenet_evaluation'
+        fitness = - fitness
+        return fitness, other_info
