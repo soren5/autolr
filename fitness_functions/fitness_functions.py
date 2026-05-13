@@ -365,3 +365,9 @@ class Optimizer_Evaluator_FMNIST_CIFAR10_CIFAR100_TIN():
                         other_info['source'] = 'tiny_imagenet_evaluation'
         fitness = - fitness
         return fitness, other_info
+    def init_net(self, params):
+        pass
+    def init_data(self, params):
+        pass
+    def init_evaluation(self, params):
+        pass
