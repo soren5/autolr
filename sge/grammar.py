@@ -122,7 +122,7 @@ class Grammar:
         else:
             expansion_possibility = random.randint(0, self.count_number_of_options_in_production()[symbol] - 1)
 
-        genome[self.get_non_terminals().index(symbol)].append(expansion_possibility)
+        genome[self.get_non_terminals().index(symbol)].append((expansion_possibility, current_depth))
         expansion_symbols = self.grammar[symbol][expansion_possibility]
         depths = [current_depth]
         for sym in expansion_symbols:
@@ -134,6 +134,7 @@ class Grammar:
         if positions_to_map is None:
             positions_to_map = [0] * len(self.ordered_non_terminals)
         output = []
+        #print('Mapping start')
         max_depth = self._recursive_mapping(mapping_rules, positions_to_map, self.start_rule, 0, output)
         output = "".join(output)
         if self.grammar_file.endswith("pybnf"):
@@ -161,10 +162,11 @@ class Grammar:
                     expansion_possibility = random.choice(possibilities)
                 else:
                     expansion_possibility = random.randint(0, size_of_gene[current_sym[0]] - 1)
-                mapping_rules[current_sym_pos].append(expansion_possibility)
-            current_production = mapping_rules[current_sym_pos][positions_to_map[current_sym_pos]]
+                mapping_rules[current_sym_pos].append((expansion_possibility, current_depth))
+            current_production = mapping_rules[current_sym_pos][positions_to_map[current_sym_pos]][0]
             positions_to_map[current_sym_pos] += 1
             next_to_expand = choices[current_production]
+            #print(f"Expanding {current_sym[0]} at depth {current_depth} using production {current_production}: {next_to_expand}")
             for next_sym in next_to_expand:
                 depths.append(
                     self._recursive_mapping(mapping_rules, positions_to_map, next_sym, current_depth + 1, output))

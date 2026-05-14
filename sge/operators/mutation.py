@@ -14,16 +14,16 @@ def mutate(p, pmutation):
         mapped = temp[at_gene]
         for position_to_mutate in range(0, mapped):
             if random.random() < pmutation:
-                current_value = p['genotype'][at_gene][position_to_mutate]
+                current_value, current_depth = p['genotype'][at_gene][position_to_mutate]
                 choices = []
-                if p['tree_depth'] >= grammar.get_max_depth():
+                if current_depth >= grammar.get_max_depth():
                     choices = grammar.get_non_recursive_options()[nt]
                 else:
                     choices = list(range(0, size_of_genes[nt]))
                     choices.remove(current_value)
                 if len(choices) == 0:
                     choices = range(0, size_of_genes[nt])
-                p['genotype'][at_gene][position_to_mutate] = random.choice(choices)
+                p['genotype'][at_gene][position_to_mutate] = [random.choice(choices), current_depth]
                 p['operation'] = "crossover+mutation" if p['operation'] == "crossover" else "mutation"
     return p
 
@@ -57,9 +57,9 @@ def mutate_one(p, chosen_nt=None):
         print(f"Error: mapped value is {mapped} for gene {nt} at index {at_gene}. Genotype length is {len(p['genotype'][at_gene])}.")
         position_to_mutate = 0
 
-    current_value = p['genotype'][at_gene][position_to_mutate]
+    current_value, current_depth = p['genotype'][at_gene][position_to_mutate]
     choices = []
-    if p['tree_depth'] >= grammar.get_max_depth():
+    if current_depth >= grammar.get_max_depth():
         choices = grammar.get_non_recursive_options()[nt]
     else:
         choices = list(range(0, size_of_genes[nt]))
@@ -67,7 +67,7 @@ def mutate_one(p, chosen_nt=None):
     if len(choices) == 0:
         choices = range(0, size_of_genes[nt])
     #print(f"Mutating gene {nt} at position {position_to_mutate} from value {current_value} to one of {choices}")
-    p['genotype'][at_gene][position_to_mutate] = random.choice(choices)
+    p['genotype'][at_gene][position_to_mutate] = [random.choice(choices), current_depth]
     p['operation'] = "crossover+mutation" if p['operation'] == "crossover" else "mutation"
     
     return p, {'non-terminal': nt, 'position_mutated': position_to_mutate, 'old_value': current_value, 'new_value': p['genotype'][at_gene][position_to_mutate]} 
@@ -84,15 +84,15 @@ def mutate_level(p, pmutation):
         for position_to_mutate in range(0, mapped):
             if random.random() < pmutation[at_gene]:
                 # print("I am mutating, master!")
-                current_value = p['genotype'][at_gene][position_to_mutate]
+                current_value, current_depth = p['genotype'][at_gene][position_to_mutate]
                 choices = []
-                if p['tree_depth'] >= grammar.get_max_depth():
+                if current_depth >= grammar.get_max_depth():
                     choices = grammar.get_non_recursive_options()[nt]
                 else:
                     choices = list(range(0, size_of_genes[nt]))
                     choices.remove(current_value)
                 if len(choices) == 0:
                     choices = range(0, size_of_genes[nt])
-                p['genotype'][at_gene][position_to_mutate] = random.choice(choices)
+                p['genotype'][at_gene][position_to_mutate] = [random.choice(choices), current_depth]
                 p['operation'] = "crossover+mutation" if p['operation'] == "crossover" else "mutation"
     return p

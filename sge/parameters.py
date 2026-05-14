@@ -52,6 +52,13 @@ default_params = {
     'FMNIST_THRESHOLD': 0.8,
     'CIFAR10_THRESHOLD': 0.7,
     'CIFAR100_THRESHOLD': 0.5,
+    
+    # F-race settings, only used when RACING is True
+    'RACING': False,
+    'RACING_ALPHA': 0.05,
+    'RACING_MIN_EVALS': 2,
+    'RACING_MAX_EVALS': 30,
+    'RACING_STAT_TEST': 'mannwhitney',
     }
 
 params = default_params.copy()
@@ -202,6 +209,26 @@ def set_parameters(arguments):
         dest="SINGLE_GEN",
         type=bool,
         help="If true, only one generation is run, and the program ends.")
+    parser.add_argument('--racing',
+        dest="RACING",
+        type=bool,
+        help="Enables within-generation F-race reevaluation.")
+    parser.add_argument('--racing_alpha',
+        dest="RACING_ALPHA",
+        type=float,
+        help="Significance threshold used by F-race.")
+    parser.add_argument('--racing_min_evals',
+        dest="RACING_MIN_EVALS",
+        type=int,
+        help="Minimum evaluations before F-race can eliminate a candidate.")
+    parser.add_argument('--racing_max_evals',
+        dest="RACING_MAX_EVALS",
+        type=int,
+        help="Maximum total evaluations per archive key during F-race.")
+    parser.add_argument('--racing_stat_test',
+        dest="RACING_STAT_TEST",
+        type=str,
+        help="Statistical test used by F-race. Currently only 'mannwhitney' is supported.")
     
 
     
@@ -231,4 +258,3 @@ def set_parameters(arguments):
 
 
     params.update(cmd_args)
-

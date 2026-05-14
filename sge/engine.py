@@ -161,7 +161,7 @@ def update_archive_and_fitness(evaluation_function, population, archive, it):
         indiv = population[i]
         print(f"Individual {i}/{len(population)}")
         evaluation_function, archive, indiv = update_archive(evaluation_function, archive, indiv, it)
-    population, archive = update_best_fitness(population, archive)
+    population, archive = update_best_fitness(population, archive, evaluation_function)
        
     for indiv in population:
         archive, indiv = update_key_and_fitness_based_on_archive(archive, indiv)
@@ -317,15 +317,85 @@ def update_key(indiv):
     key = single_task_key(indiv['phenotype'], params['CURRENT_GEN'])
     return key
 
-def update_best_fitness(population, archive):
-    best_fit = params['FITNESS_FLOOR'] + 1
+def update_best_fitness(population, archive, evaluation_function=None):
+    if not params.get('RACING', False):
+        return population, archive
+    if evaluation_function is None:
+        raise Exception("RACING requires an evaluation function")
+    if params.get('RACING_STAT_TEST') != 'mannwhitney':
+        raise Exception("Only Mann-Whitney F-race is supported")
+
+    race_individuals = collect_race_individuals(population, archive)
+    if len(race_individuals) <= 1:
+        return population, archive
+
+    remaining_keys = set(race_individuals.keys())
+    while len(remaining_keys) > 1:
+        best_key = min(remaining_keys, key=lambda key: archive[key]['fitness'])
+        remaining_keys = eliminate_clearly_worse_candidates(archive, remaining_keys, best_key)
+
+        if len(remaining_keys) <= 1:
+            break
+
+        evaluated_any = False
+        for key in list(remaining_keys):
+            if len(archive[key]['evaluations']) < params['RACING_MAX_EVALS']:
+                archive = reevaluate_race_candidate(evaluation_function, archive, race_individuals[key])
+                evaluated_any = True
+
+        if not evaluated_any:
+            break
+
+    return population, archive
+
+def collect_race_individuals(population, archive):
+    race_individuals = {}
     for indiv in population:
         key = single_task_key(indiv['phenotype'], params['CURRENT_GEN'])
-        #key = indiv['smart_phenotype']
-        if archive[key]['fitness'] < best_fit:
-                # best = archive[key]
-            best_fit = archive[key]['fitness'] 
-        return population, archive
+        if key not in archive:
+            raise Exception(f"Missing archive entry for race candidate: {key}")
+        if 'grad' not in key:
+            continue
+        if key not in race_individuals:
+            race_individuals[key] = indiv
+    return race_individuals
+
+def eliminate_clearly_worse_candidates(archive, remaining_keys, best_key):
+    best_evaluations = archive[best_key]['evaluations']
+    kept_keys = set()
+    for key in remaining_keys:
+        if key == best_key:
+            kept_keys.add(key)
+            continue
+
+        if candidate_is_clearly_worse(archive, best_key, key, best_evaluations):
+            print(f"[F-RACE] Eliminating candidate {key}")
+        else:
+            kept_keys.add(key)
+    return kept_keys
+
+def candidate_is_clearly_worse(archive, best_key, candidate_key, best_evaluations):
+    candidate_evaluations = archive[candidate_key]['evaluations']
+    if len(best_evaluations) < params['RACING_MIN_EVALS']:
+        return False
+    if len(candidate_evaluations) < params['RACING_MIN_EVALS']:
+        return False
+    if archive[candidate_key]['fitness'] <= archive[best_key]['fitness']:
+        return False
+
+    try:
+        _, p_value = stats.mannwhitneyu(best_evaluations, candidate_evaluations)
+    except ValueError:
+        p_value = 1
+    return p_value < params['RACING_ALPHA']
+
+def reevaluate_race_candidate(evaluation_function, archive, indiv):
+    key = single_task_key(indiv['phenotype'], params['CURRENT_GEN'])
+    print(f"[F-RACE] Re-evaluating candidate {key}; evaluation #{len(archive[key]['evaluations']) + 1}")
+    evaluate(indiv, evaluation_function)
+    archive[key]['evaluations'].append(indiv['fitness'])
+    archive[key]['fitness'] = statistics.mean(archive[key]['evaluations'])
+    return archive
 
 def update_archive(evaluation_function, archive, indiv, it):
     indiv['smart_phenotype'] = smart_phenotype(indiv['phenotype'])
@@ -385,4 +455,3 @@ def initialize_pop(logger):
     if 'SINGLE_GEN' in params and params['SINGLE_GEN']:
         params['GENERATIONS'] = it + 1
     return population, archive, counter, it
-
