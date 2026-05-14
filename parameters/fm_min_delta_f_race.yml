@@ -18,7 +18,7 @@ MIN_DELTA: 0.02 # I doubled this because 0.01 was to lenient to eliminate the op
 RACING: True
 RACING_ALPHA: 0.05
 RACING_MIN_EVALS: 2
-RACING_MAX_EVALS: 30
+RACING_MAX_EVALS: 5
 RACING_STAT_TEST: 'mannwhitney'
 PROB_MUTATION: {
 0: 0.0, # start
