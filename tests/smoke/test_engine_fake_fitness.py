@@ -1,4 +1,6 @@
 import copy
+import csv
+import json
 
 import pytest
 
@@ -89,3 +91,46 @@ def test_engine_racing_resume_matches_uninterrupted_fake_fitness_run(
     )
 
     assert population_signature(resumed) == population_signature(uninterrupted)
+
+
+@pytest.mark.smoke
+def test_engine_racing_writes_utility_logging_artifacts(
+    tiny_engine_parameters,
+    deterministic_evaluator,
+):
+    import sge
+
+    tiny_engine_parameters["RACING"] = True
+    tiny_engine_parameters["RACING_MAX_EVALS"] = 3
+    tiny_engine_parameters["RACING_MIN_EVALS"] = 2
+
+    sge.evolutionary_algorithm(
+        parameters=tiny_engine_parameters,
+        evaluation_function=deterministic_evaluator,
+    )
+
+    dump_dir = run_dump_dir(tiny_engine_parameters)
+    expected_files = [
+        "_race_f_race_report.jsonl",
+        "_race_f_race_summary.csv",
+        "_race_selection_audit_report.jsonl",
+        "_race_selection_audit_summary.csv",
+    ]
+    for file_name in expected_files:
+        assert (dump_dir / file_name).is_file()
+
+    with (dump_dir / "_race_f_race_report.jsonl").open("r") as report_file:
+        assert all(json.loads(line) for line in report_file)
+
+    with (dump_dir / "_race_f_race_summary.csv").open("r") as summary_file:
+        assert list(csv.DictReader(summary_file))
+
+    sorted_names = sorted(["_progress_report.csv"] + expected_files + ["builtinstate_3"])
+    assert sorted_names == [
+        "_progress_report.csv",
+        "_race_f_race_report.jsonl",
+        "_race_f_race_summary.csv",
+        "_race_selection_audit_report.jsonl",
+        "_race_selection_audit_summary.csv",
+        "builtinstate_3",
+    ]

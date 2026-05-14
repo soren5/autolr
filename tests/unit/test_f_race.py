@@ -1,4 +1,6 @@
 import copy
+import csv
+import json
 
 import pytest
 
@@ -67,6 +69,18 @@ def make_archive(population, initial_fitness):
             "fitness": initial_fitness[key],
         }
     return archive
+
+
+def prepare_native_logger():
+    import sge.logger as logger
+
+    logger.prepare_dumps()
+    return logger
+
+
+def read_jsonl(path):
+    with path.open("r") as report_file:
+        return [json.loads(line) for line in report_file]
 
 
 @pytest.fixture
@@ -196,3 +210,207 @@ def test_racing_does_not_reevaluate_invalid_no_grad_candidate(racing_parameters)
     assert len(updated_archive[valid["smart_phenotype"]]["evaluations"]) == 1
     assert len(updated_archive[invalid["smart_phenotype"]]["evaluations"]) == 1
     assert invalid["smart_phenotype"] not in evaluator.calls
+
+
+@pytest.mark.unit
+def test_pre_race_snapshot_records_duplicates_invalids_and_ranks(racing_parameters):
+    from sge.engine import build_pre_race_snapshot
+
+    best = make_individual(basic_phenotype("grad"), 1)
+    duplicate = make_individual(best["phenotype"], 2)
+    worse = make_individual(
+        basic_phenotype("tf.math.multiply(tf.constant(9.99847452e-01, dtype=tf.float32), grad)"),
+        3,
+    )
+    invalid = make_individual(basic_phenotype("tf.constant(1.0, dtype=tf.float32)"), 4)
+    population = [best, duplicate, worse, invalid]
+    archive = make_archive(
+        [best, worse, invalid],
+        {
+            best["smart_phenotype"]: -0.50,
+            worse["smart_phenotype"]: -0.25,
+            invalid["smart_phenotype"]: 0,
+        },
+    )
+    archive[best["smart_phenotype"]]["evaluations"] = [-0.40, -0.60]
+    archive[best["smart_phenotype"]]["fitness"] = -0.50
+
+    snapshot = build_pre_race_snapshot(population, archive)
+
+    assert snapshot[best["smart_phenotype"]]["population_ids"] == [1, 2]
+    assert snapshot[best["smart_phenotype"]]["first_fitness"] == -0.40
+    assert snapshot[best["smart_phenotype"]]["pre_race_fitness"] == -0.50
+    assert snapshot[best["smart_phenotype"]]["n_evals_before"] == 2
+    assert snapshot[best["smart_phenotype"]]["initial_rank"] == 1
+    assert snapshot[worse["smart_phenotype"]]["initial_rank"] == 2
+    assert snapshot[invalid["smart_phenotype"]]["valid"] is False
+    assert snapshot[invalid["smart_phenotype"]]["initial_rank"] is None
+
+
+@pytest.mark.unit
+def test_f_race_logging_writes_event_trace_and_summary(racing_parameters):
+    from sge.engine import build_pre_race_snapshot, update_best_fitness
+    from sge.parameters import params
+    from tests.helpers import run_dump_dir
+
+    params["RACING_MAX_EVALS"] = 3
+    best = make_individual(basic_phenotype("grad"), 1)
+    close = make_individual(
+        basic_phenotype("tf.math.multiply(tf.constant(9.99847452e-01, dtype=tf.float32), grad)"),
+        2,
+    )
+    invalid = make_individual(basic_phenotype("tf.constant(1.0, dtype=tf.float32)"), 3)
+    population = [best, close, invalid]
+    archive = make_archive(
+        population,
+        {
+            best["smart_phenotype"]: -0.50,
+            close["smart_phenotype"]: -0.50,
+            invalid["smart_phenotype"]: 0,
+        },
+    )
+    snapshot = build_pre_race_snapshot(population, archive)
+    evaluator = ScriptedFitnessEvaluator(
+        {
+            best["smart_phenotype"]: [-0.50, -0.50, -0.50],
+            close["smart_phenotype"]: [-0.50, -0.50, -0.50],
+        },
+        start_index=1,
+    )
+    logger = prepare_native_logger()
+
+    update_best_fitness(population, archive, evaluator, logger, 0, snapshot)
+
+    dump_dir = run_dump_dir(params)
+    events = read_jsonl(dump_dir / "_race_f_race_report.jsonl")
+    event_names = [event["event"] for event in events]
+    assert "race_start" in event_names
+    assert "candidate_snapshot" in event_names
+    assert "reevaluation" in event_names
+    assert "race_stop" in event_names
+    invalid_snapshots = [
+        event for event in events
+        if event["event"] == "candidate_snapshot" and event["key"] == invalid["smart_phenotype"]
+    ]
+    assert invalid_snapshots[0]["valid"] is False
+
+    with (dump_dir / "_race_f_race_summary.csv").open("r") as summary_file:
+        rows = list(csv.DictReader(summary_file))
+    assert rows[0]["generation"] == "0"
+    assert rows[0]["eligible_count"] == "2"
+    assert rows[0]["invalid_count"] == "1"
+    assert int(rows[0]["extra_evaluations"]) > 0
+
+
+@pytest.mark.unit
+def test_f_race_logging_records_elimination_p_value(racing_parameters):
+    from sge.engine import build_pre_race_snapshot, update_best_fitness
+    from sge.parameters import params
+    from tests.helpers import run_dump_dir
+
+    params["RACING_ALPHA"] = 0.99
+    best = make_individual(basic_phenotype("grad"), 1)
+    worse = make_individual(
+        basic_phenotype("tf.math.multiply(tf.constant(5.55606489e-05, dtype=tf.float32), grad)"),
+        2,
+    )
+    population = [best, worse]
+    archive = make_archive(
+        population,
+        {
+            best["smart_phenotype"]: -0.90,
+            worse["smart_phenotype"]: -0.10,
+        },
+    )
+    snapshot = build_pre_race_snapshot(population, archive)
+    evaluator = ScriptedFitnessEvaluator(
+        {
+            best["smart_phenotype"]: [-0.90, -0.91, -0.92],
+            worse["smart_phenotype"]: [-0.10, -0.11, -0.12],
+        },
+        start_index=1,
+    )
+    logger = prepare_native_logger()
+
+    update_best_fitness(population, archive, evaluator, logger, 0, snapshot)
+
+    events = read_jsonl(run_dump_dir(params) / "_race_f_race_report.jsonl")
+    eliminations = [event for event in events if event["event"] == "elimination"]
+    assert eliminations
+    assert eliminations[0]["key"] == worse["smart_phenotype"]
+    assert eliminations[0]["p_value"] is not None
+
+
+@pytest.mark.unit
+def test_tournament_audit_reports_counterfactual_parent_without_changing_actual(racing_parameters, monkeypatch):
+    from sge.engine import build_pre_race_snapshot, make_selection_audit_summary, tournament_selection
+    from sge.parameters import params
+    from tests.helpers import run_dump_dir
+
+    one_shot_best = make_individual(basic_phenotype("grad"), 1)
+    race_best = make_individual(
+        basic_phenotype("tf.math.multiply(tf.constant(9.99847452e-01, dtype=tf.float32), grad)"),
+        2,
+    )
+    population = [one_shot_best, race_best]
+    archive = make_archive(
+        population,
+        {
+            one_shot_best["smart_phenotype"]: -0.90,
+            race_best["smart_phenotype"]: -0.10,
+        },
+    )
+    snapshot = build_pre_race_snapshot(population, archive)
+    one_shot_best["fitness"] = -0.20
+    race_best["fitness"] = -0.95
+    logger = prepare_native_logger()
+    summary = make_selection_audit_summary()
+    monkeypatch.setattr("sge.engine.random.sample", lambda sampled_population, tsize: population)
+
+    selected = tournament_selection(population, logger, 0, snapshot, 0, summary)
+
+    assert selected["id"] == race_best["id"]
+    assert summary["tournament_events"] == 1
+    assert summary["tournament_changed"] == 1
+    events = read_jsonl(run_dump_dir(params) / "_race_selection_audit_report.jsonl")
+    assert events[0]["event"] == "tournament_audit"
+    assert events[0]["outcome_changed"] is True
+    assert events[0]["actual_parent_id"] == race_best["id"]
+    assert events[0]["counterfactual_parent_id"] == one_shot_best["id"]
+
+
+@pytest.mark.unit
+def test_elitism_audit_reports_counterfactual_unique_elite_set(racing_parameters):
+    from sge.engine import build_pre_race_snapshot, make_selection_audit_summary, reproduce_via_elitism
+    from sge.parameters import params
+    from tests.helpers import run_dump_dir
+
+    params["ELITISM"] = 1
+    one_shot_best = make_individual(basic_phenotype("grad"), 1)
+    race_best = make_individual(
+        basic_phenotype("tf.math.multiply(tf.constant(9.99847452e-01, dtype=tf.float32), grad)"),
+        2,
+    )
+    population = [race_best, one_shot_best]
+    archive = make_archive(
+        population,
+        {
+            one_shot_best["smart_phenotype"]: -0.90,
+            race_best["smart_phenotype"]: -0.10,
+        },
+    )
+    snapshot = build_pre_race_snapshot(population, archive)
+    race_best["fitness"] = -0.95
+    one_shot_best["fitness"] = -0.20
+    logger = prepare_native_logger()
+    summary = make_selection_audit_summary()
+
+    elites, _, summary = reproduce_via_elitism(population, logger, 0, snapshot, summary)
+
+    assert elites[0]["id"] == race_best["id"]
+    assert summary["elitism_changed"] is True
+    events = read_jsonl(run_dump_dir(params) / "_race_selection_audit_report.jsonl")
+    assert events[0]["event"] == "elitism_audit"
+    assert events[0]["elite_set_changed"] is True
+    assert events[0]["actual_elite_ids"] == [race_best["id"]]
+    assert events[0]["counterfactual_elite_ids"] == [one_shot_best["id"]]

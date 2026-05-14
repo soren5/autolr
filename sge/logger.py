@@ -9,6 +9,7 @@ import glob
 import re
 import os.path
 from os import path
+import csv
 
 
 def evolution_progress(generation, pop):
@@ -99,9 +100,61 @@ def save_progress_to_file(data):
     with open(os.path.join(path_to_save, '_progress_report.csv'), 'a') as f:
         f.write(data + '\n')
 
+def run_dump_path():
+    return os.path.join(params['DUMPS_DIR'], params['EXPERIMENT_NAME'], f"run_{params['RUN']}")
+
+def append_jsonl(file_name, event):
+    path_to_save = run_dump_path()
+    with open(os.path.join(path_to_save, file_name), 'a') as f:
+        f.write(json.dumps(event) + '\n')
+
+def append_csv_row(file_name, fieldnames, row):
+    path_to_save = run_dump_path()
+    file_path = os.path.join(path_to_save, file_name)
+    needs_header = not os.path.exists(file_path) or os.path.getsize(file_path) == 0
+    with open(file_path, 'a', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        if needs_header:
+            writer.writeheader()
+        writer.writerow(row)
+
+def f_race_event(event):
+    append_jsonl('_race_f_race_report.jsonl', event)
+
+def f_race_summary(row):
+    fieldnames = [
+        'generation',
+        'eligible_count',
+        'invalid_count',
+        'extra_evaluations',
+        'initial_best_key',
+        'final_best_key',
+        'initial_best_changed',
+        'eliminated_count',
+        'max_evals_hit_count',
+        'winner_evals',
+        'stop_reason',
+    ]
+    append_csv_row('_race_f_race_summary.csv', fieldnames, row)
+
+def selection_audit_event(event):
+    append_jsonl('_race_selection_audit_report.jsonl', event)
+
+def selection_audit_summary(row):
+    fieldnames = [
+        'generation',
+        'elitism_changed',
+        'elitism_order_changed',
+        'tournament_events',
+        'tournament_changed',
+        'tournament_changed_rate',
+        'audit_unavailable_count',
+    ]
+    append_csv_row('_race_selection_audit_summary.csv', fieldnames, row)
+
 
 def save_step(generation, population):
-    path_to_save = os.path.join(params['DUMPS_DIR'], params['EXPERIMENT_NAME'], f"run_{params['RUN']}")
+    path_to_save = run_dump_path()
     with open(os.path.join(path_to_save, f'iteration_{generation}.json'), 'w') as f:
         json.dump(population, f)
 

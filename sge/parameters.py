@@ -59,6 +59,8 @@ default_params = {
     'RACING_MIN_EVALS': 2,
     'RACING_MAX_EVALS': 30,
     'RACING_STAT_TEST': 'mannwhitney',
+    'RACING_LOGGING': True,
+    'RACING_SELECTION_AUDIT': True,
     }
 
 params = default_params.copy()
@@ -229,6 +231,14 @@ def set_parameters(arguments):
         dest="RACING_STAT_TEST",
         type=str,
         help="Statistical test used by F-race. Currently only 'mannwhitney' is supported.")
+    parser.add_argument('--racing_logging',
+        dest="RACING_LOGGING",
+        type=bool,
+        help="Enables F-race structured logging when racing is enabled.")
+    parser.add_argument('--racing_selection_audit',
+        dest="RACING_SELECTION_AUDIT",
+        type=bool,
+        help="Enables F-race parent selection and elitism counterfactual audit.")
     
 
     

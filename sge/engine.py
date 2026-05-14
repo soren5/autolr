@@ -147,27 +147,28 @@ def run_evolution(evaluation_function, logger, population, archive, counter, it)
         
         print(f"{it}")
         params["CURRENT_GEN"] = it
-        evaluation_function, population, archive, it = update_archive_and_fitness(evaluation_function, population, archive, it)
+        evaluation_function, population, archive, it, pre_race_snapshot = update_archive_and_fitness(evaluation_function, population, archive, it, logger)
         
         save_data(logger, population, it)
 
 
-        logger, population, archive, counter, it = reproduction_and_elitism(logger, population, archive, counter, it)
+        logger, population, archive, counter, it = reproduction_and_elitism(logger, population, archive, counter, it, pre_race_snapshot)
 
     return population
 
-def update_archive_and_fitness(evaluation_function, population, archive, it):
+def update_archive_and_fitness(evaluation_function, population, archive, it, logger=None):
     for i in range(len(population)):
         indiv = population[i]
         print(f"Individual {i}/{len(population)}")
         evaluation_function, archive, indiv = update_archive(evaluation_function, archive, indiv, it)
-    population, archive = update_best_fitness(population, archive, evaluation_function)
+    pre_race_snapshot = build_pre_race_snapshot(population, archive)
+    population, archive = update_best_fitness(population, archive, evaluation_function, logger, it, pre_race_snapshot)
        
     for indiv in population:
         archive, indiv = update_key_and_fitness_based_on_archive(archive, indiv)
 
     population, it  = sort_pop_and_print_best_fit(population, it)
-    return evaluation_function, population, archive, it
+    return evaluation_function, population, archive, it, pre_race_snapshot
 
 def simulation_is_over(it):
     return it == params['GENERATIONS']
@@ -175,9 +176,11 @@ def simulation_is_over(it):
 def simulation_is_running(it, start_time):
     return it < params['GENERATIONS'] and (True if 'TIME_STOP' not in params else (True if time.time() - start_time < params['TIME_STOP'] else False))
 
-def reproduction_and_elitism(logger, population, archive, counter, it):
-    new_population, population = reproduce_via_elitism(population)
-    logger, population, archive, counter, it, new_population = reproduction(logger, population, archive, counter, it, new_population)
+def reproduction_and_elitism(logger, population, archive, counter, it, pre_race_snapshot=None):
+    audit_summary = make_selection_audit_summary()
+    new_population, population, audit_summary = reproduce_via_elitism(population, logger, it, pre_race_snapshot, audit_summary)
+    logger, population, archive, counter, it, new_population, audit_summary = reproduction(logger, population, archive, counter, it, new_population, pre_race_snapshot, audit_summary)
+    write_selection_audit_summary(logger, it - 1, audit_summary)
     return logger, population, archive, counter, it
 
 def save_data(logger, population, it):
@@ -211,10 +214,13 @@ def check_google_colab(params, logger):
             it = params['RESUME']
             counter = int(np.max([archive[x]['id'] for x in archive]))
 
-def reproduction(logger, population, archive, counter, it, new_population):
+def reproduction(logger, population, archive, counter, it, new_population, pre_race_snapshot=None, audit_summary=None):
+    selection_index = 0
     while len(new_population) < params['POPSIZE']:
-        new_indiv = selection(population)
-        new_indiv_2 = selection(population) 
+        new_indiv = selection(population, logger, it, pre_race_snapshot, selection_index, audit_summary)
+        selection_index += 1
+        new_indiv_2 = selection(population, logger, it, pre_race_snapshot, selection_index, audit_summary) 
+        selection_index += 1
         #print(new_indiv)
         new_indiv = crossover(new_indiv, new_indiv_2, params['PROB_CROSSOVER'])
         new_indiv = mutation(new_indiv)
@@ -222,11 +228,11 @@ def reproduction(logger, population, archive, counter, it, new_population):
         archive, counter, new_population, new_indiv = update_archive_with_new_indiv(archive, counter, new_population, new_indiv)
     it, population = go_to_next_generation(it, new_population)
     save_data_new_pop(logger, population, archive, it)
-    return logger, population, archive, counter, it, new_population
+    return logger, population, archive, counter, it, new_population, audit_summary
 
-def selection(population):
+def selection(population, logger=None, generation=None, pre_race_snapshot=None, selection_index=None, audit_summary=None):
     if params['SELECTION_TYPE'] == 'tournament':
-        new_indiv = tournament_selection(population)
+        new_indiv = tournament_selection(population, logger, generation, pre_race_snapshot, selection_index, audit_summary)
     elif params['SELECTION_TYPE'] == 'stochastic':
         new_indiv = universal_stochastic_sampling(population)
     return new_indiv
@@ -269,16 +275,23 @@ def mutation(new_indiv):
         raise Exception("Invalid mutation type")
     return new_indiv
 
-def tournament_selection(population):
+def tournament_selection(population, logger=None, generation=None, pre_race_snapshot=None, selection_index=None, audit_summary=None):
     #if random.random() < params['PROB_CROSSOVER']:
     #    p1 = tournament(population, params['TSIZE'])
     #    p2 = tournament(population, params['TSIZE'])
     #    new_indiv = crossover(p1, p2)
     #else:
-    new_indiv = tournament(population, params['TSIZE'])
+    pool = random.sample(population, params['TSIZE'])
+    if any(ind['fitness'] == None for ind in pool):
+        raise "Some individuals have no fitness at the moment of selection"
+    pool.sort(key=lambda i: i['fitness'])
+    new_indiv = copy.deepcopy(pool[0])
+    new_indiv["operation"] = "copy"
+    new_indiv["parent"] = [new_indiv['id']]
+    audit_tournament_selection(logger, generation, selection_index, pool, new_indiv, pre_race_snapshot, audit_summary)
     return new_indiv
 
-def reproduce_via_elitism(population):
+def reproduce_via_elitism(population, logger=None, generation=None, pre_race_snapshot=None, audit_summary=None):
     behaviors_added = []
     new_population = []
     print("[ELITE] Adding following individuals to new population:")
@@ -293,12 +306,143 @@ def reproduce_via_elitism(population):
 
     for indiv in new_population:
         indiv['operation'] = 'elitism'
+        if 'other_info' not in indiv:
+            indiv['other_info'] = {}
         indiv['other_info']['source'] = 'elitism'
-    return new_population, population
+    audit_elitism(logger, generation, population, new_population, pre_race_snapshot, audit_summary)
+    return new_population, population, audit_summary
 
 def sort_pop_based_on_fitness(population):
     population.sort(key=lambda x: x['fitness'])
     return population
+
+def audit_tournament_selection(logger, generation, selection_index, pool, actual_parent, pre_race_snapshot, audit_summary):
+    if not selection_audit_enabled() or audit_summary is None:
+        return
+    event = {
+        'generation': generation,
+        'event': 'tournament_audit',
+        'selection_index': selection_index,
+        'pool_ids': [indiv['id'] for indiv in pool],
+        'pool_keys': [single_task_key(indiv['phenotype'], params['CURRENT_GEN']) for indiv in pool],
+        'actual_parent_id': actual_parent['id'],
+        'actual_parent_key': single_task_key(actual_parent['phenotype'], params['CURRENT_GEN']),
+        'actual_fitness': actual_parent['fitness'],
+        'audit_available': True,
+    }
+
+    if pre_race_snapshot is None:
+        event.update(empty_counterfactual_parent_fields())
+        audit_summary['audit_unavailable_count'] += 1
+        write_selection_audit_event(logger, event)
+        return
+
+    pool_keys = event['pool_keys']
+    if any(key not in pre_race_snapshot for key in pool_keys):
+        event.update(empty_counterfactual_parent_fields())
+        audit_summary['audit_unavailable_count'] += 1
+        write_selection_audit_event(logger, event)
+        return
+
+    counterfactual = min(pool, key=lambda indiv: pre_race_snapshot[single_task_key(indiv['phenotype'], params['CURRENT_GEN'])]['pre_race_fitness'])
+    counterfactual_key = single_task_key(counterfactual['phenotype'], params['CURRENT_GEN'])
+    actual_key = event['actual_parent_key']
+    outcome_changed = counterfactual['id'] != actual_parent['id']
+    event.update({
+        'counterfactual_parent_id': counterfactual['id'],
+        'counterfactual_parent_key': counterfactual_key,
+        'counterfactual_fitness': counterfactual['fitness'],
+        'actual_pre_race_fitness': pre_race_snapshot[actual_key]['pre_race_fitness'],
+        'counterfactual_pre_race_fitness': pre_race_snapshot[counterfactual_key]['pre_race_fitness'],
+        'outcome_changed': outcome_changed,
+    })
+    audit_summary['tournament_events'] += 1
+    if outcome_changed:
+        audit_summary['tournament_changed'] += 1
+    write_selection_audit_event(logger, event)
+
+def empty_counterfactual_parent_fields():
+    return {
+        'counterfactual_parent_id': None,
+        'counterfactual_parent_key': None,
+        'counterfactual_fitness': None,
+        'actual_pre_race_fitness': None,
+        'counterfactual_pre_race_fitness': None,
+        'outcome_changed': False,
+        'audit_available': False,
+    }
+
+def audit_elitism(logger, generation, population, actual_elites, pre_race_snapshot, audit_summary):
+    if not selection_audit_enabled() or audit_summary is None:
+        return
+    actual_keys = [single_task_key(indiv['phenotype'], params['CURRENT_GEN']) for indiv in actual_elites]
+    event = {
+        'generation': generation,
+        'event': 'elitism_audit',
+        'elitism_count': params['ELITISM'],
+        'actual_elite_ids': [indiv['id'] for indiv in actual_elites],
+        'actual_elite_keys': actual_keys,
+        'audit_available': True,
+    }
+
+    if pre_race_snapshot is None:
+        event.update(empty_counterfactual_elite_fields())
+        audit_summary['audit_unavailable_count'] += 1
+        write_selection_audit_event(logger, event)
+        return
+
+    population_keys = [single_task_key(indiv['phenotype'], params['CURRENT_GEN']) for indiv in population]
+    if any(key not in pre_race_snapshot for key in population_keys):
+        event.update(empty_counterfactual_elite_fields())
+        audit_summary['audit_unavailable_count'] += 1
+        write_selection_audit_event(logger, event)
+        return
+
+    counterfactual_elites = choose_counterfactual_elites(population, pre_race_snapshot)
+    counterfactual_keys = [single_task_key(indiv['phenotype'], params['CURRENT_GEN']) for indiv in counterfactual_elites]
+    counterfactual_ids = [indiv['id'] for indiv in counterfactual_elites]
+    elite_set_changed = set(actual_keys) != set(counterfactual_keys)
+    elite_order_changed = actual_keys != counterfactual_keys
+    changed_positions = [
+        index
+        for index, (actual_key, counterfactual_key) in enumerate(zip(actual_keys, counterfactual_keys))
+        if actual_key != counterfactual_key
+    ]
+    event.update({
+        'counterfactual_elite_ids': counterfactual_ids,
+        'counterfactual_elite_keys': counterfactual_keys,
+        'elite_set_changed': elite_set_changed,
+        'elite_order_changed': elite_order_changed,
+        'changed_positions': changed_positions,
+    })
+    audit_summary['elitism_changed'] = elite_set_changed
+    audit_summary['elitism_order_changed'] = elite_order_changed
+    write_selection_audit_event(logger, event)
+
+def empty_counterfactual_elite_fields():
+    return {
+        'counterfactual_elite_ids': [],
+        'counterfactual_elite_keys': [],
+        'elite_set_changed': False,
+        'elite_order_changed': False,
+        'changed_positions': [],
+        'audit_available': False,
+    }
+
+def choose_counterfactual_elites(population, pre_race_snapshot):
+    sorted_population = sorted(
+        population,
+        key=lambda indiv: pre_race_snapshot[single_task_key(indiv['phenotype'], params['CURRENT_GEN'])]['pre_race_fitness'],
+    )
+    behaviors_added = []
+    counterfactual_elites = []
+    for indiv in sorted_population:
+        if indiv['smart_phenotype'] not in behaviors_added and len(behaviors_added) < params['ELITISM']:
+            behaviors_added.append(indiv['smart_phenotype'])
+            counterfactual_elites.append(indiv)
+    while len(counterfactual_elites) < params['ELITISM']:
+        counterfactual_elites.append(sorted_population[0])
+    return counterfactual_elites
 
 def update_key_and_fitness_based_on_archive(archive, indiv):
     key = update_key(indiv)
@@ -317,7 +461,75 @@ def update_key(indiv):
     key = single_task_key(indiv['phenotype'], params['CURRENT_GEN'])
     return key
 
-def update_best_fitness(population, archive, evaluation_function=None):
+def build_pre_race_snapshot(population, archive):
+    snapshot = {}
+    for indiv in population:
+        key = single_task_key(indiv['phenotype'], params['CURRENT_GEN'])
+        if key not in archive:
+            raise Exception(f"Missing archive entry for pre-race snapshot: {key}")
+        if key not in snapshot:
+            evaluations = archive[key]['evaluations']
+            snapshot[key] = {
+                'key': key,
+                'archive_id': archive[key]['id'],
+                'population_ids': [],
+                'pre_race_fitness': archive[key]['fitness'],
+                'first_fitness': evaluations[0] if len(evaluations) > 0 else None,
+                'n_evals_before': len(evaluations),
+                'valid': 'grad' in key,
+                'initial_rank': None,
+            }
+        snapshot[key]['population_ids'].append(indiv['id'])
+
+    valid_keys = [key for key, record in snapshot.items() if record['valid']]
+    valid_keys.sort(key=lambda key: snapshot[key]['pre_race_fitness'])
+    for rank, key in enumerate(valid_keys, start=1):
+        snapshot[key]['initial_rank'] = rank
+    return snapshot
+
+def racing_logging_enabled():
+    return params.get('RACING', False) and params.get('RACING_LOGGING', True)
+
+def selection_audit_enabled():
+    return params.get('RACING', False) and params.get('RACING_SELECTION_AUDIT', True)
+
+def write_f_race_event(logger, event):
+    if racing_logging_enabled() and logger is not None and hasattr(logger, 'f_race_event'):
+        logger.f_race_event(event)
+
+def write_f_race_summary(logger, row):
+    if racing_logging_enabled() and logger is not None and hasattr(logger, 'f_race_summary'):
+        logger.f_race_summary(row)
+
+def write_selection_audit_event(logger, event):
+    if selection_audit_enabled() and logger is not None and hasattr(logger, 'selection_audit_event'):
+        logger.selection_audit_event(event)
+
+def make_selection_audit_summary():
+    return {
+        'elitism_changed': False,
+        'elitism_order_changed': False,
+        'tournament_events': 0,
+        'tournament_changed': 0,
+        'audit_unavailable_count': 0,
+    }
+
+def write_selection_audit_summary(logger, generation, summary):
+    if not selection_audit_enabled() or logger is None or not hasattr(logger, 'selection_audit_summary'):
+        return
+    events = summary['tournament_events']
+    changed_rate = summary['tournament_changed'] / events if events else 0
+    logger.selection_audit_summary({
+        'generation': generation,
+        'elitism_changed': summary['elitism_changed'],
+        'elitism_order_changed': summary['elitism_order_changed'],
+        'tournament_events': events,
+        'tournament_changed': summary['tournament_changed'],
+        'tournament_changed_rate': changed_rate,
+        'audit_unavailable_count': summary['audit_unavailable_count'],
+    })
+
+def update_best_fitness(population, archive, evaluation_function=None, logger=None, generation=None, pre_race_snapshot=None):
     if not params.get('RACING', False):
         return population, archive
     if evaluation_function is None:
@@ -327,25 +539,43 @@ def update_best_fitness(population, archive, evaluation_function=None):
 
     race_individuals = collect_race_individuals(population, archive)
     if len(race_individuals) <= 1:
+        write_empty_f_race_summary(logger, generation, race_individuals, pre_race_snapshot, 'not_enough_candidates')
         return population, archive
 
     remaining_keys = set(race_individuals.keys())
+    initial_best_key = min(remaining_keys, key=lambda key: archive[key]['fitness'])
+    extra_evaluations = 0
+    eliminated_count = 0
+    stop_reason = 'unknown'
+    round_number = 0
+    log_race_start(logger, generation, race_individuals, archive, pre_race_snapshot, initial_best_key)
     while len(remaining_keys) > 1:
+        round_number += 1
         best_key = min(remaining_keys, key=lambda key: archive[key]['fitness'])
-        remaining_keys = eliminate_clearly_worse_candidates(archive, remaining_keys, best_key)
+        remaining_keys, round_eliminated = eliminate_clearly_worse_candidates(archive, remaining_keys, best_key, logger, generation, round_number)
+        eliminated_count += round_eliminated
 
         if len(remaining_keys) <= 1:
+            stop_reason = 'single_remaining'
             break
 
         evaluated_any = False
         for key in list(remaining_keys):
             if len(archive[key]['evaluations']) < params['RACING_MAX_EVALS']:
-                archive = reevaluate_race_candidate(evaluation_function, archive, race_individuals[key])
+                archive = reevaluate_race_candidate(evaluation_function, archive, race_individuals[key], logger, generation, round_number)
                 evaluated_any = True
+                extra_evaluations += 1
 
         if not evaluated_any:
+            if all(len(archive[key]['evaluations']) >= params['RACING_MAX_EVALS'] for key in remaining_keys):
+                stop_reason = 'max_evals'
+            else:
+                stop_reason = 'no_evaluable_candidates'
             break
 
+    if stop_reason == 'unknown':
+        stop_reason = 'single_remaining' if len(remaining_keys) <= 1 else 'max_evals'
+    log_race_stop(logger, generation, archive, remaining_keys, race_individuals, pre_race_snapshot, initial_best_key, extra_evaluations, eliminated_count, stop_reason)
     return population, archive
 
 def collect_race_individuals(population, archive):
@@ -360,41 +590,215 @@ def collect_race_individuals(population, archive):
             race_individuals[key] = indiv
     return race_individuals
 
-def eliminate_clearly_worse_candidates(archive, remaining_keys, best_key):
+def log_race_start(logger, generation, race_individuals, archive, pre_race_snapshot, initial_best_key):
+    if not racing_logging_enabled():
+        return
+    invalid_count = count_invalid_snapshot_records(pre_race_snapshot)
+    write_f_race_event(logger, {
+        'generation': generation,
+        'event': 'race_start',
+        'candidate_count': len(pre_race_snapshot) if pre_race_snapshot is not None else len(race_individuals),
+        'eligible_count': len(race_individuals),
+        'invalid_count': invalid_count,
+        'max_evals': params['RACING_MAX_EVALS'],
+        'alpha': params['RACING_ALPHA'],
+        'stat_test': params['RACING_STAT_TEST'],
+        'initial_best_key': initial_best_key,
+        'initial_best_mean': archive[initial_best_key]['fitness'],
+    })
+    if pre_race_snapshot is None:
+        snapshot_keys = sorted(race_individuals.keys(), key=lambda key: archive[key]['fitness'])
+    else:
+        snapshot_keys = sorted(
+            pre_race_snapshot.keys(),
+            key=lambda key: (
+                pre_race_snapshot[key]['initial_rank'] is None,
+                pre_race_snapshot[key]['initial_rank'] if pre_race_snapshot[key]['initial_rank'] is not None else 0,
+                key,
+            ),
+        )
+    for key in snapshot_keys:
+        snapshot_record = pre_race_snapshot[key] if pre_race_snapshot is not None and key in pre_race_snapshot else {}
+        population_ids = snapshot_record.get('population_ids')
+        if population_ids is None:
+            population_ids = [race_individuals[key]['id']]
+        write_f_race_event(logger, {
+            'generation': generation,
+            'event': 'candidate_snapshot',
+            'key': key,
+            'archive_id': archive[key]['id'],
+            'population_ids': population_ids,
+            'n_evals_before': len(archive[key]['evaluations']),
+            'first_fitness': archive[key]['evaluations'][0] if archive[key]['evaluations'] else None,
+            'mean_before': archive[key]['fitness'],
+            'initial_rank': snapshot_record.get('initial_rank'),
+            'valid': snapshot_record.get('valid', key in race_individuals),
+        })
+
+def count_invalid_snapshot_records(pre_race_snapshot):
+    if pre_race_snapshot is None:
+        return 0
+    return len([record for record in pre_race_snapshot.values() if not record['valid']])
+
+def write_empty_f_race_summary(logger, generation, race_individuals, pre_race_snapshot, stop_reason):
+    if not racing_logging_enabled():
+        return
+    initial_best_key = None
+    if race_individuals:
+        initial_best_key = next(iter(race_individuals.keys()))
+    write_f_race_event(logger, {
+        'generation': generation,
+        'event': 'race_start',
+        'candidate_count': len(pre_race_snapshot) if pre_race_snapshot is not None else len(race_individuals),
+        'eligible_count': len(race_individuals),
+        'invalid_count': count_invalid_snapshot_records(pre_race_snapshot),
+        'max_evals': params['RACING_MAX_EVALS'],
+        'alpha': params['RACING_ALPHA'],
+        'stat_test': params['RACING_STAT_TEST'],
+        'initial_best_key': initial_best_key,
+        'initial_best_mean': None,
+    })
+    if pre_race_snapshot is not None:
+        for key in sorted(pre_race_snapshot.keys()):
+            record = pre_race_snapshot[key]
+            write_f_race_event(logger, {
+                'generation': generation,
+                'event': 'candidate_snapshot',
+                'key': key,
+                'archive_id': record['archive_id'],
+                'population_ids': record['population_ids'],
+                'n_evals_before': record['n_evals_before'],
+                'first_fitness': record['first_fitness'],
+                'mean_before': record['pre_race_fitness'],
+                'initial_rank': record['initial_rank'],
+                'valid': record['valid'],
+            })
+    write_f_race_event(logger, {
+        'generation': generation,
+        'event': 'race_stop',
+        'reason': stop_reason,
+        'winner_key': initial_best_key,
+        'initial_best_key': initial_best_key,
+        'final_best_key': initial_best_key,
+        'initial_best_changed': False,
+        'extra_evaluations': 0,
+        'remaining_count': len(race_individuals),
+        'eliminated_count': 0,
+        'max_evals_hit_count': 0,
+        'winner_evals': 0,
+    })
+    write_f_race_summary(logger, {
+        'generation': generation,
+        'eligible_count': len(race_individuals),
+        'invalid_count': count_invalid_snapshot_records(pre_race_snapshot),
+        'extra_evaluations': 0,
+        'initial_best_key': initial_best_key,
+        'final_best_key': initial_best_key,
+        'initial_best_changed': False,
+        'eliminated_count': 0,
+        'max_evals_hit_count': 0,
+        'winner_evals': 0,
+        'stop_reason': stop_reason,
+    })
+
+def log_race_stop(logger, generation, archive, remaining_keys, race_individuals, pre_race_snapshot, initial_best_key, extra_evaluations, eliminated_count, stop_reason):
+    final_best_key = min(race_individuals.keys(), key=lambda key: archive[key]['fitness'])
+    max_evals_hit_count = len([key for key in race_individuals if len(archive[key]['evaluations']) >= params['RACING_MAX_EVALS']])
+    winner_evals = len(archive[final_best_key]['evaluations'])
+    event = {
+        'generation': generation,
+        'event': 'race_stop',
+        'reason': stop_reason,
+        'winner_key': final_best_key,
+        'initial_best_key': initial_best_key,
+        'final_best_key': final_best_key,
+        'initial_best_changed': initial_best_key != final_best_key,
+        'extra_evaluations': extra_evaluations,
+        'remaining_count': len(remaining_keys),
+        'eliminated_count': eliminated_count,
+        'max_evals_hit_count': max_evals_hit_count,
+        'winner_evals': winner_evals,
+    }
+    write_f_race_event(logger, event)
+    write_f_race_summary(logger, {
+        'generation': generation,
+        'eligible_count': len(race_individuals),
+        'invalid_count': count_invalid_snapshot_records(pre_race_snapshot),
+        'extra_evaluations': extra_evaluations,
+        'initial_best_key': initial_best_key,
+        'final_best_key': final_best_key,
+        'initial_best_changed': initial_best_key != final_best_key,
+        'eliminated_count': eliminated_count,
+        'max_evals_hit_count': max_evals_hit_count,
+        'winner_evals': winner_evals,
+        'stop_reason': stop_reason,
+    })
+
+def eliminate_clearly_worse_candidates(archive, remaining_keys, best_key, logger=None, generation=None, round_number=None):
     best_evaluations = archive[best_key]['evaluations']
     kept_keys = set()
+    eliminated_count = 0
     for key in remaining_keys:
         if key == best_key:
             kept_keys.add(key)
             continue
 
-        if candidate_is_clearly_worse(archive, best_key, key, best_evaluations):
+        is_worse, p_value = candidate_is_clearly_worse(archive, best_key, key, best_evaluations)
+        if is_worse:
             print(f"[F-RACE] Eliminating candidate {key}")
+            eliminated_count += 1
+            write_f_race_event(logger, {
+                'generation': generation,
+                'event': 'elimination',
+                'round': round_number,
+                'key': key,
+                'best_key': best_key,
+                'candidate_mean': archive[key]['fitness'],
+                'best_mean': archive[best_key]['fitness'],
+                'candidate_n': len(archive[key]['evaluations']),
+                'best_n': len(best_evaluations),
+                'p_value': p_value,
+                'reason': 'clearly_worse',
+            })
         else:
             kept_keys.add(key)
-    return kept_keys
+    return kept_keys, eliminated_count
 
 def candidate_is_clearly_worse(archive, best_key, candidate_key, best_evaluations):
     candidate_evaluations = archive[candidate_key]['evaluations']
     if len(best_evaluations) < params['RACING_MIN_EVALS']:
-        return False
+        return False, None
     if len(candidate_evaluations) < params['RACING_MIN_EVALS']:
-        return False
+        return False, None
     if archive[candidate_key]['fitness'] <= archive[best_key]['fitness']:
-        return False
+        return False, None
 
     try:
         _, p_value = stats.mannwhitneyu(best_evaluations, candidate_evaluations)
     except ValueError:
         p_value = 1
-    return p_value < params['RACING_ALPHA']
+    return p_value < params['RACING_ALPHA'], p_value
 
-def reevaluate_race_candidate(evaluation_function, archive, indiv):
+def reevaluate_race_candidate(evaluation_function, archive, indiv, logger=None, generation=None, round_number=None):
     key = single_task_key(indiv['phenotype'], params['CURRENT_GEN'])
     print(f"[F-RACE] Re-evaluating candidate {key}; evaluation #{len(archive[key]['evaluations']) + 1}")
+    mean_before = archive[key]['fitness']
     evaluate(indiv, evaluation_function)
     archive[key]['evaluations'].append(indiv['fitness'])
     archive[key]['fitness'] = statistics.mean(archive[key]['evaluations'])
+    write_f_race_event(logger, {
+        'generation': generation,
+        'event': 'reevaluation',
+        'round': round_number,
+        'key': key,
+        'archive_id': archive[key]['id'],
+        'eval_number': len(archive[key]['evaluations']),
+        'new_fitness': indiv['fitness'],
+        'n_evals_before': len(archive[key]['evaluations']) - 1,
+        'n_evals_after': len(archive[key]['evaluations']),
+        'mean_before': mean_before,
+        'mean_after': archive[key]['fitness'],
+    })
     return archive
 
 def update_archive(evaluation_function, archive, indiv, it):
