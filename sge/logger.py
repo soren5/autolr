@@ -13,7 +13,10 @@ from os import path
 
 def evolution_progress(generation, pop):
     fitness_samples = [i['fitness'] for i in pop]
-    data = '%4d\t%.6e\t%.6e\t%.6e' % (generation, np.min(fitness_samples), np.mean(fitness_samples), np.std(fitness_samples))
+    s_phen = [i['smart_phenotype'] for i in pop]
+    header = f'gen \tbest \tmean \tdev  \tdiver%'
+    percent_diversity = len(list(set(s_phen))) / len(pop)
+    data = '%4d\t%.6e\t%.6e\t%.6e\t%.6e' % (generation, np.min(fitness_samples), np.mean(fitness_samples), np.std(fitness_samples), percent_diversity)
     if params['VERBOSE']:
         print(data)
     save_progress_to_file(data)
