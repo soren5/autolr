@@ -166,13 +166,13 @@ def test_racing_eliminates_clearly_worse_candidate_before_max(racing_parameters)
         population,
         {
             best["smart_phenotype"]: -0.90,
-            worse["smart_phenotype"]: -0.10,
+            worse["smart_phenotype"]: -0.25,
         },
     )
     evaluator = ScriptedFitnessEvaluator(
         {
             best["smart_phenotype"]: [-0.90, -0.91, -0.92, -0.93],
-            worse["smart_phenotype"]: [-0.10, -0.11, -0.12, -0.13],
+            worse["smart_phenotype"]: [-0.25, -0.26, -0.27, -0.28],
         },
         start_index=1,
     )
@@ -210,6 +210,70 @@ def test_racing_does_not_reevaluate_invalid_no_grad_candidate(racing_parameters)
     assert len(updated_archive[valid["smart_phenotype"]]["evaluations"]) == 1
     assert len(updated_archive[invalid["smart_phenotype"]]["evaluations"]) == 1
     assert invalid["smart_phenotype"] not in evaluator.calls
+
+
+@pytest.mark.unit
+def test_racing_does_not_reevaluate_candidate_with_score_in_no_reevaluation_band(racing_parameters):
+    from sge.engine import update_best_fitness
+
+    strong = make_individual(basic_phenotype("grad"), 1)
+    weak = make_individual(
+        basic_phenotype("tf.math.multiply(tf.constant(9.99847452e-01, dtype=tf.float32), grad)"),
+        2,
+    )
+    population = [strong, weak]
+    archive = make_archive(
+        population,
+        {
+            strong["smart_phenotype"]: -0.50,
+            weak["smart_phenotype"]: -0.10,
+        },
+    )
+    evaluator = ScriptedFitnessEvaluator(
+        {
+            strong["smart_phenotype"]: [-0.50, -0.50, -0.50, -0.50],
+            weak["smart_phenotype"]: [-0.10, -0.10, -0.10, -0.10],
+        },
+        start_index=1,
+    )
+
+    _, updated_archive = update_best_fitness(population, archive, evaluator)
+
+    assert len(updated_archive[strong["smart_phenotype"]]["evaluations"]) == 5
+    assert len(updated_archive[weak["smart_phenotype"]]["evaluations"]) == 1
+    assert weak["smart_phenotype"] not in evaluator.calls
+
+
+@pytest.mark.unit
+def test_racing_stops_reevaluating_candidate_after_new_score_enters_no_reevaluation_band(racing_parameters):
+    from sge.engine import update_best_fitness
+
+    steady = make_individual(basic_phenotype("grad"), 1)
+    drops_into_band = make_individual(
+        basic_phenotype("tf.math.multiply(tf.constant(9.99847452e-01, dtype=tf.float32), grad)"),
+        2,
+    )
+    population = [steady, drops_into_band]
+    archive = make_archive(
+        population,
+        {
+            steady["smart_phenotype"]: -0.50,
+            drops_into_band["smart_phenotype"]: -0.50,
+        },
+    )
+    evaluator = ScriptedFitnessEvaluator(
+        {
+            steady["smart_phenotype"]: [-0.50, -0.50, -0.50, -0.50],
+            drops_into_band["smart_phenotype"]: [-0.10, -0.10, -0.10, -0.10],
+        },
+        start_index=0,
+    )
+
+    _, updated_archive = update_best_fitness(population, archive, evaluator)
+
+    assert len(updated_archive[steady["smart_phenotype"]]["evaluations"]) == 5
+    assert updated_archive[drops_into_band["smart_phenotype"]]["evaluations"] == [-0.50, -0.10]
+    assert evaluator.calls.count(drops_into_band["smart_phenotype"]) == 1
 
 
 @pytest.mark.unit
@@ -319,14 +383,14 @@ def test_f_race_logging_records_elimination_p_value(racing_parameters):
         population,
         {
             best["smart_phenotype"]: -0.90,
-            worse["smart_phenotype"]: -0.10,
+            worse["smart_phenotype"]: -0.25,
         },
     )
     snapshot = build_pre_race_snapshot(population, archive)
     evaluator = ScriptedFitnessEvaluator(
         {
             best["smart_phenotype"]: [-0.90, -0.91, -0.92],
-            worse["smart_phenotype"]: [-0.10, -0.11, -0.12],
+            worse["smart_phenotype"]: [-0.25, -0.26, -0.27],
         },
         start_index=1,
     )

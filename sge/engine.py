@@ -561,7 +561,7 @@ def update_best_fitness(population, archive, evaluation_function=None, logger=No
 
         evaluated_any = False
         for key in list(remaining_keys):
-            if len(archive[key]['evaluations']) < params['RACING_MAX_EVALS']:
+            if candidate_can_be_reevaluated(archive, key):
                 archive = reevaluate_race_candidate(evaluation_function, archive, race_individuals[key], logger, generation, round_number)
                 evaluated_any = True
                 extra_evaluations += 1
@@ -589,6 +589,15 @@ def collect_race_individuals(population, archive):
         if key not in race_individuals:
             race_individuals[key] = indiv
     return race_individuals
+
+def candidate_can_be_reevaluated(archive, key):
+    return (
+        len(archive[key]['evaluations']) < params['RACING_MAX_EVALS']
+        and not candidate_has_no_reevaluation_score(archive, key)
+    )
+
+def candidate_has_no_reevaluation_score(archive, key):
+    return any(-0.2 <= evaluation <= 0.0 for evaluation in archive[key]['evaluations'])
 
 def log_race_start(logger, generation, race_individuals, archive, pre_race_snapshot, initial_best_key):
     if not racing_logging_enabled():
