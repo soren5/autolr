@@ -213,6 +213,22 @@ def test_racing_does_not_reevaluate_invalid_no_grad_candidate(racing_parameters)
 
 
 @pytest.mark.unit
+def test_racing_syncs_archive_evaluations_to_individual_trials(racing_parameters):
+    from sge.engine import update_key_and_fitness_based_on_archive
+
+    individual = make_individual(basic_phenotype("grad"), 1)
+    archive = make_archive(population=[individual], initial_fitness={individual["smart_phenotype"]: -0.50})
+    archive[individual["smart_phenotype"]]["evaluations"] = [-0.50, -0.60, -0.55]
+    archive[individual["smart_phenotype"]]["fitness"] = -0.55
+
+    _, individual = update_key_and_fitness_based_on_archive(archive, individual)
+
+    assert individual["fitness"] == -0.55
+    assert individual["trials"] == [-0.50, -0.60, -0.55]
+    assert individual["trials"] is not archive[individual["smart_phenotype"]]["evaluations"]
+
+
+@pytest.mark.unit
 def test_racing_does_not_reevaluate_candidate_with_score_in_no_reevaluation_band(racing_parameters):
     from sge.engine import update_best_fitness
 

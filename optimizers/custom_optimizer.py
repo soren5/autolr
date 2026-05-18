@@ -3,6 +3,13 @@ from tensorflow import keras
 import numpy as np
 from utils.smart_phenotype import readable_phenotype, get_optimizer_type
 
+PADDING_ENCODING = {
+    'valid': 0.0,
+    'same': 1.0,
+    'causal': 1.0,
+}
+
+
 class CustomOptimizer(keras.optimizers.Optimizer):
     def __init__(self,
                             name="CustomOptimizer",
@@ -37,6 +44,10 @@ class CustomOptimizer(keras.optimizers.Optimizer):
         self._sigma_func = exec_env["sigma_func"] if self._variables_used['sigma'] else None
         self._grad_func = exec_env["grad_func"]
         self.training_ops = None
+
+    def _padding_value_for_layer(self, layer):
+        padding = getattr(layer, 'padding', 'valid')
+        return PADDING_ENCODING.get(str(padding).lower(), 0.0)
 
     def _get_variables_used(self, phen):
         readable_phen, alpha_phen, beta_phen, sigma_phen, grad_phen = readable_phenotype(phen, full_return=True)
@@ -89,6 +100,7 @@ class CustomOptimizer(keras.optimizers.Optimizer):
             'kernel_size': False,
             'filters': False,
             'dilation_rate': False,
+            'padding': False,
             'units': False,
             'pool_size': False,
             'momentum': False,
@@ -110,6 +122,7 @@ class CustomOptimizer(keras.optimizers.Optimizer):
         self._kernel = {}
         self._filters = {}
         self._dilation_rate = {}
+        self._padding = {}
 
         self._pool_size = {}
 
@@ -134,6 +147,7 @@ class CustomOptimizer(keras.optimizers.Optimizer):
                 self._init_optimizer_variable('kernel_size', self._kernel, trainable_weight, constant_value=layer.kernel_size[0] if hasattr(layer, 'kernel_size') else 0.0)
                 self._init_optimizer_variable('filters', self._filters, trainable_weight, constant_value=layer.filters if hasattr(layer, 'filters') else 0.0)
                 self._init_optimizer_variable('dilation_rate', self._dilation_rate, trainable_weight, constant_value=layer.dilation_rate[0] if hasattr(layer, 'dilation_rate') else 0.0)
+                self._init_optimizer_variable('padding', self._padding, trainable_weight, constant_value=self._padding_value_for_layer(layer))
 
                 # Dense variables
                 self._init_optimizer_variable('units', self._units, trainable_weight, constant_value=layer.units if hasattr(layer, 'units') else 0.0)
@@ -168,6 +182,7 @@ class CustomOptimizer(keras.optimizers.Optimizer):
             'kernel_size': False,
             'filters': False,
             'dilation_rate': False,
+            'padding': False,
             'units': False,
             'pool_size': False,
             'momentum': False,
@@ -189,6 +204,7 @@ class CustomOptimizer(keras.optimizers.Optimizer):
         self._kernel = {}
         self._filters = {}
         self._dilation_rate = {}
+        self._padding = {}
 
         self._pool_size = {}
 
@@ -212,6 +228,7 @@ class CustomOptimizer(keras.optimizers.Optimizer):
             self._init_optimizer_variable('kernel_size', self._kernel, var, 0.0)
             self._init_optimizer_variable('filters', self._filters, var, 0.0)
             self._init_optimizer_variable('dilation_rate', self._dilation_rate, var, 0.0)
+            self._init_optimizer_variable('padding', self._padding, var, 0.0)
 
             # Dense variables
             self._init_optimizer_variable('units', self._units, var, 0.0)
@@ -264,6 +281,7 @@ class CustomOptimizer(keras.optimizers.Optimizer):
                     self._kernel[variable_name],
                     self._filters[variable_name],
                     self._dilation_rate[variable_name],
+                    self._padding[variable_name],
                     self._units[variable_name],
                     self._pool_size[variable_name],
                     self._layer_count[variable_name],
@@ -278,6 +296,7 @@ class CustomOptimizer(keras.optimizers.Optimizer):
                     self._kernel[variable_name],
                     self._filters[variable_name],
                     self._dilation_rate[variable_name],
+                    self._padding[variable_name],
                     self._units[variable_name],
                     self._pool_size[variable_name],
                     self._layer_count[variable_name],

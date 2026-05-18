@@ -56,10 +56,18 @@ def trim_phenotype(phenotype, debug=False):
         if optimizer_type == 'deep_architecture_optimizer_with_ifs':
                 functions = phenotype.split(r'lambda has_strides, strides, has_kernel_size, kernel_size, has_filters, filters, has_dilation_rate, dilation_rate, has_units, units, has_pool_size, pool_size, layer_count, layer_num, shape, alpha')
         elif optimizer_type == 'deep_architecture_optimizer_with_aggregators':
-                functions = phenotype.split(r'lambda momentum, variance, layer_wise_lr, strides, kernel_size, filters, dilation_rate, units, pool_size, layer_count, layer_num, shape, alpha')
+                signature = phenotype.split('alpha,')[0]
+                if 'dilation_rate, padding, units' in signature:
+                    functions = phenotype.split(r'lambda momentum, variance, layer_wise_lr, strides, kernel_size, filters, dilation_rate, padding, units, pool_size, layer_count, layer_num, shape, alpha')
+                else:
+                    functions = phenotype.split(r'lambda momentum, variance, layer_wise_lr, strides, kernel_size, filters, dilation_rate, units, pool_size, layer_count, layer_num, shape, alpha')
                 functions[-1] = remove_scientific_notation_from_end(functions[-1])
         elif optimizer_type == 'deep_architecture_optimizer':
-                functions = phenotype.split(r'lambda strides, kernel_size, filters, dilation_rate, units, pool_size, layer_count, layer_num, shape, alpha')
+                signature = phenotype.split('alpha,')[0]
+                if 'dilation_rate, padding, units' in signature:
+                    functions = phenotype.split(r'lambda strides, kernel_size, filters, dilation_rate, padding, units, pool_size, layer_count, layer_num, shape, alpha')
+                else:
+                    functions = phenotype.split(r'lambda strides, kernel_size, filters, dilation_rate, units, pool_size, layer_count, layer_num, shape, alpha')
         elif optimizer_type == 'architecture_layer_type_optimizer':
             functions = phenotype.split(r'lambda is_dense, units, is_pool, pool_size, is_conv, kernel_size, filters, stride, layer_count, layer_num, shape, alpha')
         elif optimizer_type == 'basic_architecture_optimizer':

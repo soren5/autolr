@@ -39,6 +39,7 @@ def test_engine_fake_fitness_writes_expected_artifacts(
     smart_keys = {indiv["smart_phenotype"] for indiv in evaluated_population}
     assert smart_keys.issubset(set(archive))
     assert all(entry["fitness"] <= 0 for entry in archive.values())
+    assert all("trials" not in indiv for indiv in evaluated_population)
 
 
 @pytest.mark.smoke
@@ -124,6 +125,14 @@ def test_engine_racing_writes_utility_logging_artifacts(
 
     with (dump_dir / "_race_f_race_summary.csv").open("r") as summary_file:
         assert list(csv.DictReader(summary_file))
+
+    evaluated_population = load_iteration(tiny_engine_parameters, 2)
+    archive = load_archive(tiny_engine_parameters, 3)
+    assert all("trials" in indiv for indiv in evaluated_population)
+    assert all(
+        indiv["trials"] == archive[indiv["smart_phenotype"]]["evaluations"]
+        for indiv in evaluated_population
+    )
 
     sorted_names = sorted(["_progress_report.csv"] + expected_files + ["builtinstate_3"])
     assert sorted_names == [
