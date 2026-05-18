@@ -118,7 +118,7 @@ def load_results(root_dir):
                                 'operation': x['operation'] if 'operation' in x else None,
                                 'parents': x['parent'] if 'parent' in x else None,
                                 'genotype': x['genotype'] if 'genotype' in x else None,
-
+                                'tree_depth': x['tree_depth'] if 'tree_depth' in x else None,
                             }
                             if 'other_info' in x:
                                 for extra in x['other_info']:
