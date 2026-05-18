@@ -451,6 +451,8 @@ def update_key_and_fitness_based_on_archive(archive, indiv):
 
 def update_fitness_based_on_archive(archive, indiv, key):
     indiv['fitness'] = archive[key]['fitness']
+    if params.get('RACING', False):
+        indiv['trials'] = list(archive[key]['evaluations'])
     if 'other_info' not in indiv:
         indiv['other_info'] = {}
     if 'source' not in indiv['other_info']:
