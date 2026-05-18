@@ -66,6 +66,7 @@ class TINY_IMAGENET_Dataset:
             x_val -= x_mean
             x_fit -= x_mean
 
+        #len(x_train) 245224 len(x_val) 7000 len(x_fit) 3000
         self.x_train = x_train
         self.y_train = y_train
         self.x_val = x_val
