@@ -1,5 +1,5 @@
 RUN: 1
-EXPERIMENT_NAME: 'multi_task4_easy_f_race_big_cross'
+EXPERIMENT_NAME: 'big_cross'
 GRAMMAR: 'grammars/deep_architecture_optimizer.txt'
 MIN_TREE_DEPTH: 6
 MAX_TREE_DEPTH: 40
