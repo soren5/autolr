@@ -453,10 +453,20 @@ def update_fitness_based_on_archive(archive, indiv, key):
     indiv['fitness'] = archive[key]['fitness']
     if params.get('RACING', False):
         indiv['trials'] = list(archive[key]['evaluations'])
+        sync_multi_task_trials_to_individual(archive[key], indiv)
     if 'other_info' not in indiv:
         indiv['other_info'] = {}
     if 'source' not in indiv['other_info']:
         indiv['other_info']['source'] = 'archive'
+
+def sync_multi_task_trials_to_individual(archive_entry, indiv):
+    if 'multi_task_trials' not in archive_entry:
+        return
+    indiv['task_trials'] = copy.deepcopy(archive_entry.get('task_evaluations', {}))
+    indiv['task_pass_trials'] = copy.deepcopy(archive_entry.get('task_passes', {}))
+    indiv['reached_depth_trials'] = list(archive_entry.get('reached_depths', []))
+    indiv['failed_task_trials'] = list(archive_entry.get('failed_tasks', []))
+    indiv['multi_task_trials'] = copy.deepcopy(archive_entry.get('multi_task_trials', []))
 
 
 def update_key(indiv):
@@ -633,7 +643,7 @@ def log_race_start(logger, generation, race_individuals, archive, pre_race_snaps
         population_ids = snapshot_record.get('population_ids')
         if population_ids is None:
             population_ids = [race_individuals[key]['id']]
-        write_f_race_event(logger, {
+        event = {
             'generation': generation,
             'event': 'candidate_snapshot',
             'key': key,
@@ -644,7 +654,9 @@ def log_race_start(logger, generation, race_individuals, archive, pre_race_snaps
             'mean_before': archive[key]['fitness'],
             'initial_rank': snapshot_record.get('initial_rank'),
             'valid': snapshot_record.get('valid', key in race_individuals),
-        })
+        }
+        add_latest_multi_task_record_to_event(event, archive.get(key, {}))
+        write_f_race_event(logger, event)
 
 def count_invalid_snapshot_records(pre_race_snapshot):
     if pre_race_snapshot is None:
@@ -672,7 +684,7 @@ def write_empty_f_race_summary(logger, generation, race_individuals, pre_race_sn
     if pre_race_snapshot is not None:
         for key in sorted(pre_race_snapshot.keys()):
             record = pre_race_snapshot[key]
-            write_f_race_event(logger, {
+            event = {
                 'generation': generation,
                 'event': 'candidate_snapshot',
                 'key': key,
@@ -683,7 +695,8 @@ def write_empty_f_race_summary(logger, generation, race_individuals, pre_race_sn
                 'mean_before': record['pre_race_fitness'],
                 'initial_rank': record['initial_rank'],
                 'valid': record['valid'],
-            })
+            }
+            write_f_race_event(logger, event)
     write_f_race_event(logger, {
         'generation': generation,
         'event': 'race_stop',
@@ -754,11 +767,11 @@ def eliminate_clearly_worse_candidates(archive, remaining_keys, best_key, logger
             kept_keys.add(key)
             continue
 
-        is_worse, p_value = candidate_is_clearly_worse(archive, best_key, key, best_evaluations)
+        is_worse, p_value, comparison_metadata = candidate_is_clearly_worse_by_rule(archive, best_key, key, best_evaluations)
         if is_worse:
             print(f"[F-RACE] Eliminating candidate {key}")
             eliminated_count += 1
-            write_f_race_event(logger, {
+            event = {
                 'generation': generation,
                 'event': 'elimination',
                 'round': round_number,
@@ -769,11 +782,27 @@ def eliminate_clearly_worse_candidates(archive, remaining_keys, best_key, logger
                 'candidate_n': len(archive[key]['evaluations']),
                 'best_n': len(best_evaluations),
                 'p_value': p_value,
-                'reason': 'clearly_worse',
-            })
+                'reason': comparison_metadata.get('reason', 'clearly_worse'),
+            }
+            event.update(comparison_metadata)
+            write_f_race_event(logger, event)
         else:
             kept_keys.add(key)
     return kept_keys, eliminated_count
+
+def candidate_is_clearly_worse_by_rule(archive, best_key, candidate_key, best_evaluations):
+    if params.get('RACING_DECISION_RULE', 'scalar_mannwhitney') == 'gated_cascade':
+        is_worse, p_value, metadata = candidate_is_clearly_worse_gated(archive, best_key, candidate_key)
+        if is_worse:
+            return is_worse, p_value, metadata
+        if metadata.get('comparison_type') not in ('insufficient_gated_evidence', 'scalar_fallback'):
+            return is_worse, p_value, metadata
+    is_worse, p_value = candidate_is_clearly_worse(archive, best_key, candidate_key, best_evaluations)
+    return is_worse, p_value, {
+        'reason': 'clearly_worse',
+        'comparison_type': 'scalar_fallback' if params.get('RACING_DECISION_RULE') == 'gated_cascade' else 'scalar_mannwhitney',
+        'comparison_task': None,
+    }
 
 def candidate_is_clearly_worse(archive, best_key, candidate_key, best_evaluations):
     candidate_evaluations = archive[candidate_key]['evaluations']
@@ -788,7 +817,102 @@ def candidate_is_clearly_worse(archive, best_key, candidate_key, best_evaluation
         _, p_value = stats.mannwhitneyu(best_evaluations, candidate_evaluations)
     except ValueError:
         p_value = 1
-    return p_value < params['RACING_ALPHA'], p_value
+    return bool(p_value < params['RACING_ALPHA']), p_value
+
+def candidate_is_clearly_worse_gated(archive, best_key, candidate_key):
+    best_entry = archive[best_key]
+    candidate_entry = archive[candidate_key]
+    if not has_multi_task_trials(best_entry) or not has_multi_task_trials(candidate_entry):
+        return False, None, {
+            'reason': 'missing_multi_task_trials',
+            'comparison_type': 'scalar_fallback',
+            'comparison_task': None,
+        }
+
+    compared_any_gated_evidence = False
+    is_worse, p_value, metadata = compare_reached_depths(best_entry, candidate_entry)
+    compared_any_gated_evidence = compared_any_gated_evidence or metadata.get('comparison_available', False)
+    if is_worse:
+        return True, p_value, metadata
+
+    for task in multi_task_task_order(best_entry, candidate_entry):
+        is_worse, p_value, metadata = compare_task_scores(best_entry, candidate_entry, task)
+        compared_any_gated_evidence = compared_any_gated_evidence or metadata.get('comparison_available', False)
+        if is_worse:
+            return True, p_value, metadata
+
+    if compared_any_gated_evidence:
+        return False, None, {
+            'reason': 'gated_cascade_not_clearly_worse',
+            'comparison_type': 'gated_cascade_not_clearly_worse',
+            'comparison_task': None,
+        }
+
+    return False, None, {
+        'reason': 'insufficient_gated_evidence',
+        'comparison_type': 'insufficient_gated_evidence',
+        'comparison_task': None,
+    }
+
+def has_multi_task_trials(archive_entry):
+    return bool(archive_entry.get('multi_task_trials')) and bool(archive_entry.get('reached_depths'))
+
+def compare_reached_depths(best_entry, candidate_entry):
+    best_depths = [depth for depth in best_entry.get('reached_depths', []) if depth is not None]
+    candidate_depths = [depth for depth in candidate_entry.get('reached_depths', []) if depth is not None]
+    metadata = {
+        'reason': 'gated_cascade_clearly_worse',
+        'comparison_type': 'reached_depth',
+        'comparison_task': None,
+        'best_reached_depth_mean': statistics.mean(best_depths) if best_depths else None,
+        'candidate_reached_depth_mean': statistics.mean(candidate_depths) if candidate_depths else None,
+        'comparison_available': False,
+    }
+    if len(best_depths) < params['RACING_MIN_EVALS'] or len(candidate_depths) < params['RACING_MIN_EVALS']:
+        return False, None, metadata
+    metadata['comparison_available'] = True
+    if metadata['candidate_reached_depth_mean'] >= metadata['best_reached_depth_mean']:
+        return False, None, metadata
+    try:
+        _, p_value = stats.mannwhitneyu(best_depths, candidate_depths)
+    except ValueError:
+        p_value = 1
+    return bool(p_value < params['RACING_ALPHA']), p_value, metadata
+
+def compare_task_scores(best_entry, candidate_entry, task):
+    best_scores = best_entry.get('task_evaluations', {}).get(task, [])
+    candidate_scores = candidate_entry.get('task_evaluations', {}).get(task, [])
+    metadata = {
+        'reason': 'gated_cascade_clearly_worse',
+        'comparison_type': 'task_score',
+        'comparison_task': task,
+        'best_task_score_mean': statistics.mean(best_scores) if best_scores else None,
+        'candidate_task_score_mean': statistics.mean(candidate_scores) if candidate_scores else None,
+        'comparison_available': False,
+    }
+    if len(best_scores) < params['RACING_MIN_EVALS'] or len(candidate_scores) < params['RACING_MIN_EVALS']:
+        return False, None, metadata
+    metadata['comparison_available'] = True
+    if metadata['candidate_task_score_mean'] >= metadata['best_task_score_mean']:
+        return False, None, metadata
+    try:
+        _, p_value = stats.mannwhitneyu(best_scores, candidate_scores)
+    except ValueError:
+        p_value = 1
+    return bool(p_value < params['RACING_ALPHA']), p_value, metadata
+
+def multi_task_task_order(best_entry, candidate_entry):
+    if best_entry.get('task_order'):
+        return best_entry['task_order']
+    if candidate_entry.get('task_order'):
+        return candidate_entry['task_order']
+    best_trials = best_entry.get('multi_task_trials', [])
+    if best_trials and best_trials[0].get('task_order'):
+        return best_trials[0]['task_order']
+    candidate_trials = candidate_entry.get('multi_task_trials', [])
+    if candidate_trials and candidate_trials[0].get('task_order'):
+        return candidate_trials[0]['task_order']
+    return []
 
 def reevaluate_race_candidate(evaluation_function, archive, indiv, logger=None, generation=None, round_number=None):
     key = single_task_key(indiv['phenotype'], params['CURRENT_GEN'])
@@ -797,7 +921,8 @@ def reevaluate_race_candidate(evaluation_function, archive, indiv, logger=None, 
     evaluate(indiv, evaluation_function)
     archive[key]['evaluations'].append(indiv['fitness'])
     archive[key]['fitness'] = statistics.mean(archive[key]['evaluations'])
-    write_f_race_event(logger, {
+    append_multi_task_trial_to_archive(archive[key], extract_multi_task_record(indiv))
+    event = {
         'generation': generation,
         'event': 'reevaluation',
         'round': round_number,
@@ -809,7 +934,9 @@ def reevaluate_race_candidate(evaluation_function, archive, indiv, logger=None, 
         'n_evals_after': len(archive[key]['evaluations']),
         'mean_before': mean_before,
         'mean_after': archive[key]['fitness'],
-    })
+    }
+    add_latest_multi_task_record_to_event(event, archive[key])
+    write_f_race_event(logger, event)
     return archive
 
 def update_archive(evaluation_function, archive, indiv, it):
@@ -823,8 +950,51 @@ def update_archive(evaluation_function, archive, indiv, it):
         evaluate(indiv, evaluation_function)
         archive[key]['evaluations'].append(indiv['fitness'])
         archive[key]['fitness'] = statistics.mean(archive[key]['evaluations'])
+        append_multi_task_trial_to_archive(archive[key], extract_multi_task_record(indiv))
 
     return evaluation_function, archive, indiv
+
+def extract_multi_task_record(indiv):
+    other_info = indiv.get('other_info', {})
+    multi_task_record = other_info.get('multi_task')
+    if isinstance(multi_task_record, dict):
+        return copy.deepcopy(multi_task_record)
+    return None
+
+def append_multi_task_trial_to_archive(archive_entry, multi_task_record):
+    if not isinstance(multi_task_record, dict):
+        return
+    task_order = multi_task_record.get('task_order', [])
+    scores = multi_task_record.get('scores', {})
+    passes = multi_task_record.get('passed', {})
+    thresholds = multi_task_record.get('thresholds', {})
+
+    archive_entry.setdefault('multi_task_trials', [])
+    archive_entry.setdefault('task_evaluations', {})
+    archive_entry.setdefault('task_passes', {})
+    archive_entry.setdefault('reached_depths', [])
+    archive_entry.setdefault('failed_tasks', [])
+    archive_entry.setdefault('task_order', list(task_order))
+    archive_entry.setdefault('task_thresholds', copy.deepcopy(thresholds))
+
+    archive_entry['multi_task_trials'].append(copy.deepcopy(multi_task_record))
+    archive_entry['reached_depths'].append(multi_task_record.get('reached_depth'))
+    archive_entry['failed_tasks'].append(multi_task_record.get('failed_task'))
+
+    for task in task_order:
+        archive_entry['task_evaluations'].setdefault(task, [])
+        archive_entry['task_passes'].setdefault(task, [])
+        score = scores.get(task)
+        passed = passes.get(task)
+        if score is not None:
+            archive_entry['task_evaluations'][task].append(score)
+        if passed is not None:
+            archive_entry['task_passes'][task].append(passed)
+
+def add_latest_multi_task_record_to_event(event, archive_entry):
+    trials = archive_entry.get('multi_task_trials', [])
+    if trials:
+        event['multi_task'] = copy.deepcopy(trials[-1])
 
 def initialize_pop(logger):
     successful_resume = False
