@@ -1,5 +1,12 @@
 import re
 
+
+CONSTANT_VALUE_PATTERN = re.compile(
+    r"(?P<prefix>\b(?:tf\.)?constant\(\s*)"
+    r"(?P<value>[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)"
+)
+CONSTANT_PLACEHOLDER_PATTERN = re.compile(r"\bCONST_(?P<index>\d+)\b")
+
 def remove_scientific_notation_from_end(text):
     """
     Remove 3 comma-separated float values in scientific notation from the end of a string.
@@ -148,10 +155,137 @@ def advanced_readable_phenotype(phenotype, debug=False):
     """ 
     return readable_phen
 
-def abstract_constants(phenotype, debug=False):
-    constant_pattern = r'\s*([0-9]*\.?[0-9]+(?:[eE][+-]?[0-9]+)?)'
-    constants = re.findall(constant_pattern, phenotype)
-    abstracted_phen = phenotype
-    for i, constant in enumerate(constants):
-        abstracted_phen = abstracted_phen.replace(constant, f'CONST_{i}')
-    return abstracted_phen
+def _abstract_constant_calls(text, start_index=0):
+    """Abstract numeric arguments to constant calls in occurrence order."""
+
+    constants = {}
+
+    def replace(match):
+        name = f"CONST_{start_index + len(constants)}"
+        constants[name] = float(match.group("value"))
+        return f"{match.group('prefix')}{name}"
+
+    return CONSTANT_VALUE_PATTERN.sub(replace, text), constants
+
+
+def abstract_constants(text, debug=False):
+    """Make constant calls concise in readable optimizer expressions.
+
+    This presentation helper intentionally abstracts every ``constant(...)`` or
+    ``tf.constant(...)`` call in the supplied text. It is designed to be used
+    with ``advanced_readable_phenotype`` and returns only the readable string.
+    """
+
+    abstracted_text, _ = _abstract_constant_calls(text)
+    if debug:
+        print(abstracted_text)
+    return abstracted_text
+
+
+def _split_top_level_expressions(text):
+    """Split the source phenotype at boundaries between lambda functions."""
+
+    expressions = []
+    separators = []
+    depth = 0
+    start = 0
+    index = 0
+    while index < len(text):
+        character = text[index]
+        if character in "([{":
+            depth += 1
+        elif character in ")]}":
+            depth -= 1
+        elif character == "," and depth == 0:
+            next_expression = index + 1
+            while next_expression < len(text) and text[next_expression].isspace():
+                next_expression += 1
+            if not text.startswith("lambda", next_expression):
+                index += 1
+                continue
+            expressions.append(text[start:index])
+            separator_end = next_expression
+            separators.append(text[index:separator_end])
+            start = separator_end
+            index = separator_end - 1
+        index += 1
+    expressions.append(text[start:])
+    return expressions, separators
+
+
+def _join_top_level_expressions(expressions, separators):
+    result = expressions[0]
+    for separator, expression in zip(separators, expressions[1:]):
+        result += separator + expression
+    return result
+
+
+def _active_source_function_indexes(expressions):
+    """Return active alpha/beta/sigma/grad source-function indexes."""
+
+    if len(expressions) < 4 or not all(
+        expression.lstrip().startswith("lambda") for expression in expressions[:4]
+    ):
+        raise ValueError("Expected a phenotype containing four leading lambda functions")
+
+    variable_to_index = {"alpha": 0, "beta": 1, "sigma": 2}
+    active = {3}
+    pending = [3]
+    while pending:
+        function_index = pending.pop()
+        body = expressions[function_index].split(":", 1)[-1]
+        for variable, dependency_index in variable_to_index.items():
+            if re.search(rf"\b{variable}\b", body) and dependency_index not in active:
+                active.add(dependency_index)
+                pending.append(dependency_index)
+    return active
+
+
+def abstract_active_constants(phenotype):
+    """Abstract independently evolved constants in active source functions.
+
+    Constants in inactive alpha/beta/sigma functions remain untouched. Each
+    source occurrence receives its own concise ``CONST_n`` name, even when two
+    source constants currently have equal values. When an active source
+    function is expanded through another function, all expanded uses remain
+    linked because materialization happens in the original source phenotype.
+
+    Returns:
+        ``(phenotype_template, constants)`` where ``constants`` maps each
+        ``CONST_n`` name to its initial float value.
+    """
+
+    assignment, separator, right_hand_side = phenotype.partition("=")
+    if not separator:
+        raise ValueError("Expected an optimizer phenotype assignment")
+
+    expressions, separators = _split_top_level_expressions(right_hand_side)
+    active_indexes = _active_source_function_indexes(expressions)
+    constants = {}
+    for function_index in sorted(active_indexes):
+        expressions[function_index], function_constants = _abstract_constant_calls(
+            expressions[function_index],
+            start_index=len(constants),
+        )
+        constants.update(function_constants)
+
+    template = assignment + separator + _join_top_level_expressions(
+        expressions, separators
+    )
+    return template, constants
+
+
+def materialize_constants(template, values):
+    """Replace ``CONST_n`` placeholders with supplied numeric values."""
+
+    def replace(match):
+        name = f"CONST_{match.group('index')}"
+        if name not in values:
+            raise ValueError(f"No value supplied for {name}")
+        return repr(float(values[name]))
+
+    materialized = CONSTANT_PLACEHOLDER_PATTERN.sub(replace, template)
+    unresolved = CONSTANT_PLACEHOLDER_PATTERN.search(materialized)
+    if unresolved:
+        raise ValueError(f"No value supplied for {unresolved.group(0)}")
+    return materialized
