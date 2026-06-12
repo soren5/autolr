@@ -24,7 +24,9 @@ if gpus:
         print(e)
 
 class Evaluator():
-    def __init__(self, params, configuration_file=None, task_name=None):
+    def __init__(
+        self, params, configuration_file=None, task_name=None, benchmark_data=False
+    ):
         if params['MULTI_TASK']:
             # For multi-task, we need a separate configuration for each task, check if it exists
             if configuration_file not in params:
@@ -58,7 +60,21 @@ class Evaluator():
 
         self.log_path = os.path.join(params['LOGS_DIR'], params['EXPERIMENT_NAME']) #By default, this is autolr/logs, but it will check for an environment variable to override it, this is useful for running on the cluster to account for nfs
 
-        self._init_dataset_(validation_size, fitness_size, self.run, normalize, subtract_mean)
+        if benchmark_data:
+            self._init_dataset_(
+                validation_size,
+                fitness_size,
+                self.run,
+                normalize,
+                subtract_mean,
+                benchmark_data=True,
+                test_size=params.get("TEST_SIZE"),
+            )
+        else:
+            self._init_dataset_(
+                validation_size, fitness_size, self.run, normalize, subtract_mean
+            )
+        self.dataset._benchmark_data_loaded = benchmark_data
         self._init_model_(os.path.join(params['MODELS_DIR'], model_file))
         self._init_logs_(params)
 
@@ -136,14 +152,15 @@ class Evaluator():
         return fitness, results
     
     def evaluate_optimizer(self, optimizer):
+        optimizer_name = getattr(optimizer, "name", optimizer.__class__.__name__)
         # Open (or create) logs/mnist_log.log to track the evaluation
         with open(f"{self.log_path}/logs/run_{self.run}_{self.task_name}_log.log", "a") as f:
-            f.write(f"[{self.task_name} evaluate start]: Running optimizer {optimizer.name}\n")
+            f.write(f"[{self.task_name} evaluate start]: Running optimizer {optimizer_name}\n")
         
         # Open training log file for the evaluator, add a line with the phenotype being evaluated
         self.csv_log_file = f"{self.log_path}/csv/run_{self.run}_{self.task_name}_training_log.csv"
         with open(self.csv_log_file, "a") as f:
-            f.write(f"optimizer: {optimizer.name}\n")
+            f.write(f"optimizer: {optimizer_name}\n")
 
         # Run evaluation with the phenotype and collect results
         fitness, results = self.train_model("",

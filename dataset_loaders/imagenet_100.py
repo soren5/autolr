@@ -4,6 +4,7 @@ import tensorflow as tf
 from tensorflow import keras
 import os
 import numpy as np
+from dataset_loaders.dataset_utils import validate_benchmark_test_size
 
 class IMAGENET_100_Dataset:
     def __init__(self, validation_size=3500, fitness_size=3500, seed=0, normalize=True, subtract_mean=True, path=None):
@@ -76,7 +77,6 @@ class IMAGENET_100_Dataset:
         # Load the test set of IMAGENET_100, separately.
         # Preprocess when applicable.
         (x, y), (x_test, y_test) = self.load_data()
-
         # Preprocess the data
         x = x.astype('float32')
         x_test = x_test.astype('float32')
@@ -111,6 +111,10 @@ class IMAGENET_100_Dataset:
             x_train -= x_mean
             x_val -= x_mean
             x_test -= x_mean
+
+        validate_benchmark_test_size(
+            x_test, y_test, expected_test_size=getattr(self, "test_size", None)
+        )
 
         self.x_train = x_train
         self.y_train = y_train
