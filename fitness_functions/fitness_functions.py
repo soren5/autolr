@@ -260,6 +260,8 @@ class Optimizer_Evaluator_Multi_Task:
             print(f"WARNING: Evaluating an optimizer, if this is an evolution experiment it is compromised.")
 
         other_info = {}
+        multi_task_record = self._init_multi_task_record(params)
+        other_info['multi_task'] = multi_task_record
         evaluated_tasks = 0
         if self.fmnist_evaluator is not None:
             # Evaluate FMNIST
@@ -267,7 +269,9 @@ class Optimizer_Evaluator_Multi_Task:
             fitness = fmnist_results[0] + evaluated_tasks
             other_info['fmnist'] = fmnist_results[1]
             other_info['source'] = 'fmnist_evaluation'
+            self._record_multi_task_result(multi_task_record, 'fmnist', fmnist_results[0], params['FMNIST_THRESHOLD'])
             if fitness <= params['FMNIST_THRESHOLD'] + evaluated_tasks:
+                multi_task_record['failed_task'] = 'fmnist'
                 fitness = -fitness
                 return fitness, other_info
             evaluated_tasks += 1
@@ -277,7 +281,9 @@ class Optimizer_Evaluator_Multi_Task:
             fitness = cifar10_results[0] + evaluated_tasks
             other_info['cifar10'] = cifar10_results[1]
             other_info['source'] = 'cifar10_evaluation'
+            self._record_multi_task_result(multi_task_record, 'cifar10', cifar10_results[0], params['CIFAR10_THRESHOLD'])
             if fitness <= params['CIFAR10_THRESHOLD'] + evaluated_tasks:
+                multi_task_record['failed_task'] = 'cifar10'
                 fitness = -fitness
                 return fitness, other_info
             evaluated_tasks += 1
@@ -287,7 +293,9 @@ class Optimizer_Evaluator_Multi_Task:
             fitness = cifar100_results[0] + evaluated_tasks
             other_info['cifar100'] = cifar100_results[1]
             other_info['source'] = 'cifar100_evaluation'
+            self._record_multi_task_result(multi_task_record, 'cifar100', cifar100_results[0], params['CIFAR100_THRESHOLD'])
             if fitness <= params['CIFAR100_THRESHOLD'] + evaluated_tasks:
+                multi_task_record['failed_task'] = 'cifar100'
                 fitness = -fitness
                 return fitness, other_info
             evaluated_tasks += 1
@@ -297,7 +305,9 @@ class Optimizer_Evaluator_Multi_Task:
             fitness = tiny_imagenet_results[0] + evaluated_tasks
             other_info['tiny_imagenet'] = tiny_imagenet_results[1]
             other_info['source'] = 'tiny_imagenet_evaluation'
+            self._record_multi_task_result(multi_task_record, 'tiny_imagenet', tiny_imagenet_results[0], params['TINY_IMAGENET_THRESHOLD'])
             if fitness <= params['TINY_IMAGENET_THRESHOLD'] + evaluated_tasks:
+                multi_task_record['failed_task'] = 'tiny_imagenet'
                 fitness = -fitness
                 return fitness, other_info
             evaluated_tasks += 1
@@ -307,6 +317,34 @@ class Optimizer_Evaluator_Multi_Task:
         # Negate fitness because evolutionary algorithm is minimizing.
         fitness = -fitness
         return fitness, other_info
+
+    def _init_multi_task_record(self, params):
+        task_order = []
+        thresholds = {}
+        evaluator_thresholds = [
+            ('fmnist', self.fmnist_evaluator, 'FMNIST_THRESHOLD'),
+            ('cifar10', self.cifar10_evaluator, 'CIFAR10_THRESHOLD'),
+            ('cifar100', self.cifar100_evaluator, 'CIFAR100_THRESHOLD'),
+            ('tiny_imagenet', self.tiny_imagenet_evaluator, 'TINY_IMAGENET_THRESHOLD'),
+        ]
+        for task_name, evaluator, threshold_key in evaluator_thresholds:
+            if evaluator is not None:
+                task_order.append(task_name)
+                thresholds[task_name] = params[threshold_key]
+        return {
+            'task_order': task_order,
+            'scores': {task: None for task in task_order},
+            'thresholds': thresholds,
+            'passed': {task: None for task in task_order},
+            'reached_depth': 0,
+            'failed_task': None,
+        }
+
+    def _record_multi_task_result(self, multi_task_record, task_name, score, threshold):
+        multi_task_record['scores'][task_name] = score
+        multi_task_record['thresholds'][task_name] = threshold
+        multi_task_record['passed'][task_name] = score > threshold
+        multi_task_record['reached_depth'] += 1
 
     def init_net(self, params):
         pass
