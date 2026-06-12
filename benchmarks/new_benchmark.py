@@ -756,9 +756,9 @@ def load_task_parameters(task_name, use_test_data=False, config_dir=None):
 
     config_dir = Path(config_dir or BENCHMARK_CONFIG_DIR)
     config_name = TASK_CONFIG_NAMES[task]
-    config_paths = [config_dir / f"{config_name}_CONFIG.json"]
-    if use_test_data:
-        config_paths.append(config_dir / f"{config_name}_CONFIG_TEST.json")
+    config_paths = (
+        [config_dir / f"{config_name}_CONFIG_TEST.json"] if use_test_data else []
+    )
 
     parameters = default_params.copy()
     for config_path in config_paths:

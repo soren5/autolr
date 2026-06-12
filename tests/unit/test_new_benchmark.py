@@ -432,24 +432,24 @@ def test_cli_accepts_prebuilt_adam():
     assert not hasattr(arguments, "parameters")
 
 
-def test_load_task_parameters_uses_task_base_configuration():
+def test_load_task_parameters_without_test_data_uses_sge_defaults():
     from benchmarks.new_benchmark import load_task_parameters
+    from sge.parameters import default_params
 
     parameters = load_task_parameters("fmnist")
 
-    assert parameters["VALIDATION_SIZE"] == 3500
-    assert parameters["FITNESS_SIZE"] == 55000
-    assert parameters["EPOCHS"] == 1000
+    assert parameters == default_params
     assert "TEST_SIZE" not in parameters
 
 
-def test_load_task_parameters_applies_test_configuration_overlay():
+def test_load_task_parameters_uses_test_configuration_without_base_overlay():
     from benchmarks.new_benchmark import load_task_parameters
+    from sge.parameters import default_params
 
     parameters = load_task_parameters("tinyimagenet", use_test_data=True)
 
     assert parameters["VALIDATION_SIZE"] == 7000
-    assert parameters["FITNESS_SIZE"] == 3000
+    assert parameters["FITNESS_SIZE"] == default_params["FITNESS_SIZE"]
     assert parameters["TEST_SIZE"] == 10000
     assert parameters["BATCH_SIZE"] == 64
 
@@ -499,13 +499,14 @@ def test_main_uses_test_configuration_parameters_for_optuna(monkeypatch, tmp_pat
 
 def test_load_task_parameters_supports_mnist_configurations():
     from benchmarks.new_benchmark import load_task_parameters
+    from sge.parameters import default_params
 
     tuning_parameters = load_task_parameters("mnist")
     benchmark_parameters = load_task_parameters("mnist", use_test_data=True)
 
-    assert tuning_parameters["FITNESS_SIZE"] == 55000
+    assert tuning_parameters == default_params
     assert "TEST_SIZE" not in tuning_parameters
-    assert benchmark_parameters["FITNESS_SIZE"] == 55000
+    assert benchmark_parameters["FITNESS_SIZE"] == default_params["FITNESS_SIZE"]
     assert benchmark_parameters["TEST_SIZE"] == 10000
 
 
@@ -523,3 +524,40 @@ def test_load_task_parameters_reports_missing_test_configuration(tmp_path):
 
     with pytest.raises(FileNotFoundError, match="FMNIST_CONFIG_TEST.json"):
         load_task_parameters("fmnist", use_test_data=True, config_dir=tmp_path)
+
+
+def test_load_task_parameters_test_mode_does_not_require_base_configuration(tmp_path):
+    from benchmarks.new_benchmark import load_task_parameters
+
+    (tmp_path / "FMNIST_CONFIG_TEST.json").write_text(
+        json.dumps({"TEST_SIZE": 2, "VALIDATION_SIZE": 3})
+    )
+
+    parameters = load_task_parameters("fmnist", use_test_data=True, config_dir=tmp_path)
+
+    assert parameters["TEST_SIZE"] == 2
+    assert parameters["VALIDATION_SIZE"] == 3
+
+
+def test_evaluator_fitness_size_is_optional_only_for_benchmark_data():
+    from evaluators.evaluator_utils import Evaluator
+
+    evaluator = object.__new__(Evaluator)
+    evaluator.task_name = "test"
+    parameters = {
+        "VALIDATION_SIZE": 3,
+        "BATCH_SIZE": 2,
+        "EPOCHS": 1,
+        "PATIENCE": 1,
+        "MODEL": "unused.keras",
+        "NORMALIZE": True,
+        "SUBTRACT_MEAN": False,
+    }
+
+    parsed = evaluator.find_params(
+        None, parameters, fitness_size_required=False
+    )
+
+    assert parsed[1] is None
+    with pytest.raises(KeyError, match="FITNESS_SIZE"):
+        evaluator.find_params(None, parameters)

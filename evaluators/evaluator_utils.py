@@ -42,7 +42,11 @@ class Evaluator():
         self.task_name = task_name
         
         # Get the parameters from find_params, which will handle both single and multi-task cases
-        validation_size, fitness_size, batch_size, epochs, patience, model_file, normalize, subtract_mean = self.find_params(config_path, params)
+        validation_size, fitness_size, batch_size, epochs, patience, model_file, normalize, subtract_mean = self.find_params(
+            config_path,
+            params,
+            fitness_size_required=not benchmark_data,
+        )
         
         # Store the parameters in the object for later use
         self.batch_size = batch_size
@@ -173,7 +177,7 @@ class Evaluator():
             
         return fitness, results
 
-    def find_params(self, config_file, params):
+    def find_params(self, config_file, params, fitness_size_required=True):
         if config_file is not None:
             json_path = config_file
             with open(json_path, 'r') as f:
@@ -181,7 +185,11 @@ class Evaluator():
                 print(f"Loading parameters for {self.task_name} evaluator from config file: {json_path}")
                 fmnist_params = json.load(f)
                 validation_size = fmnist_params['VALIDATION_SIZE']
-                fitness_size = fmnist_params['FITNESS_SIZE']
+                fitness_size = (
+                    fmnist_params['FITNESS_SIZE']
+                    if fitness_size_required
+                    else fmnist_params.get('FITNESS_SIZE')
+                )
                 batch_size = fmnist_params['BATCH_SIZE']
                 epochs = fmnist_params['EPOCHS']
                 patience = fmnist_params['PATIENCE']
@@ -191,7 +199,11 @@ class Evaluator():
         else:
             print(f"Loading parameters for {self.task_name} evaluator from default parameters")
             validation_size = params['VALIDATION_SIZE']
-            fitness_size =params['FITNESS_SIZE'] 
+            fitness_size = (
+                params['FITNESS_SIZE']
+                if fitness_size_required
+                else params.get('FITNESS_SIZE')
+            )
             batch_size = params['BATCH_SIZE']
             epochs = params['EPOCHS']
             patience = params['PATIENCE']
