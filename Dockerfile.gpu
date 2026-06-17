@@ -1,0 +1,28 @@
+FROM tensorflow/tensorflow:2.9.1-gpu
+
+ENV APP_DIR=/home/autolr
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV DATA_DIR=/home/autolr/data
+ENV MODELS_DIR=/home/autolr/models
+ENV DUMPS_DIR=/home/autolr/dumps
+ENV LOGS_DIR=/home/autolr/logs
+
+WORKDIR ${APP_DIR}
+
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        git \
+        sqlite3 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements/requirements.txt /tmp/autolr-requirements.txt
+RUN python -m pip install --upgrade pip \
+    && python -m pip install --no-cache-dir -r /tmp/autolr-requirements.txt
+
+COPY . ${APP_DIR}
+
+RUN mkdir -p "${DATA_DIR}" "${MODELS_DIR}" "${DUMPS_DIR}" "${LOGS_DIR}"
+
+CMD ["python", "-m", "main", "--help"]
