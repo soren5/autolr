@@ -23,6 +23,8 @@ from utils.smart_phenotype import abstract_active_constants, materialize_constan
 DEFAULT_BENCHMARK_REPEATS = 30
 DEFAULT_SEARCH_LOW = 1e-8
 DEFAULT_SEARCH_HIGH = 1.0
+OPTUNA_HEARTBEAT_INTERVAL = 60
+OPTUNA_HEARTBEAT_GRACE_PERIOD = 300
 BENCHMARK_CONFIG_DIR = Path(__file__).resolve().parent / "benchmark_dataset_configs"
 TASK_CONFIG_NAMES = {
     "fmnist": "FMNIST",
@@ -30,6 +32,7 @@ TASK_CONFIG_NAMES = {
     "cifar10": "CIFAR10",
     "cifar100": "CIFAR100",
     "tiny_imagenet": "TINY_IMAGENET",
+    "tiny_imagenet_custom": "TINY_IMAGENET_CUSTOM",
 }
 ADAM_SEARCH_SPACE = {
     "learning_rate": {"type": "float", "low": DEFAULT_SEARCH_LOW, "high": DEFAULT_SEARCH_HIGH},
@@ -93,10 +96,18 @@ def create_task_evaluator(
             task_name="tiny_imagenet",
             benchmark_data=use_validation_data or use_test_data,
         )
+    elif task in {"tiny_imagenet_custom", "tinyimagenet_custom"}:
+        from evaluators.evaluate_tiny_imagenet_custom import TINY_IMAGENET_CUSTOM_Evaluator
+
+        evaluator = TINY_IMAGENET_CUSTOM_Evaluator(
+            parameters,
+            task_name="tiny_imagenet_custom",
+            benchmark_data=use_validation_data or use_test_data,
+        )
     else:
         raise ValueError(
             f"Unknown task {task_name!r}. Supported tasks: fmnist, mnist, cifar10, "
-            "cifar100, tiny_imagenet."
+            "cifar100, tiny_imagenet, tiny_imagenet_custom."
         )
     evaluator.assessment_split = "fitness"
     if use_validation_data:
@@ -298,18 +309,74 @@ def _json_safe(value):
 
 def _write_json(path, value):
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w") as output_file:
+    temporary_path = path.with_name(f".{path.name}.tmp")
+    with temporary_path.open("w") as output_file:
         json.dump(_json_safe(value), output_file, indent=2, sort_keys=True)
+    temporary_path.replace(path)
 
 
-def _write_study_artifacts(study, output_dir, phenotype_template, tunable_parameters):
+def _write_dataframe_csv(path, dataframe):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary_path = path.with_name(f".{path.name}.tmp")
+    dataframe.to_csv(temporary_path, index=False)
+    temporary_path.replace(path)
+
+
+def _prepare_benchmark_parameters(parameters, output_dir):
+    prepared = dict(parameters)
+    prepared["LOGS_DIR"] = str(Path(output_dir) / "logs")
+    prepared["EXPERIMENT_NAME"] = "new_benchmark"
+    return prepared
+
+
+def _create_optuna_storage(optuna, output_dir):
+    storage_path = (Path(output_dir) / "optuna_study.sqlite3").resolve()
+    return optuna.storages.RDBStorage(
+        url=f"sqlite:///{storage_path}",
+        heartbeat_interval=OPTUNA_HEARTBEAT_INTERVAL,
+        grace_period=OPTUNA_HEARTBEAT_GRACE_PERIOD,
+    )
+
+
+def _write_tuning_status(study, output_dir, requested_completed_trials):
+    state_counts = {}
+    for trial in study.trials:
+        state_counts[trial.state.name.lower()] = (
+            state_counts.get(trial.state.name.lower(), 0) + 1
+        )
+    completed_trials = state_counts.get("complete", 0)
+    status = {
+        "study_name": study.study_name,
+        "requested_completed_trials": requested_completed_trials,
+        "completed_trials": completed_trials,
+        "remaining_completed_trials": max(
+            0, requested_completed_trials - completed_trials
+        ),
+        "trial_state_counts": state_counts,
+        "total_trials": len(study.trials),
+    }
+    _write_json(Path(output_dir) / "tuning_status.json", status)
+
+
+def _write_study_artifacts(
+    study,
+    output_dir,
+    phenotype_template,
+    tunable_parameters,
+    requested_completed_trials=None,
+):
     trials_path = output_dir / "tuning_trials.csv"
-    study.trials_dataframe().to_csv(trials_path, index=False)
+    _write_dataframe_csv(trials_path, study.trials_dataframe())
+    if requested_completed_trials is not None:
+        _write_tuning_status(study, output_dir, requested_completed_trials)
+    completed_trials = [
+        trial for trial in study.trials if trial.state.name == "COMPLETE"
+    ]
+    if not completed_trials:
+        return
     best = {
         "study_name": study.study_name,
-        "completed_trials": sum(
-            trial.state.name == "COMPLETE" for trial in study.trials
-        ),
+        "completed_trials": len(completed_trials),
         "best_score": study.best_value,
         "best_parameters": study.best_params,
         "tunable_parameters": tunable_parameters,
@@ -318,14 +385,25 @@ def _write_study_artifacts(study, output_dir, phenotype_template, tunable_parame
     _write_json(output_dir / "best_tuned_phenotype.json", best)
 
 
-def _write_optimizer_study_artifacts(study, output_dir, optimizer_spec, search_space):
-    study.trials_dataframe().to_csv(output_dir / "tuning_trials.csv", index=False)
+def _write_optimizer_study_artifacts(
+    study,
+    output_dir,
+    optimizer_spec,
+    search_space,
+    requested_completed_trials=None,
+):
+    _write_dataframe_csv(output_dir / "tuning_trials.csv", study.trials_dataframe())
+    if requested_completed_trials is not None:
+        _write_tuning_status(study, output_dir, requested_completed_trials)
+    completed_trials = [
+        trial for trial in study.trials if trial.state.name == "COMPLETE"
+    ]
+    if not completed_trials:
+        return
     tuned_optimizer = materialize_optimizer(optimizer_spec, study.best_params)
     best = {
         "study_name": study.study_name,
-        "completed_trials": sum(
-            trial.state.name == "COMPLETE" for trial in study.trials
-        ),
+        "completed_trials": len(completed_trials),
         "best_score": study.best_value,
         "best_parameters": study.best_params,
         "search_space": search_space,
@@ -374,12 +452,12 @@ def tune_phenotype(
 
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
+    parameters = _prepare_benchmark_parameters(parameters, output_dir)
     phenotype_template, tunable_parameters = abstract_active_constants(phenotype)
     evaluator = evaluator or create_task_evaluator(
         task_name, parameters, use_validation_data=True
     )
-    storage_path = (output_dir / "optuna_study.sqlite3").resolve()
-    storage = f"sqlite:///{storage_path}"
+    storage = _create_optuna_storage(optuna, output_dir)
     # Load once before constructing the seeded sampler. Optuna persists trials
     # but not sampler RNG state; offsetting by the saved count avoids replaying
     # the sampler's first suggestions after a resumed seeded run.
@@ -446,9 +524,44 @@ def tune_phenotype(
         search_space=phenotype_search_space,
         remaining_trials=remaining_trials,
     )
+    artifact_callback = lambda current_study, _: _write_study_artifacts(
+        current_study,
+        output_dir,
+        phenotype_template,
+        tunable_parameters,
+        requested_completed_trials=n_trials,
+    )
+    _write_study_artifacts(
+        study,
+        output_dir,
+        phenotype_template,
+        tunable_parameters,
+        requested_completed_trials=n_trials,
+    )
     if remaining_trials:
-        study.optimize(objective, n_trials=remaining_trials, timeout=timeout)
-    _write_study_artifacts(study, output_dir, phenotype_template, tunable_parameters)
+        try:
+            study.optimize(
+                objective,
+                n_trials=remaining_trials,
+                timeout=timeout,
+                callbacks=[artifact_callback],
+            )
+        finally:
+            _write_study_artifacts(
+                study,
+                output_dir,
+                phenotype_template,
+                tunable_parameters,
+                requested_completed_trials=n_trials,
+            )
+    else:
+        _write_study_artifacts(
+            study,
+            output_dir,
+            phenotype_template,
+            tunable_parameters,
+            requested_completed_trials=n_trials,
+        )
     return study
 
 
@@ -484,6 +597,7 @@ def tune_optimizer(
 
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
+    parameters = _prepare_benchmark_parameters(parameters, output_dir)
     optimizer_spec = serialize_optimizer(optimizer)
     search_space = _json_safe(search_space or default_optimizer_search_space(optimizer))
     if not search_space:
@@ -498,8 +612,7 @@ def tune_optimizer(
     evaluator = evaluator or create_task_evaluator(
         task_name, parameters, use_validation_data=True
     )
-    storage_path = (output_dir / "optuna_study.sqlite3").resolve()
-    storage = f"sqlite:///{storage_path}"
+    storage = _create_optuna_storage(optuna, output_dir)
     study = optuna.create_study(
         study_name=study_name,
         storage=storage,
@@ -544,9 +657,44 @@ def tune_optimizer(
         search_space=search_space,
         remaining_trials=remaining_trials,
     )
+    artifact_callback = lambda current_study, _: _write_optimizer_study_artifacts(
+        current_study,
+        output_dir,
+        optimizer_spec,
+        search_space,
+        requested_completed_trials=n_trials,
+    )
+    _write_optimizer_study_artifacts(
+        study,
+        output_dir,
+        optimizer_spec,
+        search_space,
+        requested_completed_trials=n_trials,
+    )
     if remaining_trials:
-        study.optimize(objective, n_trials=remaining_trials, timeout=timeout)
-    _write_optimizer_study_artifacts(study, output_dir, optimizer_spec, search_space)
+        try:
+            study.optimize(
+                objective,
+                n_trials=remaining_trials,
+                timeout=timeout,
+                callbacks=[artifact_callback],
+            )
+        finally:
+            _write_optimizer_study_artifacts(
+                study,
+                output_dir,
+                optimizer_spec,
+                search_space,
+                requested_completed_trials=n_trials,
+            )
+    else:
+        _write_optimizer_study_artifacts(
+            study,
+            output_dir,
+            optimizer_spec,
+            search_space,
+            requested_completed_trials=n_trials,
+        )
     return study
 
 
@@ -569,6 +717,7 @@ def benchmark_best_phenotype(
 
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
+    parameters = _prepare_benchmark_parameters(parameters, output_dir)
     results_path = output_dir / "benchmark_runs.jsonl"
     manifest_path = output_dir / "benchmark_manifest.json"
     phenotype_template = study.user_attrs["phenotype_template"]
@@ -600,6 +749,17 @@ def benchmark_best_phenotype(
             f"{results_path} already contains {len(existing_results)} runs, "
             f"more than the requested {repeats}"
         )
+    summary_fields = {
+        "task_name": task_name,
+        "assessment_split": "test",
+        "study_name": study.study_name,
+        "best_tuning_score": study.best_value,
+        "best_parameters": study.best_params,
+        "phenotype": phenotype,
+    }
+    _write_benchmark_artifacts(
+        output_dir, existing_results[:repeats], repeats, summary_fields
+    )
 
     if evaluator is None:
         evaluator = create_task_evaluator(task_name, parameters, use_test_data=True)
@@ -621,24 +781,19 @@ def benchmark_best_phenotype(
             results_file.write(json.dumps(record, sort_keys=True) + "\n")
             results_file.flush()
             existing_results.append(record)
+            _write_benchmark_artifacts(
+                output_dir,
+                existing_results[:repeats],
+                repeats,
+                summary_fields,
+            )
 
-    scores = [float(record["score"]) for record in existing_results[:repeats]]
-    summary = {
-        "task_name": task_name,
-        "assessment_split": "test",
-        "study_name": study.study_name,
-        "best_tuning_score": study.best_value,
-        "best_parameters": study.best_params,
-        "phenotype": phenotype,
-        "runs": len(scores),
-        "mean_score": sum(scores) / len(scores),
-        "min_score": min(scores),
-        "max_score": max(scores),
-        "scores": scores,
-    }
-    _write_json(output_dir / "benchmark_summary.json", summary)
-    _write_benchmark_csv(output_dir / "benchmark_runs.csv", existing_results[:repeats])
-    return summary
+    return _write_benchmark_artifacts(
+        output_dir,
+        existing_results[:repeats],
+        repeats,
+        summary_fields,
+    )
 
 
 def benchmark_best_optimizer(
@@ -656,6 +811,7 @@ def benchmark_best_optimizer(
 
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
+    parameters = _prepare_benchmark_parameters(parameters, output_dir)
     results_path = output_dir / "benchmark_runs.jsonl"
     manifest_path = output_dir / "benchmark_manifest.json"
     optimizer_spec = study.user_attrs["optimizer_spec"]
@@ -689,6 +845,17 @@ def benchmark_best_optimizer(
             f"{results_path} already contains {len(existing_results)} runs, "
             f"more than the requested {repeats}"
         )
+    summary_fields = {
+        "task_name": task_name,
+        "assessment_split": "test",
+        "study_name": study.study_name,
+        "best_tuning_score": study.best_value,
+        "best_parameters": study.best_params,
+        "optimizer": tuned_spec,
+    }
+    _write_benchmark_artifacts(
+        output_dir, existing_results[:repeats], repeats, summary_fields
+    )
 
     if evaluator is None:
         evaluator = create_task_evaluator(task_name, parameters, use_test_data=True)
@@ -710,33 +877,50 @@ def benchmark_best_optimizer(
             results_file.write(json.dumps(record, sort_keys=True) + "\n")
             results_file.flush()
             existing_results.append(record)
+            _write_benchmark_artifacts(
+                output_dir,
+                existing_results[:repeats],
+                repeats,
+                summary_fields,
+            )
 
-    scores = [float(record["score"]) for record in existing_results[:repeats]]
-    summary = {
-        "task_name": task_name,
-        "assessment_split": "test",
-        "study_name": study.study_name,
-        "best_tuning_score": study.best_value,
-        "best_parameters": study.best_params,
-        "optimizer": tuned_spec,
-        "runs": len(scores),
-        "mean_score": sum(scores) / len(scores),
-        "min_score": min(scores),
-        "max_score": max(scores),
-        "scores": scores,
-    }
-    _write_json(output_dir / "benchmark_summary.json", summary)
-    _write_benchmark_csv(output_dir / "benchmark_runs.csv", existing_results[:repeats])
+    return _write_benchmark_artifacts(
+        output_dir,
+        existing_results[:repeats],
+        repeats,
+        summary_fields,
+    )
+
+
+def _write_benchmark_artifacts(output_dir, records, requested_runs, summary_fields):
+    scores = [float(record["score"]) for record in records]
+    summary = dict(summary_fields)
+    summary.update(
+        {
+            "requested_runs": requested_runs,
+            "runs": len(scores),
+            "complete": len(scores) >= requested_runs,
+            "mean_score": sum(scores) / len(scores) if scores else None,
+            "min_score": min(scores) if scores else None,
+            "max_score": max(scores) if scores else None,
+            "scores": scores,
+        }
+    )
+    _write_json(Path(output_dir) / "benchmark_summary.json", summary)
+    _write_benchmark_csv(Path(output_dir) / "benchmark_runs.csv", records)
     return summary
 
 
 def _write_benchmark_csv(path, records):
-    with path.open("w", newline="") as csv_file:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary_path = path.with_name(f".{path.name}.tmp")
+    with temporary_path.open("w", newline="") as csv_file:
         writer = csv.DictWriter(csv_file, fieldnames=["run", "score"])
         writer.writeheader()
         writer.writerows(
             {"run": record["run"], "score": record["score"]} for record in records
         )
+    temporary_path.replace(path)
 
 
 def load_task_parameters(task_name, use_test_data=False, config_dir=None):
@@ -747,6 +931,8 @@ def load_task_parameters(task_name, use_test_data=False, config_dir=None):
     task = task_name.lower().replace("-", "_")
     if task == "tinyimagenet":
         task = "tiny_imagenet"
+    if task == "tinyimagenet_custom":
+        task = "tiny_imagenet_custom"
     if task not in TASK_CONFIG_NAMES:
         supported = ", ".join(sorted(TASK_CONFIG_NAMES))
         raise ValueError(

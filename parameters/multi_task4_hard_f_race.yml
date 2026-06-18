@@ -13,8 +13,8 @@ MULTI_TASK: True
 FMNIST_CONFIG: 'parameters/dataset_parameters/FMNIST_CONFIG.json'
 CIFAR10_CONFIG: 'parameters/dataset_parameters/CIFAR10_CONFIG.json'
 CIFAR100_CONFIG: 'parameters/dataset_parameters/CIFAR100_CONFIG.json' 
-TINY_IMAGENET_CONFIG: 'parameters/dataset_parameters/TINY_IMAGENET_CONFIG.json'
-FMNIST_THRESHOLD: 0.84 #These are not real values, just estimated, need to run tests to 
+TINY_IMAGENET_CUSTOM_CONFIG: 'parameters/dataset_parameters/TINY_IMAGENET_CUSTOM_CONFIG.json'
+FMNIST_THRESHOLD: 0.84
 CIFAR10_THRESHOLD: 0.80
 CIFAR100_THRESHOLD: 0.61
 RACING: True

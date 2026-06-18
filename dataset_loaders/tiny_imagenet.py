@@ -1,16 +1,13 @@
 from sklearn.model_selection import train_test_split
 from tensorflow.keras import backend as K
-import tensorflow as tf
-from tensorflow import keras
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from models.keras_model_adapters.resnet_adapter import ResNet_Interface
 from dataset_loaders.dataset_utils import validate_benchmark_test_size
+
 
 class TINY_IMAGENET_Dataset:
     def __init__(self, validation_size=3500, fitness_size=3500, seed=0, normalize=True, subtract_mean=True, path=None):
-        # Tensorflow does not give us y in one-hot encoding, so we need to convert it ourselves
         self.n_classes = 200
         self.validation_size = validation_size
         self.fitness_size = fitness_size
@@ -24,30 +21,18 @@ class TINY_IMAGENET_Dataset:
         else:
             self.path = path
 
-
     def load_data_for_evolution(self):
-        # TINY_IMAGENET dataset is not available in Keras, so we use our own implementation to load it.
-
-        # Load the TINY_IMAGENET dataset, split it into training, validation and fitness sets, and preprocess when applicable.
-        # TINY_IMAGENET test set is not used in the evolution, it is only used in the final benchmark evaluation, so we can ignore it here.
         (x, y), (_, _) = self.load_data()
 
-        # Preprocess the data
         x = x.astype('float32')
-
-        # Normalize the data to [0, 1] range if specified in the parameters
         if self.normalize:
             x /= 255
 
-        # Ensure data follows the correct shape for Keras
         if K.image_data_format() == 'channels_first':
             x = x.reshape(x.shape[0], self.channels, self.img_rows, self.img_cols)
         else:
             x = x.reshape(x.shape[0], self.img_rows, self.img_cols, self.channels)
-        
-        # We do not do one-hot encoding as it is handled inside "self.load_data"
 
-        # Split the data into training, validation and fitness sets using stratified sampling to maintain class distribution
         x_train, x_val, y_train, y_val = train_test_split(x, y,
                                                         test_size=self.validation_size + self.fitness_size,
                                                         stratify=y,
@@ -57,7 +42,6 @@ class TINY_IMAGENET_Dataset:
                                                         stratify=y_val,
                                                         random_state=self.seed)
 
-        # Subtract the mean image from the data if specified in the parameters
         if self.subtract_mean:
             x_mean = 0
             for x in x_train:
@@ -67,45 +51,34 @@ class TINY_IMAGENET_Dataset:
             x_val -= x_mean
             x_fit -= x_mean
 
-        #len(x_train) 245224 len(x_val) 7000 len(x_fit) 3000
         self.x_train = x_train
         self.y_train = y_train
         self.x_val = x_val
         self.y_val = y_val
         self.x_fit = x_fit
         self.y_fit = y_fit
-    
+
     def load_data_for_benchmark(self):
-        # Load the TINY_IMAGENET dataset, split it into training, validation sets.
-        # Load the test set of TINY_IMAGENET, separately.
-        # Preprocess when applicable.
         (x, y), (x_test, y_test) = self.load_data()
-        # Preprocess the data
+
         x = x.astype('float32')
         x_test = x_test.astype('float32')
-
-        # Normalize the data to [0, 1] range if specified in the parameters
         if self.normalize:
             x /= 255
             x_test /= 255
 
-        # Ensure data follows the correct shape for Keras
         if K.image_data_format() == 'channels_first':
             x = x.reshape(x.shape[0], self.channels, self.img_rows, self.img_cols)
             x_test = x_test.reshape(x_test.shape[0], self.channels, self.img_rows, self.img_cols)
         else:
             x = x.reshape(x.shape[0], self.img_rows, self.img_cols, self.channels)
             x_test = x_test.reshape(x_test.shape[0], self.img_rows, self.img_cols, self.channels)
-        
-        # We do not do one-hot encoding as it is handled inside "self.load_data"
 
-        # Split the data into training, validation sets using stratified sampling to maintain class distribution
         x_train, x_val, y_train, y_val = train_test_split(x, y,
                                                         test_size=self.validation_size,
                                                         stratify=y,
                                                         random_state=self.seed)
 
-        # Subtract the mean image from the data if specified in the parameters
         if self.subtract_mean:
             x_mean = 0
             for x in x_train:
@@ -125,57 +98,99 @@ class TINY_IMAGENET_Dataset:
         self.y_val = y_val
         self.x_test = x_test
         self.y_test = y_test
-    
+
     def load_data(self):
-        # This expects the TINY_IMAGENET dataset to be in a data directory, in a folder called tiny_imagenet, with the following structure:
-        # By default, self.path = 'data/tiny_imagenet'
-        # tiny_imagenet/train/class_x/xxx.JPEG
-        # tiny_imagenet/val/class_x/xxx.JPEG
-        # where class_x is the name of the class, and xxx.JPEG is the name
-        # The directory should be specified using self.path which is set in the constructor.
-
-        training_path = os.path.join(self.path, 'train')
-        validation_path = os.path.join(self.path, 'val')
-
-
-        # We need to load from two directories so let's create a helper function to load the data from a directory
-        def load_data_from_directory(path):
-            # Get the list of class directories
-            class_dirs = [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
-            # Initialize lists to store data
-            x = []
-            y = []
-            class_index = {}
-
-            # Loop through each class directory
-            for i, class_dir in enumerate(class_dirs):
-                class_index[class_dir] = i
-                class_path = os.path.join(path, class_dir)
-                # Get the list of image files in the class directory
-                image_files = [f for f in os.listdir(class_path) if f.endswith('.JPEG')]
-                
-                # Loop through each image file and store the data
-                for image_file in image_files:
-                    # Load image file and convert to numpy array
-                    image_path = os.path.join(class_path, image_file)
-                    image = plt.imread(image_path)
-                    x.append(image)
-
-                    # Turn class into binary vector where class_index[class_dir] is 1 and the rest are 0
-
-                    y_vector = np.zeros(len(class_dirs))
-                    y_vector[class_index[class_dir]] = 1
-                    y.append(y_vector)
-
-            # Create a numpy data set from the collected data
-            return np.array(x), np.array(y)
-        
-        # I could not find labelled test set for this dataset.
-        # We use "TINY_IMAGENET Training" for evolution data: training, validation and fitness sets.
-        # We use "TINY_IMAGENET Validation" for benchmark data: test set.
-
-        x, y = load_data_from_directory(training_path)
-        x_test, y_test = load_data_from_directory(validation_path)
-
-        # Return in the same form as keras datasets to keep it neat and consistent with the rest of the codebase
+        class_names = self._load_class_names()
+        x, y = self._load_training_data(class_names)
+        x_test, y_test = self._load_validation_data(class_names)
         return (x, y), (x_test, y_test)
+
+    def _load_class_names(self):
+        metadata_wnids = os.path.join(self.path, 'metadata', 'wnids.txt')
+        root_wnids = os.path.join(self.path, 'wnids.txt')
+        if os.path.isfile(metadata_wnids):
+            wnids_path = metadata_wnids
+        elif os.path.isfile(root_wnids):
+            wnids_path = root_wnids
+        else:
+            train_path = os.path.join(self.path, 'train')
+            return sorted(
+                d for d in os.listdir(train_path)
+                if os.path.isdir(os.path.join(train_path, d))
+            )
+
+        with open(wnids_path) as wnids_file:
+            return [line.strip() for line in wnids_file if line.strip()]
+
+    def _one_hot(self, class_name, class_index):
+        y_vector = np.zeros(len(class_index))
+        y_vector[class_index[class_name]] = 1
+        return y_vector
+
+    def _load_training_data(self, class_names):
+        train_path = os.path.join(self.path, 'train')
+        class_index = {class_name: i for i, class_name in enumerate(class_names)}
+        x = []
+        y = []
+
+        for class_name in class_names:
+            class_path = os.path.join(train_path, class_name)
+            images_path = os.path.join(class_path, 'images')
+            if os.path.isdir(images_path):
+                class_path = images_path
+            for image_file in sorted(os.listdir(class_path)):
+                if not image_file.endswith('.JPEG'):
+                    continue
+                image = plt.imread(os.path.join(class_path, image_file))
+                x.append(image)
+                y.append(self._one_hot(class_name, class_index))
+
+        return np.array(x), np.array(y)
+
+    def _load_validation_data(self, class_names):
+        val_path = os.path.join(self.path, 'val')
+        canonical_images_path = os.path.join(val_path, 'images')
+        class_index = {class_name: i for i, class_name in enumerate(class_names)}
+        x = []
+        y = []
+
+        if os.path.isdir(canonical_images_path):
+            annotations = self._load_val_annotations()
+            for image_file in sorted(os.listdir(canonical_images_path)):
+                if not image_file.endswith('.JPEG'):
+                    continue
+                class_name = annotations[image_file]
+                image = plt.imread(os.path.join(canonical_images_path, image_file))
+                x.append(image)
+                y.append(self._one_hot(class_name, class_index))
+        else:
+            for class_name in class_names:
+                class_path = os.path.join(val_path, class_name)
+                if not os.path.isdir(class_path):
+                    continue
+                for image_file in sorted(os.listdir(class_path)):
+                    if not image_file.endswith('.JPEG'):
+                        continue
+                    image = plt.imread(os.path.join(class_path, image_file))
+                    x.append(image)
+                    y.append(self._one_hot(class_name, class_index))
+
+        return np.array(x), np.array(y)
+
+    def _load_val_annotations(self):
+        annotation_paths = [
+            os.path.join(self.path, 'metadata', 'val_annotations.txt'),
+            os.path.join(self.path, 'val', 'val_annotations.txt'),
+        ]
+        for annotation_path in annotation_paths:
+            if os.path.isfile(annotation_path):
+                annotations = {}
+                with open(annotation_path) as annotations_file:
+                    for line in annotations_file:
+                        parts = line.strip().split('\t')
+                        if len(parts) >= 2:
+                            annotations[parts[0]] = parts[1]
+                return annotations
+        raise FileNotFoundError(
+            f"Could not find Tiny ImageNet validation annotations under {self.path}"
+        )

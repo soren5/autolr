@@ -1,0 +1,10 @@
+{
+    "VALIDATION_SIZE": 7000,
+    "TEST_SIZE": 10000,
+    "BATCH_SIZE": 64,
+    "EPOCHS": 1000,
+    "PATIENCE": 1001,
+    "MODEL": "resnet",
+    "NORMALIZE": true,
+    "SUBTRACT_MEAN": true
+}

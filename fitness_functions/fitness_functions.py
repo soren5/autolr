@@ -9,8 +9,12 @@ class Optimizer_Evaluator_Tensorflow:
                 from evaluators.evaluate_cifar10 import CIFAR10_Evaluator
                 evaluator = CIFAR10_Evaluator(params)
             elif 'resnet' in params['MODEL']:
-                from evaluators.evaluate_tiny_imagenet import TINY_IMAGENET_Evaluator
-                evaluator = TINY_IMAGENET_Evaluator(params)
+                if 'TINY_IMAGENET_CUSTOM_CONFIG' in params:
+                    from evaluators.evaluate_tiny_imagenet_custom import TINY_IMAGENET_CUSTOM_Evaluator
+                    evaluator = TINY_IMAGENET_CUSTOM_Evaluator(params)
+                else:
+                    from evaluators.evaluate_tiny_imagenet import TINY_IMAGENET_Evaluator
+                    evaluator = TINY_IMAGENET_Evaluator(params)
             elif 'mnist' in params['MODEL']:
                 from evaluators.evaluate_fmnist import FMNIST_Evaluator
                 evaluator = FMNIST_Evaluator(params)
@@ -214,10 +218,28 @@ class Optimizer_Evaluator_Torch:
         return -value, other_info
     def init_evaluation(self, params):
         pass
+def _create_tiny_imagenet_evaluator(params):
+    if 'TINY_IMAGENET_CUSTOM_CONFIG' in params:
+        from evaluators.evaluate_tiny_imagenet_custom import TINY_IMAGENET_CUSTOM_Evaluator
+        return TINY_IMAGENET_CUSTOM_Evaluator(
+            params,
+            configuration_file='TINY_IMAGENET_CUSTOM_CONFIG',
+            task_name='tiny_imagenet_custom',
+        )
+    if 'TINY_IMAGENET_CONFIG' in params:
+        from evaluators.evaluate_tiny_imagenet import TINY_IMAGENET_Evaluator
+        return TINY_IMAGENET_Evaluator(
+            params,
+            configuration_file='TINY_IMAGENET_CONFIG',
+            task_name='tiny_imagenet',
+        )
+    return None
+
+
 class Optimizer_Evaluator_Multi_Task:
     def __init__(self, params):  #should give a function 
         # The tasks included are determined by which configurations are loaded in the parameters
-        task_configs = ['FMNIST_CONFIG', 'CIFAR10_CONFIG', 'CIFAR100_CONFIG', 'TINY_IMAGENET_CONFIG']
+        task_configs = ['FMNIST_CONFIG', 'CIFAR10_CONFIG', 'CIFAR100_CONFIG', 'TINY_IMAGENET_CONFIG', 'TINY_IMAGENET_CUSTOM_CONFIG']
         
         if 'FMNIST_CONFIG' in params:    
             from evaluators.evaluate_fmnist import FMNIST_Evaluator
@@ -240,11 +262,9 @@ class Optimizer_Evaluator_Multi_Task:
             print("WARNING: CIFAR100_CONFIG not found in params, skipping CIFAR100 evaluation.")
             self.cifar100_evaluator = None
         
-        if 'TINY_IMAGENET_CONFIG' in params:
-            from evaluators.evaluate_tiny_imagenet import TINY_IMAGENET_Evaluator
-            self.tiny_imagenet_evaluator = TINY_IMAGENET_Evaluator(params, configuration_file='TINY_IMAGENET_CONFIG', task_name='tiny_imagenet')
-        else:
-            print("WARNING: TINY_IMAGENET_CONFIG not found in params, skipping Tiny Imagenet evaluation.")
+        self.tiny_imagenet_evaluator = _create_tiny_imagenet_evaluator(params)
+        if self.tiny_imagenet_evaluator is None:
+            print("WARNING: TINY_IMAGENET_CONFIG/TINY_IMAGENET_CUSTOM_CONFIG not found in params, skipping Tiny Imagenet evaluation.")
             self.tiny_imagenet_evaluator = None
 
 
@@ -364,8 +384,9 @@ class Optimizer_Evaluator_FMNIST_CIFAR10_CIFAR100_TIN():
         from evaluators.evaluate_cifar100 import CIFAR100_Evaluator
         self.cifar100_evaluator = CIFAR100_Evaluator(params, configuration_file='CIFAR100_CONFIG', task_name='cifar100')
 
-        from evaluators.evaluate_tiny_imagenet import TINY_IMAGENET_Evaluator
-        self.tiny_imagenet_evaluator = TINY_IMAGENET_Evaluator(params, configuration_file='TINY_IMAGENET_CONFIG', task_name='tiny_imagenet')
+        self.tiny_imagenet_evaluator = _create_tiny_imagenet_evaluator(params)
+        if self.tiny_imagenet_evaluator is None:
+            raise Exception('TINY_IMAGENET_CONFIG or TINY_IMAGENET_CUSTOM_CONFIG is required')
     
     def evaluate(self, phen, params, opt=None):
         #print(f"\n\n\nTesting phenotype {smart_phenotype(phen)}:\n{readable_phenotype(phen)}")

@@ -64,6 +64,16 @@ class FixedOptimizerEvaluator:
         return score, {"test_score": score}
 
 
+class InterruptingOptimizerEvaluator(FixedOptimizerEvaluator):
+    def __init__(self, first_score):
+        super().__init__([first_score])
+
+    def evaluate_optimizer(self, optimizer):
+        if self.optimizers:
+            raise RuntimeError("simulated interruption")
+        return super().evaluate_optimizer(optimizer)
+
+
 class NamelessOptimizer:
     pass
 
@@ -274,6 +284,88 @@ def test_tune_prebuilt_adam_uses_fresh_optimizer_per_trial(tmp_path):
     assert (tmp_path / "best_tuned_optimizer.json").is_file()
 
 
+def test_tuning_artifacts_survive_a_later_failed_trial(tmp_path):
+    from tensorflow.keras.optimizers import Adam
+
+    from benchmarks.new_benchmark import tune_optimizer
+
+    with pytest.raises(RuntimeError, match="simulated interruption"):
+        tune_optimizer(
+            optimizer=Adam(),
+            task_name="fmnist",
+            parameters={},
+            n_trials=2,
+            output_dir=tmp_path,
+            search_space={
+                "learning_rate": {
+                    "type": "float",
+                    "low": 1e-4,
+                    "high": 1e-2,
+                    "log": True,
+                }
+            },
+            study_name="interrupted-tuning",
+            evaluator=InterruptingOptimizerEvaluator(0.4),
+            seed=2,
+        )
+
+    status = json.loads((tmp_path / "tuning_status.json").read_text())
+    best = json.loads((tmp_path / "best_tuned_optimizer.json").read_text())
+
+    assert status["completed_trials"] == 1
+    assert status["remaining_completed_trials"] == 1
+    assert status["trial_state_counts"]["fail"] == 1
+    assert best["best_score"] == pytest.approx(0.4)
+    assert (tmp_path / "tuning_trials.csv").is_file()
+
+
+def test_benchmark_artifacts_survive_a_later_failed_repetition(tmp_path):
+    from tensorflow.keras.optimizers import Adam
+
+    from benchmarks.new_benchmark import (
+        benchmark_best_optimizer,
+        serialize_optimizer,
+    )
+
+    optimizer_spec = serialize_optimizer(Adam())
+    study = SimpleNamespace(
+        study_name="interrupted-benchmark",
+        best_value=0.8,
+        best_params={"learning_rate": 0.01},
+        user_attrs={"optimizer_spec": optimizer_spec},
+    )
+
+    with pytest.raises(RuntimeError, match="simulated interruption"):
+        benchmark_best_optimizer(
+            study,
+            "fmnist",
+            {},
+            tmp_path,
+            repeats=2,
+            evaluator=InterruptingOptimizerEvaluator(0.6),
+        )
+
+    summary = json.loads((tmp_path / "benchmark_summary.json").read_text())
+
+    assert summary["runs"] == 1
+    assert summary["requested_runs"] == 2
+    assert summary["complete"] is False
+    assert summary["scores"] == [pytest.approx(0.6)]
+    assert (tmp_path / "benchmark_runs.csv").is_file()
+
+
+def test_benchmark_parameters_put_evaluator_logs_under_output_directory(tmp_path):
+    from benchmarks.new_benchmark import _prepare_benchmark_parameters
+
+    original = {"LOGS_DIR": "logs", "EXPERIMENT_NAME": "example"}
+
+    prepared = _prepare_benchmark_parameters(original, tmp_path)
+
+    assert prepared["LOGS_DIR"] == str(tmp_path / "logs")
+    assert prepared["EXPERIMENT_NAME"] == "new_benchmark"
+    assert original == {"LOGS_DIR": "logs", "EXPERIMENT_NAME": "example"}
+
+
 def test_default_probe_must_be_inside_search_space(tmp_path):
     from tensorflow.keras.optimizers import Adam
 
@@ -452,6 +544,15 @@ def test_load_task_parameters_uses_test_configuration_without_base_overlay():
     assert parameters["FITNESS_SIZE"] == default_params["FITNESS_SIZE"]
     assert parameters["TEST_SIZE"] == 10000
     assert parameters["BATCH_SIZE"] == 64
+
+
+def test_load_task_parameters_supports_custom_tiny_imagenet_configuration():
+    from benchmarks.new_benchmark import load_task_parameters
+
+    parameters = load_task_parameters("tiny_imagenet_custom", use_test_data=True)
+
+    assert parameters["TEST_SIZE"] == 10000
+    assert parameters["MODEL"] == "resnet"
 
 
 def test_optuna_parameter_loading_uses_test_configuration_overlay():

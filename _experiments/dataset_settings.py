@@ -4,7 +4,7 @@ from itertools import product
 import yaml
 from evaluators.evaluate_fmnist import FMNIST_Evaluator
 from evaluators.evaluate_cifar10 import CIFAR10_Evaluator
-from evaluators.evaluate_tiny_imagenet import TINY_IMAGENET_Evaluator
+from evaluators.evaluate_tiny_imagenet_custom import TINY_IMAGENET_CUSTOM_Evaluator
 from evaluators.evaluate_cifar100 import CIFAR100_Evaluator
 from sge.parameters import reset_parameters, manual_load_parameters, params
 from tensorflow.keras.optimizers import Adam
@@ -38,15 +38,15 @@ def main(i):
                     params['FMNIST_CONFIG'] = 'parameters/dataset_parameters/FMNIST_CONFIG.json'
                     params['CIFAR10_CONFIG'] = 'parameters/dataset_parameters/CIFAR10_CONFIG.json'
                     params['CIFAR100_CONFIG'] = 'parameters/dataset_parameters/CIFAR100_CONFIG.json'
-                    params['TINY_IMAGENET_CONFIG'] = 'parameters/dataset_parameters/TINY_IMAGENET_CONFIG.json'
+                    params['TINY_IMAGENET_CUSTOM_CONFIG'] = 'parameters/dataset_parameters/TINY_IMAGENET_CUSTOM_CONFIG.json'
                 else:
                     params['FMNIST_CONFIG'] = 'parameters/dataset_parameters/FMNIST_CONFIG_all_false.json'
                     params['CIFAR10_CONFIG'] = 'parameters/dataset_parameters/CIFAR10_CONFIG_all_false.json'
-                    params['TINY_IMAGENET_CONFIG'] = 'parameters/dataset_parameters/TINY_IMAGENET_CONFIG_all_false.json'
+                    params['TINY_IMAGENET_CUSTOM_CONFIG'] = 'parameters/dataset_parameters/TINY_IMAGENET_CONFIG_all_false.json'
 
                 print(params)
                 if config['task'] == 'Tiny-Imagenet':
-                    evaluator = TINY_IMAGENET_Evaluator(params, task_name=f"{config['task'].lower()}_{config['pre_process']}")
+                    evaluator = TINY_IMAGENET_CUSTOM_Evaluator(params, task_name=f"{config['task'].lower()}_{config['pre_process']}")
                 elif config['task'] == 'CIFAR100':
                     evaluator = CIFAR100_Evaluator(params, task_name=f"{config['task'].lower()}_{config['pre_process']}")
                 elif config['task'] == 'CIFAR10':
@@ -66,4 +66,4 @@ if __name__ == '__main__':
         i = int(sys.argv[1])
     else:        
         i = 0
-    main(i) 
+    main(i)

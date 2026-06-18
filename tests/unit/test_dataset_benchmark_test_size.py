@@ -11,6 +11,7 @@ BENCHMARK_DATASET_LOADERS = [
     "dataset_loaders/cifar10.py",
     "dataset_loaders/cifar100.py",
     "dataset_loaders/tiny_imagenet.py",
+    "dataset_loaders/tiny_imagenet_custom.py",
     "dataset_loaders/imagenet_100.py",
 ]
 
