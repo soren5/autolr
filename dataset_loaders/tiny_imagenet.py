@@ -127,6 +127,20 @@ class TINY_IMAGENET_Dataset:
         y_vector[class_index[class_name]] = 1
         return y_vector
 
+    def _load_image(self, image_path):
+        image = plt.imread(image_path)
+        image = np.asarray(image)
+        if image.ndim == 2:
+            image = np.stack([image, image, image], axis=-1)
+        elif image.ndim == 3 and image.shape[-1] == 4:
+            image = image[..., :3]
+        if image.shape != (self.img_rows, self.img_cols, self.channels):
+            raise ValueError(
+                f"Expected Tiny ImageNet image {image_path} to have shape "
+                f"({self.img_rows}, {self.img_cols}, {self.channels}), got {image.shape}"
+            )
+        return image
+
     def _load_training_data(self, class_names):
         train_path = os.path.join(self.path, 'train')
         class_index = {class_name: i for i, class_name in enumerate(class_names)}
@@ -141,7 +155,7 @@ class TINY_IMAGENET_Dataset:
             for image_file in sorted(os.listdir(class_path)):
                 if not image_file.endswith('.JPEG'):
                     continue
-                image = plt.imread(os.path.join(class_path, image_file))
+                image = self._load_image(os.path.join(class_path, image_file))
                 x.append(image)
                 y.append(self._one_hot(class_name, class_index))
 
@@ -160,7 +174,7 @@ class TINY_IMAGENET_Dataset:
                 if not image_file.endswith('.JPEG'):
                     continue
                 class_name = annotations[image_file]
-                image = plt.imread(os.path.join(canonical_images_path, image_file))
+                image = self._load_image(os.path.join(canonical_images_path, image_file))
                 x.append(image)
                 y.append(self._one_hot(class_name, class_index))
         else:
@@ -171,7 +185,7 @@ class TINY_IMAGENET_Dataset:
                 for image_file in sorted(os.listdir(class_path)):
                     if not image_file.endswith('.JPEG'):
                         continue
-                    image = plt.imread(os.path.join(class_path, image_file))
+                    image = self._load_image(os.path.join(class_path, image_file))
                     x.append(image)
                     y.append(self._one_hot(class_name, class_index))
 

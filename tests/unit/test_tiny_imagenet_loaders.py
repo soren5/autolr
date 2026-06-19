@@ -19,11 +19,15 @@ def test_canonical_tiny_imagenet_loader_reads_stanford_layout(tmp_path, monkeypa
     (dataset_root / "val" / "images" / "val_0.JPEG").write_text("")
     (dataset_root / "val" / "images" / "val_1.JPEG").write_text("")
 
-    monkeypatch.setattr(
-        tiny_imagenet.plt,
-        "imread",
-        lambda path: np.zeros((64, 64, 3), dtype=np.uint8),
-    )
+    def fake_imread(path):
+        path = str(path)
+        if path.endswith("train_0.JPEG"):
+            return np.zeros((64, 64), dtype=np.uint8)
+        if path.endswith("val_0.JPEG"):
+            return np.zeros((64, 64, 4), dtype=np.uint8)
+        return np.zeros((64, 64, 3), dtype=np.uint8)
+
+    monkeypatch.setattr(tiny_imagenet.plt, "imread", fake_imread)
 
     (x, y), (x_test, y_test) = TINY_IMAGENET_Dataset(path=str(dataset_root)).load_data()
 
