@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 
 def test_smoke_runner_defaults_are_small():
-    from benchmarks.run_new_benchmark_smoke import parse_args
+    from benchmarks.run_benchmark_smoke import parse_args
 
     arguments = parse_args([])
 
@@ -16,7 +16,7 @@ def test_smoke_runner_defaults_are_small():
 
 
 def test_smoke_parameters_use_test_configuration_without_resource_overrides(tmp_path):
-    from benchmarks.run_new_benchmark_smoke import smoke_parameters
+    from benchmarks.run_benchmark_smoke import smoke_parameters
 
     parameters = smoke_parameters("mnist", tmp_path)
 
@@ -31,7 +31,7 @@ def test_smoke_parameters_use_test_configuration_without_resource_overrides(tmp_
 
 
 def test_smoke_runner_executes_both_subjects(monkeypatch, tmp_path):
-    import benchmarks.run_new_benchmark_smoke as smoke
+    import benchmarks.run_benchmark_smoke as smoke
 
     calls = []
     study = SimpleNamespace()

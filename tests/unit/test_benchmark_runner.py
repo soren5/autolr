@@ -100,7 +100,7 @@ def test_materialize_phenotype_replaces_active_constant():
 
 
 def test_benchmark_best_phenotype_resumes_and_writes_summary(tmp_path):
-    from benchmarks.new_benchmark import benchmark_best_phenotype
+    from benchmarks.benchmark_runner import benchmark_best_phenotype
     from utils.smart_phenotype import abstract_active_constants, materialize_constants
 
     template, _ = abstract_active_constants(BASIC_PHENOTYPE)
@@ -147,7 +147,7 @@ def test_benchmark_best_phenotype_resumes_and_writes_summary(tmp_path):
 
 
 def test_benchmark_rejects_results_from_a_different_best_phenotype(tmp_path):
-    from benchmarks.new_benchmark import benchmark_best_phenotype
+    from benchmarks.benchmark_runner import benchmark_best_phenotype
     from utils.smart_phenotype import abstract_active_constants
 
     template, _ = abstract_active_constants(BASIC_PHENOTYPE)
@@ -173,7 +173,7 @@ def test_benchmark_rejects_results_from_a_different_best_phenotype(tmp_path):
 
 
 def test_tuning_resumes_sqlite_study_to_requested_total_trials(tmp_path):
-    from benchmarks.new_benchmark import tune_phenotype
+    from benchmarks.benchmark_runner import tune_phenotype
 
     first_evaluator = FixedEvaluator([0.4, 0.6])
     first_study = tune_phenotype(
@@ -219,7 +219,7 @@ def test_tuning_resumes_sqlite_study_to_requested_total_trials(tmp_path):
 def test_materialize_optimizer_creates_fresh_adam_with_overrides():
     from tensorflow.keras.optimizers import Adam
 
-    from benchmarks.new_benchmark import materialize_optimizer, serialize_optimizer
+    from benchmarks.benchmark_runner import materialize_optimizer, serialize_optimizer
 
     specification = serialize_optimizer(Adam())
     first = materialize_optimizer(specification, {"learning_rate": 0.01})
@@ -253,7 +253,7 @@ def test_optimizer_evaluator_logging_accepts_optimizer_without_name(tmp_path):
 def test_tune_prebuilt_adam_uses_fresh_optimizer_per_trial(tmp_path):
     from tensorflow.keras.optimizers import Adam
 
-    from benchmarks.new_benchmark import tune_optimizer
+    from benchmarks.benchmark_runner import tune_optimizer
 
     evaluator = FixedOptimizerEvaluator([0.4, 0.8])
     study = tune_optimizer(
@@ -287,7 +287,7 @@ def test_tune_prebuilt_adam_uses_fresh_optimizer_per_trial(tmp_path):
 def test_tuning_artifacts_survive_a_later_failed_trial(tmp_path):
     from tensorflow.keras.optimizers import Adam
 
-    from benchmarks.new_benchmark import tune_optimizer
+    from benchmarks.benchmark_runner import tune_optimizer
 
     with pytest.raises(RuntimeError, match="simulated interruption"):
         tune_optimizer(
@@ -322,7 +322,7 @@ def test_tuning_artifacts_survive_a_later_failed_trial(tmp_path):
 def test_benchmark_artifacts_survive_a_later_failed_repetition(tmp_path):
     from tensorflow.keras.optimizers import Adam
 
-    from benchmarks.new_benchmark import (
+    from benchmarks.benchmark_runner import (
         benchmark_best_optimizer,
         serialize_optimizer,
     )
@@ -355,21 +355,21 @@ def test_benchmark_artifacts_survive_a_later_failed_repetition(tmp_path):
 
 
 def test_benchmark_parameters_put_evaluator_logs_under_output_directory(tmp_path):
-    from benchmarks.new_benchmark import _prepare_benchmark_parameters
+    from benchmarks.benchmark_runner import _prepare_benchmark_parameters
 
     original = {"LOGS_DIR": "logs", "EXPERIMENT_NAME": "example"}
 
     prepared = _prepare_benchmark_parameters(original, tmp_path)
 
     assert prepared["LOGS_DIR"] == str(tmp_path / "logs")
-    assert prepared["EXPERIMENT_NAME"] == "new_benchmark"
+    assert prepared["EXPERIMENT_NAME"] == "benchmark_runner"
     assert original == {"LOGS_DIR": "logs", "EXPERIMENT_NAME": "example"}
 
 
 def test_default_probe_must_be_inside_search_space(tmp_path):
     from tensorflow.keras.optimizers import Adam
 
-    from benchmarks.new_benchmark import tune_optimizer
+    from benchmarks.benchmark_runner import tune_optimizer
 
     with pytest.raises(ValueError, match="outside its search space"):
         tune_optimizer(
@@ -393,7 +393,7 @@ def test_default_probe_must_be_inside_search_space(tmp_path):
 def test_benchmark_best_optimizer_resumes_with_fresh_instances(tmp_path):
     from tensorflow.keras.optimizers import Adam
 
-    from benchmarks.new_benchmark import (
+    from benchmarks.benchmark_runner import (
         benchmark_best_optimizer,
         serialize_optimizer,
     )
@@ -431,7 +431,7 @@ def test_benchmark_best_optimizer_resumes_with_fresh_instances(tmp_path):
 
 
 def test_prepare_evaluator_for_test_assessment_replaces_fitness_split():
-    from benchmarks.new_benchmark import prepare_evaluator_for_test_assessment
+    from benchmarks.benchmark_runner import prepare_evaluator_for_test_assessment
 
     evaluator = FixedEvaluator([0.5])
 
@@ -444,7 +444,7 @@ def test_prepare_evaluator_for_test_assessment_replaces_fitness_split():
 
 
 def test_prepare_evaluator_for_validation_assessment_replaces_fitness_split():
-    from benchmarks.new_benchmark import (
+    from benchmarks.benchmark_runner import (
         evaluate_phenotype,
         prepare_evaluator_for_validation_assessment,
     )
@@ -467,7 +467,7 @@ def test_prepare_evaluator_for_validation_assessment_replaces_fitness_split():
 
 
 def test_task_evaluator_rejects_simultaneous_validation_and_test_assessment():
-    from benchmarks.new_benchmark import create_task_evaluator
+    from benchmarks.benchmark_runner import create_task_evaluator
 
     with pytest.raises(ValueError, match="cannot assess validation and test"):
         create_task_evaluator(
@@ -479,7 +479,7 @@ def test_task_evaluator_rejects_simultaneous_validation_and_test_assessment():
 
 
 def test_test_size_parameter_matches_loaded_benchmark_dataset():
-    from benchmarks.new_benchmark import prepare_evaluator_for_test_assessment
+    from benchmarks.benchmark_runner import prepare_evaluator_for_test_assessment
 
     evaluator = FixedEvaluator([0.5])
 
@@ -490,7 +490,7 @@ def test_test_size_parameter_matches_loaded_benchmark_dataset():
 
 
 def test_test_size_parameter_mismatch_is_rejected():
-    from benchmarks.new_benchmark import prepare_evaluator_for_test_assessment
+    from benchmarks.benchmark_runner import prepare_evaluator_for_test_assessment
 
     evaluator = FixedEvaluator([0.5])
 
@@ -505,7 +505,7 @@ def test_evolutionary_parameter_defaults_exclude_benchmark_test_size():
 
 
 def test_cli_accepts_prebuilt_adam():
-    from benchmarks.new_benchmark import parse_args
+    from benchmarks.benchmark_runner import parse_args
 
     arguments = parse_args(
         [
@@ -525,7 +525,7 @@ def test_cli_accepts_prebuilt_adam():
 
 
 def test_load_task_parameters_without_test_data_uses_sge_defaults():
-    from benchmarks.new_benchmark import load_task_parameters
+    from benchmarks.benchmark_runner import load_task_parameters
     from sge.parameters import default_params
 
     parameters = load_task_parameters("fmnist")
@@ -535,7 +535,7 @@ def test_load_task_parameters_without_test_data_uses_sge_defaults():
 
 
 def test_load_task_parameters_uses_test_configuration_without_base_overlay():
-    from benchmarks.new_benchmark import load_task_parameters
+    from benchmarks.benchmark_runner import load_task_parameters
     from sge.parameters import default_params
 
     parameters = load_task_parameters("tinyimagenet", use_test_data=True)
@@ -547,7 +547,7 @@ def test_load_task_parameters_uses_test_configuration_without_base_overlay():
 
 
 def test_load_task_parameters_supports_custom_tiny_imagenet_configuration():
-    from benchmarks.new_benchmark import load_task_parameters
+    from benchmarks.benchmark_runner import load_task_parameters
 
     parameters = load_task_parameters("tiny_imagenet_custom", use_test_data=True)
 
@@ -556,7 +556,7 @@ def test_load_task_parameters_supports_custom_tiny_imagenet_configuration():
 
 
 def test_optuna_parameter_loading_uses_test_configuration_overlay():
-    from benchmarks.new_benchmark import load_task_parameters
+    from benchmarks.benchmark_runner import load_task_parameters
 
     parameters = load_task_parameters("fmnist", use_test_data=True)
 
@@ -565,7 +565,7 @@ def test_optuna_parameter_loading_uses_test_configuration_overlay():
 
 
 def test_main_uses_test_configuration_parameters_for_optuna(monkeypatch, tmp_path):
-    import benchmarks.new_benchmark as benchmark
+    import benchmarks.benchmark_runner as benchmark
 
     calls = []
     parameters = {"TEST_SIZE": 2, "source": "test-config"}
@@ -599,7 +599,7 @@ def test_main_uses_test_configuration_parameters_for_optuna(monkeypatch, tmp_pat
 
 
 def test_load_task_parameters_supports_mnist_configurations():
-    from benchmarks.new_benchmark import load_task_parameters
+    from benchmarks.benchmark_runner import load_task_parameters
     from sge.parameters import default_params
 
     tuning_parameters = load_task_parameters("mnist")
@@ -612,14 +612,14 @@ def test_load_task_parameters_supports_mnist_configurations():
 
 
 def test_load_task_parameters_rejects_task_without_configuration():
-    from benchmarks.new_benchmark import load_task_parameters
+    from benchmarks.benchmark_runner import load_task_parameters
 
     with pytest.raises(ValueError, match="No benchmark dataset configuration"):
         load_task_parameters("imagenet")
 
 
 def test_load_task_parameters_reports_missing_test_configuration(tmp_path):
-    from benchmarks.new_benchmark import load_task_parameters
+    from benchmarks.benchmark_runner import load_task_parameters
 
     (tmp_path / "FMNIST_CONFIG.json").write_text("{}")
 
@@ -628,7 +628,7 @@ def test_load_task_parameters_reports_missing_test_configuration(tmp_path):
 
 
 def test_load_task_parameters_test_mode_does_not_require_base_configuration(tmp_path):
-    from benchmarks.new_benchmark import load_task_parameters
+    from benchmarks.benchmark_runner import load_task_parameters
 
     (tmp_path / "FMNIST_CONFIG_TEST.json").write_text(
         json.dumps({"TEST_SIZE": 2, "VALIDATION_SIZE": 3})
@@ -638,6 +638,12 @@ def test_load_task_parameters_test_mode_does_not_require_base_configuration(tmp_
 
     assert parameters["TEST_SIZE"] == 2
     assert parameters["VALIDATION_SIZE"] == 3
+
+
+def test_new_benchmark_module_was_removed():
+    import importlib.util
+
+    assert importlib.util.find_spec("benchmarks.new_benchmark") is None
 
 
 def test_evaluator_fitness_size_is_optional_only_for_benchmark_data():

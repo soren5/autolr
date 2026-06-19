@@ -9,7 +9,7 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 if str(REPOSITORY_ROOT) not in sys.path:
     sys.path.insert(0, str(REPOSITORY_ROOT))
 
-from benchmarks.new_benchmark import (
+from benchmarks.benchmark_runner import (
     benchmark_best_optimizer,
     benchmark_best_phenotype,
     create_prebuilt_optimizer,
@@ -32,7 +32,7 @@ def smoke_parameters(task, output_dir):
     parameters = load_task_parameters(task, use_test_data=True)
     parameters.update(
         {
-            "EXPERIMENT_NAME": "new_benchmark_smoke",
+            "EXPERIMENT_NAME": "benchmark_smoke",
             "LOGS_DIR": str(output_dir / "logs"),
             "RUN": 0,
         }
@@ -93,7 +93,7 @@ def parse_args(arguments=None):
     )
     parser.add_argument("--task", default="mnist")
     parser.add_argument(
-        "--output-dir", default="benchmarks/new_benchmark_smoke_results"
+        "--output-dir", default="benchmarks/benchmark_smoke_results"
     )
     parser.add_argument("--trials", type=int, default=3)
     parser.add_argument("--benchmark-repeats", type=int, default=1)
