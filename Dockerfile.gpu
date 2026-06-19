@@ -1,12 +1,12 @@
 FROM tensorflow/tensorflow:2.9.1-gpu
 
-ENV APP_DIR=/home/autolr
+ENV APP_DIR=/mnt/autolr_volume/autolr
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV DATA_DIR=/home/autolr/data
-ENV MODELS_DIR=/home/autolr/models
-ENV DUMPS_DIR=/home/autolr/dumps
-ENV LOGS_DIR=/home/autolr/logs
+ENV DATA_DIR=/mnt/autolr_volume/autolr/data
+ENV MODELS_DIR=/mnt/autolr_volume/autolr/models
+ENV DUMPS_DIR=/mnt/autolr_volume/autolr/dumps
+ENV LOGS_DIR=/mnt/autolr_volume/autolr/logs
 
 WORKDIR ${APP_DIR}
 
