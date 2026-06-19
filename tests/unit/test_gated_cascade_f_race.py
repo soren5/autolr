@@ -38,6 +38,7 @@ def test_multi_task_evaluator_emits_structured_cascade_record():
     evaluator.cifar10_evaluator = FixedTaskEvaluator(0.60)
     evaluator.cifar100_evaluator = None
     evaluator.tiny_imagenet_evaluator = None
+    evaluator.tiny_imagenet_custom_evaluator = None
     params = {
         "FMNIST_THRESHOLD": 0.8,
         "CIFAR10_THRESHOLD": 0.7,
@@ -53,6 +54,54 @@ def test_multi_task_evaluator_emits_structured_cascade_record():
         "passed": {"fmnist": True, "cifar10": False},
         "reached_depth": 2,
         "failed_task": "cifar10",
+    }
+
+
+def test_custom_tiny_imagenet_is_recorded_as_separate_multi_task():
+    from fitness_functions.fitness_functions import Optimizer_Evaluator_Multi_Task
+
+    evaluator = object.__new__(Optimizer_Evaluator_Multi_Task)
+    evaluator.fmnist_evaluator = None
+    evaluator.cifar10_evaluator = None
+    evaluator.cifar100_evaluator = None
+    evaluator.tiny_imagenet_evaluator = None
+    evaluator.tiny_imagenet_custom_evaluator = FixedTaskEvaluator(0.42)
+    params = {"TINY_IMAGENET_CUSTOM_THRESHOLD": 0.3}
+
+    fitness, other_info = evaluator.evaluate("phenotype", params)
+
+    assert fitness == pytest.approx(-0.42)
+    assert "tiny_imagenet" not in other_info
+    assert "tiny_imagenet_custom" in other_info
+    assert other_info["source"] == "tiny_imagenet_custom_evaluation"
+    assert other_info["multi_task"]["task_order"] == ["tiny_imagenet_custom"]
+    assert other_info["multi_task"]["scores"] == {"tiny_imagenet_custom": 0.42}
+
+
+def test_canonical_and_custom_tiny_imagenet_can_coexist_as_separate_tasks():
+    from fitness_functions.fitness_functions import Optimizer_Evaluator_Multi_Task
+
+    evaluator = object.__new__(Optimizer_Evaluator_Multi_Task)
+    evaluator.fmnist_evaluator = None
+    evaluator.cifar10_evaluator = None
+    evaluator.cifar100_evaluator = None
+    evaluator.tiny_imagenet_evaluator = FixedTaskEvaluator(0.41)
+    evaluator.tiny_imagenet_custom_evaluator = FixedTaskEvaluator(0.43)
+    params = {
+        "TINY_IMAGENET_THRESHOLD": 0.3,
+        "TINY_IMAGENET_CUSTOM_THRESHOLD": 0.3,
+    }
+
+    fitness, other_info = evaluator.evaluate("phenotype", params)
+
+    assert fitness == pytest.approx(-1.43)
+    assert other_info["multi_task"]["task_order"] == [
+        "tiny_imagenet",
+        "tiny_imagenet_custom",
+    ]
+    assert other_info["multi_task"]["scores"] == {
+        "tiny_imagenet": 0.41,
+        "tiny_imagenet_custom": 0.43,
     }
 
 

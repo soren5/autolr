@@ -39,12 +39,8 @@ if __name__ == "__main__":
             from evaluators.evaluate_cifar10 import CIFAR10_Evaluator
             evaluator = Optimizer_Evaluator_Tensorflow(params, evaluator=CIFAR10_Evaluator)
         elif 'resnet' in params['MODEL']:
-            if 'TINY_IMAGENET_CUSTOM_CONFIG' in params:
-                from evaluators.evaluate_tiny_imagenet_custom import TINY_IMAGENET_CUSTOM_Evaluator
-                evaluator = Optimizer_Evaluator_Tensorflow(params, evaluator=TINY_IMAGENET_CUSTOM_Evaluator)
-            else:
-                from evaluators.evaluate_tiny_imagenet import TINY_IMAGENET_Evaluator
-                evaluator = Optimizer_Evaluator_Tensorflow(params, evaluator=TINY_IMAGENET_Evaluator)
+            from evaluators.evaluate_tiny_imagenet import TINY_IMAGENET_Evaluator
+            evaluator = Optimizer_Evaluator_Tensorflow(params, evaluator=TINY_IMAGENET_Evaluator)
         elif 'mnist' in params['MODEL']:
             from evaluators.evaluate_fmnist import FMNIST_Evaluator
             evaluator = Optimizer_Evaluator_Tensorflow(params, evaluator=FMNIST_Evaluator)

@@ -53,6 +53,7 @@ default_params = {
     'CIFAR10_THRESHOLD': 0.7,
     'CIFAR100_THRESHOLD': 0.5,
     'TINY_IMAGENET_THRESHOLD': 0.3,
+    'TINY_IMAGENET_CUSTOM_THRESHOLD': 0.3,
     
     # F-race settings, only used when RACING is True
     'RACING': False,

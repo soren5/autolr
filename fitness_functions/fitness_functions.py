@@ -1,6 +1,7 @@
 import numpy as np
 from utils.xor_sanity_check import xor_check
 
+
 class Optimizer_Evaluator_Tensorflow:
     def __init__(self, params, evaluator=None):  #should give a function 
         if evaluator is None:
@@ -9,12 +10,8 @@ class Optimizer_Evaluator_Tensorflow:
                 from evaluators.evaluate_cifar10 import CIFAR10_Evaluator
                 evaluator = CIFAR10_Evaluator(params)
             elif 'resnet' in params['MODEL']:
-                if 'TINY_IMAGENET_CUSTOM_CONFIG' in params:
-                    from evaluators.evaluate_tiny_imagenet_custom import TINY_IMAGENET_CUSTOM_Evaluator
-                    evaluator = TINY_IMAGENET_CUSTOM_Evaluator(params)
-                else:
-                    from evaluators.evaluate_tiny_imagenet import TINY_IMAGENET_Evaluator
-                    evaluator = TINY_IMAGENET_Evaluator(params)
+                from evaluators.evaluate_tiny_imagenet import TINY_IMAGENET_Evaluator
+                evaluator = TINY_IMAGENET_Evaluator(params)
             elif 'mnist' in params['MODEL']:
                 from evaluators.evaluate_fmnist import FMNIST_Evaluator
                 evaluator = FMNIST_Evaluator(params)
@@ -218,20 +215,24 @@ class Optimizer_Evaluator_Torch:
         return -value, other_info
     def init_evaluation(self, params):
         pass
-def _create_tiny_imagenet_evaluator(params):
-    if 'TINY_IMAGENET_CUSTOM_CONFIG' in params:
-        from evaluators.evaluate_tiny_imagenet_custom import TINY_IMAGENET_CUSTOM_Evaluator
-        return TINY_IMAGENET_CUSTOM_Evaluator(
-            params,
-            configuration_file='TINY_IMAGENET_CUSTOM_CONFIG',
-            task_name='tiny_imagenet_custom',
-        )
+def _create_canonical_tiny_imagenet_evaluator(params):
     if 'TINY_IMAGENET_CONFIG' in params:
         from evaluators.evaluate_tiny_imagenet import TINY_IMAGENET_Evaluator
         return TINY_IMAGENET_Evaluator(
             params,
             configuration_file='TINY_IMAGENET_CONFIG',
             task_name='tiny_imagenet',
+        )
+    return None
+
+
+def _create_custom_tiny_imagenet_evaluator(params):
+    if 'TINY_IMAGENET_CUSTOM_CONFIG' in params:
+        from evaluators.evaluate_tiny_imagenet_custom import TINY_IMAGENET_CUSTOM_Evaluator
+        return TINY_IMAGENET_CUSTOM_Evaluator(
+            params,
+            configuration_file='TINY_IMAGENET_CUSTOM_CONFIG',
+            task_name='tiny_imagenet_custom',
         )
     return None
 
@@ -262,10 +263,12 @@ class Optimizer_Evaluator_Multi_Task:
             print("WARNING: CIFAR100_CONFIG not found in params, skipping CIFAR100 evaluation.")
             self.cifar100_evaluator = None
         
-        self.tiny_imagenet_evaluator = _create_tiny_imagenet_evaluator(params)
+        self.tiny_imagenet_evaluator = _create_canonical_tiny_imagenet_evaluator(params)
+        self.tiny_imagenet_custom_evaluator = _create_custom_tiny_imagenet_evaluator(params)
         if self.tiny_imagenet_evaluator is None:
-            print("WARNING: TINY_IMAGENET_CONFIG/TINY_IMAGENET_CUSTOM_CONFIG not found in params, skipping Tiny Imagenet evaluation.")
-            self.tiny_imagenet_evaluator = None
+            print("WARNING: TINY_IMAGENET_CONFIG not found in params, skipping canonical Tiny ImageNet evaluation.")
+        if self.tiny_imagenet_custom_evaluator is None:
+            print("WARNING: TINY_IMAGENET_CUSTOM_CONFIG not found in params, skipping custom Tiny ImageNet evaluation.")
 
 
     def evaluate(self, phen, params, opt=None):
@@ -274,7 +277,10 @@ class Optimizer_Evaluator_Multi_Task:
         fmnist_results = (0.0, {})
         cifar10_results = (0.0, {})
         cifar100_results = (0.0, {})
-        tiny_imagenet_results = (0.0, {})
+        tiny_imagenet_results = {
+            'tiny_imagenet': (0.0, {}),
+            'tiny_imagenet_custom': (0.0, {}),
+        }
 
         if opt is not None:
             print(f"WARNING: Evaluating an optimizer, if this is an evolution experiment it is compromised.")
@@ -320,19 +326,26 @@ class Optimizer_Evaluator_Multi_Task:
                 return fitness, other_info
             evaluated_tasks += 1
 
-        if self.tiny_imagenet_evaluator is not None:
-            tiny_imagenet_results = self.tiny_imagenet_evaluator.evaluate(phen) if opt is None else self.tiny_imagenet_evaluator.evaluate_optimizer(opt)
-            fitness = tiny_imagenet_results[0] + evaluated_tasks
-            other_info['tiny_imagenet'] = tiny_imagenet_results[1]
-            other_info['source'] = 'tiny_imagenet_evaluation'
-            self._record_multi_task_result(multi_task_record, 'tiny_imagenet', tiny_imagenet_results[0], params['TINY_IMAGENET_THRESHOLD'])
-            if fitness <= params['TINY_IMAGENET_THRESHOLD'] + evaluated_tasks:
-                multi_task_record['failed_task'] = 'tiny_imagenet'
+        for task_name, evaluator, threshold_key in self._tiny_imagenet_tasks():
+            if evaluator is None:
+                continue
+            task_results = evaluator.evaluate(phen) if opt is None else evaluator.evaluate_optimizer(opt)
+            tiny_imagenet_results[task_name] = task_results
+            fitness = task_results[0] + evaluated_tasks
+            other_info[task_name] = task_results[1]
+            other_info['source'] = f'{task_name}_evaluation'
+            self._record_multi_task_result(multi_task_record, task_name, task_results[0], params[threshold_key])
+            if fitness <= params[threshold_key] + evaluated_tasks:
+                multi_task_record['failed_task'] = task_name
                 fitness = -fitness
                 return fitness, other_info
             evaluated_tasks += 1
             
-        print(f"Fitness: {fitness:.4f} (fmnist: {fmnist_results[0]:.4f}, cifar10: {cifar10_results[0]:.4f}, cifar100: {cifar100_results[0]:.4f}, tiny_imagenet: {tiny_imagenet_results[0]:.4f})")
+        tiny_parts = ', '.join(
+            f"{task}: {results[0]:.4f}"
+            for task, results in tiny_imagenet_results.items()
+        )
+        print(f"Fitness: {fitness:.4f} (fmnist: {fmnist_results[0]:.4f}, cifar10: {cifar10_results[0]:.4f}, cifar100: {cifar100_results[0]:.4f}, {tiny_parts})")
         
         # Negate fitness because evolutionary algorithm is minimizing.
         fitness = -fitness
@@ -346,6 +359,7 @@ class Optimizer_Evaluator_Multi_Task:
             ('cifar10', self.cifar10_evaluator, 'CIFAR10_THRESHOLD'),
             ('cifar100', self.cifar100_evaluator, 'CIFAR100_THRESHOLD'),
             ('tiny_imagenet', self.tiny_imagenet_evaluator, 'TINY_IMAGENET_THRESHOLD'),
+            ('tiny_imagenet_custom', self.tiny_imagenet_custom_evaluator, 'TINY_IMAGENET_CUSTOM_THRESHOLD'),
         ]
         for task_name, evaluator, threshold_key in evaluator_thresholds:
             if evaluator is not None:
@@ -366,6 +380,12 @@ class Optimizer_Evaluator_Multi_Task:
         multi_task_record['passed'][task_name] = score > threshold
         multi_task_record['reached_depth'] += 1
 
+    def _tiny_imagenet_tasks(self):
+        return [
+            ('tiny_imagenet', self.tiny_imagenet_evaluator, 'TINY_IMAGENET_THRESHOLD'),
+            ('tiny_imagenet_custom', self.tiny_imagenet_custom_evaluator, 'TINY_IMAGENET_CUSTOM_THRESHOLD'),
+        ]
+
     def init_net(self, params):
         pass
     def init_data(self, params):
@@ -384,14 +404,19 @@ class Optimizer_Evaluator_FMNIST_CIFAR10_CIFAR100_TIN():
         from evaluators.evaluate_cifar100 import CIFAR100_Evaluator
         self.cifar100_evaluator = CIFAR100_Evaluator(params, configuration_file='CIFAR100_CONFIG', task_name='cifar100')
 
-        self.tiny_imagenet_evaluator = _create_tiny_imagenet_evaluator(params)
-        if self.tiny_imagenet_evaluator is None:
+        self.tiny_imagenet_evaluator = _create_canonical_tiny_imagenet_evaluator(params)
+        self.tiny_imagenet_custom_evaluator = _create_custom_tiny_imagenet_evaluator(params)
+        if self.tiny_imagenet_evaluator is None and self.tiny_imagenet_custom_evaluator is None:
             raise Exception('TINY_IMAGENET_CONFIG or TINY_IMAGENET_CUSTOM_CONFIG is required')
     
     def evaluate(self, phen, params, opt=None):
         #print(f"\n\n\nTesting phenotype {smart_phenotype(phen)}:\n{readable_phenotype(phen)}")
         #if xor_check(phen):
-        fmnist_results = cifar10_results = cifar100_results = tiny_imagenet_results = (0.0, {})  # Default results in case we skip evaluation
+        fmnist_results = cifar10_results = cifar100_results = (0.0, {})  # Default results in case we skip evaluation
+        tiny_imagenet_results = {
+            'tiny_imagenet': (0.0, {}),
+            'tiny_imagenet_custom': (0.0, {}),
+        }
 
         if opt is not None:
             print(f"WARNING: Evaluating an optimizer, if this is an evolution experiment it is compromised.")
@@ -417,13 +442,26 @@ class Optimizer_Evaluator_FMNIST_CIFAR10_CIFAR100_TIN():
                     other_info['source'] = 'cifar100_evaluation'
 
                     if fitness > 2.0 + params['CIFAR100_THRESHOLD']:
-                        #Evaluate Imagenet
-                        tiny_imagenet_results = self.tiny_imagenet_evaluator.evaluate(phen) if opt is None else self.tiny_imagenet_evaluator.evaluate_optimizer(opt)
-                        fitness = tiny_imagenet_results[0] + 3.0
-                        other_info['tiny_imagenet'] = tiny_imagenet_results[1]
-                        other_info['source'] = 'tiny_imagenet_evaluation'
+                        evaluated_tasks = 3.0
+                        for task_name, evaluator, threshold_key in self._tiny_imagenet_tasks():
+                            if evaluator is None:
+                                continue
+                            task_results = evaluator.evaluate(phen) if opt is None else evaluator.evaluate_optimizer(opt)
+                            tiny_imagenet_results[task_name] = task_results
+                            fitness = task_results[0] + evaluated_tasks
+                            other_info[task_name] = task_results[1]
+                            other_info['source'] = f'{task_name}_evaluation'
+                            if fitness <= evaluated_tasks + params[threshold_key]:
+                                break
+                            evaluated_tasks += 1.0
         fitness = - fitness
         return fitness, other_info
+
+    def _tiny_imagenet_tasks(self):
+        return [
+            ('tiny_imagenet', self.tiny_imagenet_evaluator, 'TINY_IMAGENET_THRESHOLD'),
+            ('tiny_imagenet_custom', self.tiny_imagenet_custom_evaluator, 'TINY_IMAGENET_CUSTOM_THRESHOLD'),
+        ]
     def init_net(self, params):
         pass
     def init_data(self, params):
