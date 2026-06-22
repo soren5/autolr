@@ -21,6 +21,7 @@ from benchmarks.runner_utils import (
     load_task_parameters,
     prepare_runner_parameters,
     read_phenotype_argument,
+    resolve_runner_output_dir,
     serialize_optimizer,
     write_json,
 )
@@ -259,7 +260,14 @@ def parse_args(arguments=None):
         help="Supported prebuilt TensorFlow optimizer",
     )
     parser.add_argument("--task", required=True, choices=sorted(TASK_CONFIG_NAMES))
-    parser.add_argument("--output-dir", required=True)
+    parser.add_argument(
+        "--output-dir",
+        required=True,
+        help=(
+            "Experiment output folder name under dumps/benchmarks, or an "
+            "absolute path to write elsewhere."
+        ),
+    )
     parser.add_argument("--repeats", type=int, default=DEFAULT_FITNESS_REPEATS)
     parser.add_argument("--seed", type=int)
     parser.add_argument(
@@ -274,6 +282,7 @@ def parse_args(arguments=None):
 
 def main(arguments=None):
     args = parse_args(arguments)
+    output_dir = resolve_runner_output_dir(args.output_dir)
     if args.seed is not None:
         import random
         import numpy as np
@@ -288,7 +297,7 @@ def main(arguments=None):
     summary = run_fitness_subject(
         task_name=args.task,
         parameters=parameters,
-        output_dir=args.output_dir,
+        output_dir=output_dir,
         repeats=args.repeats,
         optimizer_name=args.optimizer,
         phenotype=phenotype,

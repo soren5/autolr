@@ -32,6 +32,7 @@ from benchmarks.runner_utils import (
     prepare_evaluator_for_validation_assessment,
     prepare_runner_parameters,
     read_phenotype_argument,
+    resolve_runner_output_dir,
     serialize_optimizer,
     write_dataframe_csv,
     write_json,
@@ -708,7 +709,14 @@ def parse_args(arguments=None):
         help="Supported prebuilt TensorFlow optimizer with its default search space",
     )
     parser.add_argument("--task", required=True, choices=sorted(TASK_CONFIG_NAMES))
-    parser.add_argument("--output-dir", required=True)
+    parser.add_argument(
+        "--output-dir",
+        required=True,
+        help=(
+            "Experiment output folder name under dumps/benchmarks, or an "
+            "absolute path to write elsewhere."
+        ),
+    )
     parser.add_argument("--study-name", default="autolr_optimizer_tuning")
     parser.add_argument("--trials", type=int, default=100, help="Desired total trial count")
     parser.add_argument("--benchmark-repeats", type=int, default=DEFAULT_BENCHMARK_REPEATS)
@@ -736,6 +744,7 @@ def parse_args(arguments=None):
 
 def main(arguments=None):
     args = parse_args(arguments)
+    output_dir = resolve_runner_output_dir(args.output_dir)
     parameters = load_task_parameters(args.task, use_test_data=True)
     if args.optimizer:
         optimizer = create_prebuilt_optimizer(args.optimizer)
@@ -744,7 +753,7 @@ def main(arguments=None):
             task_name=args.task,
             parameters=parameters,
             n_trials=args.trials,
-            output_dir=args.output_dir,
+            output_dir=output_dir,
             study_name=args.study_name,
             timeout=args.timeout,
             seed=args.seed,
@@ -756,7 +765,7 @@ def main(arguments=None):
             task_name=args.task,
             parameters=parameters,
             n_trials=args.trials,
-            output_dir=args.output_dir,
+            output_dir=output_dir,
             study_name=args.study_name,
             search_low=args.search_low,
             search_high=args.search_high,
@@ -773,7 +782,7 @@ def main(arguments=None):
             study=study,
             task_name=args.task,
             parameters=parameters,
-            output_dir=args.output_dir,
+            output_dir=output_dir,
             repeats=args.benchmark_repeats,
         )
         print(f"Benchmark mean over {summary['runs']} runs: {summary['mean_score']}")

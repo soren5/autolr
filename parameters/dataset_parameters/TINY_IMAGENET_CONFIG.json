@@ -2,8 +2,8 @@
     "VALIDATION_SIZE": 7000,
     "FITNESS_SIZE": 3000,
     "BATCH_SIZE": 64,
-    "EPOCHS": 10000,
-    "PATIENCE": 12,
+    "EPOCHS": 1000,
+    "PATIENCE": 20,
     "MODEL": "resnet",
     "NORMALIZE": true,
     "SUBTRACT_MEAN": true

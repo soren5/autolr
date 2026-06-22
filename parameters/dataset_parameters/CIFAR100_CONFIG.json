@@ -2,8 +2,8 @@
     "VALIDATION_SIZE": 4500,
     "FITNESS_SIZE": 3000,
     "BATCH_SIZE": 1000,
-    "EPOCHS": 10000,
-    "PATIENCE": 5,
+    "EPOCHS": 1000,
+    "PATIENCE": 10,
     "MODEL": "cifar100_model.h5",
     "NORMALIZE": true,
     "SUBTRACT_MEAN": true

@@ -13,6 +13,7 @@ if str(REPOSITORY_ROOT) not in sys.path:
 DEFAULT_SEARCH_LOW = 1e-8
 DEFAULT_SEARCH_HIGH = 1.0
 BENCHMARK_CONFIG_DIR = Path(__file__).resolve().parent / "benchmark_dataset_configs"
+DEFAULT_RUNNER_OUTPUT_ROOT = REPOSITORY_ROOT / "dumps" / "benchmarks"
 TASK_CONFIG_NAMES = {
     "fmnist": "FMNIST",
     "mnist": "MNIST",
@@ -40,6 +41,15 @@ def normalize_task_name(task_name):
     if task == "tinyimagenet_custom":
         task = "tiny_imagenet_custom"
     return task
+
+
+def resolve_runner_output_dir(output_dir):
+    """Resolve CLI output names under dumps/benchmarks by default."""
+
+    output_path = Path(output_dir).expanduser()
+    if output_path.is_absolute():
+        return output_path
+    return DEFAULT_RUNNER_OUTPUT_ROOT / output_path
 
 
 def create_task_evaluator(
