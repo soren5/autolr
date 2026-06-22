@@ -566,8 +566,10 @@ def test_optuna_parameter_loading_uses_test_configuration_overlay():
 
 def test_main_uses_test_configuration_parameters_for_optuna(monkeypatch, tmp_path):
     import benchmarks.benchmark_runner as benchmark
+    import benchmarks.runner_utils as runner_utils
 
     calls = []
+    tune_calls = []
     parameters = {"TEST_SIZE": 2, "source": "test-config"}
     study = SimpleNamespace(best_value=0.5, best_params={})
 
@@ -577,8 +579,14 @@ def test_main_uses_test_configuration_parameters_for_optuna(monkeypatch, tmp_pat
 
     def fake_tune_optimizer(**kwargs):
         assert kwargs["parameters"] is parameters
+        tune_calls.append(kwargs)
         return study
 
+    monkeypatch.setattr(
+        runner_utils,
+        "DEFAULT_RUNNER_OUTPUT_ROOT",
+        tmp_path / "dumps" / "benchmarks",
+    )
     monkeypatch.setattr(benchmark, "load_task_parameters", fake_load_task_parameters)
     monkeypatch.setattr(benchmark, "create_prebuilt_optimizer", lambda name: object())
     monkeypatch.setattr(benchmark, "tune_optimizer", fake_tune_optimizer)
@@ -590,12 +598,13 @@ def test_main_uses_test_configuration_parameters_for_optuna(monkeypatch, tmp_pat
             "--task",
             "fmnist",
             "--output-dir",
-            str(tmp_path),
+            "adam_fmnist",
             "--tune-only",
         ]
     )
 
     assert calls == [("fmnist", True)]
+    assert tune_calls[0]["output_dir"] == tmp_path / "dumps" / "benchmarks" / "adam_fmnist"
 
 
 def test_load_task_parameters_supports_mnist_configurations():

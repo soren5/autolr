@@ -181,13 +181,30 @@ def test_fitness_runner_creates_evolution_split_evaluator(monkeypatch, tmp_path)
 
 def test_fitness_main_loads_default_parameters_not_test_configs(monkeypatch, tmp_path):
     import benchmarks.fitness_runner as fitness_runner
+    import benchmarks.runner_utils as runner_utils
 
     calls = []
+    run_calls = []
 
     def fake_load_fitness_parameters(task_name, parameter_file=None):
         calls.append((task_name, parameter_file))
         return {"source": "sge-defaults"}
 
+    def fake_run_fitness_subject(**kwargs):
+        run_calls.append(kwargs)
+        return {"runs": 1, "mean_score": 0.5}
+
+    monkeypatch.setattr(
+        runner_utils,
+        "DEFAULT_RUNNER_OUTPUT_ROOT",
+        tmp_path / "dumps" / "benchmarks",
+    )
+    monkeypatch.setattr(
+        fitness_runner,
+        "DEFAULT_RUNNER_OUTPUT_ROOT",
+        tmp_path / "dumps" / "benchmarks",
+        raising=False,
+    )
     monkeypatch.setattr(
         fitness_runner,
         "load_fitness_parameters",
@@ -196,7 +213,7 @@ def test_fitness_main_loads_default_parameters_not_test_configs(monkeypatch, tmp
     monkeypatch.setattr(
         fitness_runner,
         "run_fitness_subject",
-        lambda **kwargs: {"runs": 1, "mean_score": 0.5},
+        fake_run_fitness_subject,
     )
 
     fitness_runner.main(
@@ -206,11 +223,12 @@ def test_fitness_main_loads_default_parameters_not_test_configs(monkeypatch, tmp
             "--task",
             "fmnist",
             "--output-dir",
-            str(tmp_path),
+            "fitness_adam_fmnist",
         ]
     )
 
     assert calls == [("fmnist", None)]
+    assert run_calls[0]["output_dir"] == tmp_path / "dumps" / "benchmarks" / "fitness_adam_fmnist"
 
 
 def test_fitness_runner_cli_accepts_prebuilt_adam():
