@@ -7,6 +7,15 @@ from dataset_loaders.dataset_utils import validate_benchmark_test_size
 
 
 class TINY_IMAGENET_Dataset:
+    """Canonical Tiny ImageNet loader with path-first splitting.
+
+    Unlike the smaller Keras-backed loaders, canonical Tiny ImageNet is large
+    enough that loading every image and then splitting arrays can OOM modest
+    machines. The evaluator-facing API still exposes NumPy arrays, but this
+    loader indexes image paths first, splits those lightweight records, and only
+    materializes the final train/validation/fitness or test arrays.
+    """
+
     def __init__(self, validation_size=3500, fitness_size=3500, seed=0, normalize=True, subtract_mean=True, path=None):
         self.n_classes = 200
         self.validation_size = validation_size
@@ -22,34 +31,27 @@ class TINY_IMAGENET_Dataset:
             self.path = path
 
     def load_data_for_evolution(self):
-        (x, y), (_, _) = self.load_data()
+        class_names = self._load_class_names()
+        class_index = self._class_index(class_names)
+        train_examples = self._index_training_examples(class_names)
 
-        x = x.astype('float32')
-        if self.normalize:
-            x /= 255
+        train_examples, heldout_examples = train_test_split(
+            train_examples,
+            test_size=self.validation_size + self.fitness_size,
+            stratify=self._example_class_names(train_examples),
+            random_state=self.seed,
+        )
+        val_examples, fit_examples = train_test_split(
+            heldout_examples,
+            test_size=self.fitness_size,
+            stratify=self._example_class_names(heldout_examples),
+            random_state=self.seed,
+        )
 
-        if K.image_data_format() == 'channels_first':
-            x = x.reshape(x.shape[0], self.channels, self.img_rows, self.img_cols)
-        else:
-            x = x.reshape(x.shape[0], self.img_rows, self.img_cols, self.channels)
-
-        x_train, x_val, y_train, y_val = train_test_split(x, y,
-                                                        test_size=self.validation_size + self.fitness_size,
-                                                        stratify=y,
-                                                        random_state=self.seed)
-        x_val, x_fit, y_val, y_fit = train_test_split(x_val, y_val,
-                                                        test_size=self.fitness_size,
-                                                        stratify=y_val,
-                                                        random_state=self.seed)
-
-        if self.subtract_mean:
-            x_mean = 0
-            for x in x_train:
-                x_mean += x
-            x_mean /= len(x_train)
-            x_train -= x_mean
-            x_val -= x_mean
-            x_fit -= x_mean
+        x_train, y_train = self._load_examples(train_examples, class_index)
+        x_val, y_val = self._load_examples(val_examples, class_index)
+        x_fit, y_fit = self._load_examples(fit_examples, class_index)
+        x_train, x_val, x_fit = self._preprocess_splits(x_train, x_val, x_fit)
 
         self.x_train = x_train
         self.y_train = y_train
@@ -59,34 +61,22 @@ class TINY_IMAGENET_Dataset:
         self.y_fit = y_fit
 
     def load_data_for_benchmark(self):
-        (x, y), (x_test, y_test) = self.load_data()
+        class_names = self._load_class_names()
+        class_index = self._class_index(class_names)
+        train_examples = self._index_training_examples(class_names)
+        test_examples = self._index_validation_examples(class_names)
 
-        x = x.astype('float32')
-        x_test = x_test.astype('float32')
-        if self.normalize:
-            x /= 255
-            x_test /= 255
+        train_examples, val_examples = train_test_split(
+            train_examples,
+            test_size=self.validation_size,
+            stratify=self._example_class_names(train_examples),
+            random_state=self.seed,
+        )
 
-        if K.image_data_format() == 'channels_first':
-            x = x.reshape(x.shape[0], self.channels, self.img_rows, self.img_cols)
-            x_test = x_test.reshape(x_test.shape[0], self.channels, self.img_rows, self.img_cols)
-        else:
-            x = x.reshape(x.shape[0], self.img_rows, self.img_cols, self.channels)
-            x_test = x_test.reshape(x_test.shape[0], self.img_rows, self.img_cols, self.channels)
-
-        x_train, x_val, y_train, y_val = train_test_split(x, y,
-                                                        test_size=self.validation_size,
-                                                        stratify=y,
-                                                        random_state=self.seed)
-
-        if self.subtract_mean:
-            x_mean = 0
-            for x in x_train:
-                x_mean += x
-            x_mean /= len(x_train)
-            x_train -= x_mean
-            x_val -= x_mean
-            x_test -= x_mean
+        x_train, y_train = self._load_examples(train_examples, class_index)
+        x_val, y_val = self._load_examples(val_examples, class_index)
+        x_test, y_test = self._load_examples(test_examples, class_index)
+        x_train, x_val, x_test = self._preprocess_splits(x_train, x_val, x_test)
 
         validate_benchmark_test_size(
             x_test, y_test, expected_test_size=getattr(self, "test_size", None)
@@ -101,8 +91,17 @@ class TINY_IMAGENET_Dataset:
 
     def load_data(self):
         class_names = self._load_class_names()
-        x, y = self._load_training_data(class_names)
-        x_test, y_test = self._load_validation_data(class_names)
+        class_index = self._class_index(class_names)
+        x, y = self._load_examples(
+            self._index_training_examples(class_names),
+            class_index,
+            preprocess=False,
+        )
+        x_test, y_test = self._load_examples(
+            self._index_validation_examples(class_names),
+            class_index,
+            preprocess=False,
+        )
         return (x, y), (x_test, y_test)
 
     def _load_class_names(self):
@@ -127,6 +126,12 @@ class TINY_IMAGENET_Dataset:
         y_vector[class_index[class_name]] = 1
         return y_vector
 
+    def _class_index(self, class_names):
+        return {class_name: i for i, class_name in enumerate(class_names)}
+
+    def _example_class_names(self, examples):
+        return [class_name for _, class_name in examples]
+
     def _load_image(self, image_path):
         image = plt.imread(image_path)
         image = np.asarray(image)
@@ -141,11 +146,9 @@ class TINY_IMAGENET_Dataset:
             )
         return image
 
-    def _load_training_data(self, class_names):
+    def _index_training_examples(self, class_names):
         train_path = os.path.join(self.path, 'train')
-        class_index = {class_name: i for i, class_name in enumerate(class_names)}
-        x = []
-        y = []
+        examples = []
 
         for class_name in class_names:
             class_path = os.path.join(train_path, class_name)
@@ -155,18 +158,14 @@ class TINY_IMAGENET_Dataset:
             for image_file in sorted(os.listdir(class_path)):
                 if not image_file.endswith('.JPEG'):
                     continue
-                image = self._load_image(os.path.join(class_path, image_file))
-                x.append(image)
-                y.append(self._one_hot(class_name, class_index))
+                examples.append((os.path.join(class_path, image_file), class_name))
 
-        return np.array(x), np.array(y)
+        return examples
 
-    def _load_validation_data(self, class_names):
+    def _index_validation_examples(self, class_names):
         val_path = os.path.join(self.path, 'val')
         canonical_images_path = os.path.join(val_path, 'images')
-        class_index = {class_name: i for i, class_name in enumerate(class_names)}
-        x = []
-        y = []
+        examples = []
 
         if os.path.isdir(canonical_images_path):
             annotations = self._load_val_annotations()
@@ -174,9 +173,7 @@ class TINY_IMAGENET_Dataset:
                 if not image_file.endswith('.JPEG'):
                     continue
                 class_name = annotations[image_file]
-                image = self._load_image(os.path.join(canonical_images_path, image_file))
-                x.append(image)
-                y.append(self._one_hot(class_name, class_index))
+                examples.append((os.path.join(canonical_images_path, image_file), class_name))
         else:
             for class_name in class_names:
                 class_path = os.path.join(val_path, class_name)
@@ -185,11 +182,47 @@ class TINY_IMAGENET_Dataset:
                 for image_file in sorted(os.listdir(class_path)):
                     if not image_file.endswith('.JPEG'):
                         continue
-                    image = self._load_image(os.path.join(class_path, image_file))
-                    x.append(image)
-                    y.append(self._one_hot(class_name, class_index))
+                    examples.append((os.path.join(class_path, image_file), class_name))
 
-        return np.array(x), np.array(y)
+        return examples
+
+    def _load_examples(self, examples, class_index, preprocess=True):
+        if not preprocess:
+            x = []
+            y = np.zeros((len(examples), len(class_index)), dtype=np.float32)
+            for i, (image_path, class_name) in enumerate(examples):
+                x.append(self._load_image(image_path))
+                y[i] = self._one_hot(class_name, class_index)
+            return np.array(x), y
+
+        x = np.empty(
+            (len(examples), self.img_rows, self.img_cols, self.channels),
+            dtype=np.float32,
+        )
+        y = np.zeros((len(examples), len(class_index)), dtype=np.float32)
+
+        for i, (image_path, class_name) in enumerate(examples):
+            x[i] = self._load_image(image_path)
+            y[i] = self._one_hot(class_name, class_index)
+
+        if preprocess:
+            if self.normalize:
+                x /= 255
+            x = self._format_images(x)
+        return x, y
+
+    def _format_images(self, x):
+        if K.image_data_format() == 'channels_first':
+            return x.reshape(x.shape[0], self.channels, self.img_rows, self.img_cols)
+        return x.reshape(x.shape[0], self.img_rows, self.img_cols, self.channels)
+
+    def _preprocess_splits(self, x_train, *other_splits):
+        if self.subtract_mean:
+            x_mean = x_train.mean(axis=0)
+            x_train -= x_mean
+            for split in other_splits:
+                split -= x_mean
+        return (x_train,) + other_splits
 
     def _load_val_annotations(self):
         annotation_paths = [
