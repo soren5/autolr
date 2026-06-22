@@ -21,23 +21,26 @@ RACING_MAX_EVALS: 5
 RACING_STAT_TEST: 'mannwhitney'
 PROB_MUTATION: {
   0: 0.0, # start
-  1: 0.01, # alpha_expr
-  2: 0.01, # alpha_func
-  3: 0.05, # alpha_terminal
-  4: 0.05, # alpha_var_const
-  5: 0.15, # alpha_const
-  6: 0.01, # beta_expr
-  7: 0.01, # beta_func
-  8: 0.05, # beta_terminal
-  9: 0.05, # beta_var_const
-  10: 0.15, # beta_const
-  11: 0.01, # sigma_expr
-  12: 0.01, # sigma_func
-  13: 0.05, # sigma_terminal
-  14: 0.05, # sigma_var_const
-  15: 0.15, # sigma_const
-  16: 0.01, # grad_expr
-  17: 0.01, # grad_func
-  18: 0.05, # grad_terminal
-  19: 0.15, # grad_const
+  1: 0.01, # alpha_update
+  2: 0.01, # alpha_expr
+  3: 0.01, # alpha_func
+  4: 0.05, # alpha_terminal
+  5: 0.05, # alpha_var_const
+  6: 0.15, # alpha_const
+  7: 0.01, # beta_update
+  8: 0.01, # beta_expr
+  9: 0.01, # beta_func
+  10: 0.05, # beta_terminal
+  11: 0.05, # beta_var_const
+  12: 0.15, # beta_const
+  13: 0.01, # sigma_update
+  14: 0.01, # sigma_expr
+  15: 0.01, # sigma_func
+  16: 0.05, # sigma_terminal
+  17: 0.05, # sigma_var_const
+  18: 0.15, # sigma_const
+  19: 0.01, # grad_expr
+  20: 0.01, # grad_func
+  21: 0.05, # grad_terminal
+  22: 0.15, # grad_const
 }
