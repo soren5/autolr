@@ -143,8 +143,12 @@ def _load_benchmark_dataset(evaluator, expected_test_size=None):
             dataset.test_size = expected_test_size
         dataset.load_data_for_benchmark()
         dataset._benchmark_data_loaded = True
-    if not all(hasattr(dataset, name) for name in ("x_test", "y_test")):
-        raise ValueError("Benchmark dataset did not expose x_test and y_test")
+    has_array_test = all(hasattr(dataset, name) for name in ("x_test", "y_test"))
+    has_streaming_test = hasattr(dataset, "test_data")
+    if not has_array_test and not has_streaming_test:
+        raise ValueError(
+            "Benchmark dataset did not expose x_test/y_test or test_data"
+        )
     return dataset
 
 
@@ -152,11 +156,19 @@ def prepare_evaluator_for_validation_assessment(evaluator, expected_test_size=No
     """Load benchmark-layout data and assess Optuna trials on validation data."""
 
     dataset = _load_benchmark_dataset(evaluator, expected_test_size)
-    if not all(hasattr(dataset, name) for name in ("x_val", "y_val")):
-        raise ValueError("Validation assessment requires dataset x_val and y_val")
+    has_array_validation = all(hasattr(dataset, name) for name in ("x_val", "y_val"))
+    has_streaming_validation = hasattr(dataset, "validation_data")
+    if not has_array_validation and not has_streaming_validation:
+        raise ValueError(
+            "Validation assessment requires x_val/y_val or validation_data"
+        )
 
-    dataset.x_fit = dataset.x_val
-    dataset.y_fit = dataset.y_val
+    if has_streaming_validation:
+        dataset.fitness_data = dataset.validation_data
+        dataset.fitness_steps = dataset.validation_steps
+    else:
+        dataset.x_fit = dataset.x_val
+        dataset.y_fit = dataset.y_val
     evaluator.assessment_split = "validation"
     return evaluator
 
@@ -165,8 +177,12 @@ def prepare_evaluator_for_test_assessment(evaluator, expected_test_size=None):
     """Reload an evaluator's dataset for held-out test-set assessment."""
 
     dataset = _load_benchmark_dataset(evaluator, expected_test_size)
-    dataset.x_fit = dataset.x_test
-    dataset.y_fit = dataset.y_test
+    if hasattr(dataset, "test_data"):
+        dataset.fitness_data = dataset.test_data
+        dataset.fitness_steps = dataset.test_steps
+    else:
+        dataset.x_fit = dataset.x_test
+        dataset.y_fit = dataset.y_test
     evaluator.assessment_split = "test"
     return evaluator
 

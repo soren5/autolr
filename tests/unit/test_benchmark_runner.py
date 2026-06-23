@@ -38,6 +38,19 @@ class FixedBenchmarkDataset:
         )
 
 
+class FixedStreamingBenchmarkDataset:
+    def __init__(self):
+        self.test_size = 2
+        self.benchmark_loads = 0
+
+    def load_data_for_benchmark(self):
+        self.benchmark_loads += 1
+        self.validation_data = "validation-stream"
+        self.validation_steps = 3
+        self.test_data = "test-stream"
+        self.test_steps = 4
+
+
 class FixedEvaluator:
     def __init__(self, scores):
         self.scores = iter(scores)
@@ -76,6 +89,36 @@ class InterruptingOptimizerEvaluator(FixedOptimizerEvaluator):
 
 class NamelessOptimizer:
     pass
+
+
+def test_runner_prepares_streaming_validation_and_test_assessment():
+    from benchmarks.runner_utils import (
+        prepare_evaluator_for_test_assessment,
+        prepare_evaluator_for_validation_assessment,
+    )
+
+    validation_evaluator = SimpleNamespace(
+        dataset=FixedStreamingBenchmarkDataset(),
+        assessment_split="fitness",
+    )
+    prepare_evaluator_for_validation_assessment(
+        validation_evaluator,
+        expected_test_size=2,
+    )
+
+    assert validation_evaluator.assessment_split == "validation"
+    assert validation_evaluator.dataset.fitness_data == "validation-stream"
+    assert validation_evaluator.dataset.fitness_steps == 3
+
+    test_evaluator = SimpleNamespace(
+        dataset=FixedStreamingBenchmarkDataset(),
+        assessment_split="fitness",
+    )
+    prepare_evaluator_for_test_assessment(test_evaluator, expected_test_size=2)
+
+    assert test_evaluator.assessment_split == "test"
+    assert test_evaluator.dataset.fitness_data == "test-stream"
+    assert test_evaluator.dataset.fitness_steps == 4
 
 
 def test_abstract_constants_only_tunes_active_values():

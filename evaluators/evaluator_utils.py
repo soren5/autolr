@@ -242,19 +242,41 @@ class Evaluator():
             print("WARNING FAKE FITNESS IS ON " * 10)
             return random.random(), {}
         
-        score = model.fit(self.dataset.x_train, self.dataset.y_train,
-            batch_size=self.batch_size,
-            epochs=self.epochs,
-            verbose=0,
-            validation_data=(self.dataset.x_val, self.dataset.y_val),
-            validation_steps= self.validation_size // self.batch_size,
-            callbacks=[
-                early_stop,
-                terminate_on_nan,
-                csv_logger
-            ])
+        if hasattr(self.dataset, "train_data"):
+            score = model.fit(
+                self.dataset.train_data,
+                epochs=self.epochs,
+                verbose=0,
+                validation_data=self.dataset.validation_data,
+                steps_per_epoch=self.dataset.train_steps,
+                validation_steps=self.dataset.validation_steps,
+                callbacks=[
+                    early_stop,
+                    terminate_on_nan,
+                    csv_logger
+                ],
+            )
 
-        fitness_score = model.evaluate(x=self.dataset.x_fit,y=self.dataset.y_fit, verbose=0, callbacks=[])
+            fitness_score = model.evaluate(
+                self.dataset.fitness_data,
+                steps=self.dataset.fitness_steps,
+                verbose=0,
+                callbacks=[],
+            )
+        else:
+            score = model.fit(self.dataset.x_train, self.dataset.y_train,
+                batch_size=self.batch_size,
+                epochs=self.epochs,
+                verbose=0,
+                validation_data=(self.dataset.x_val, self.dataset.y_val),
+                validation_steps= self.validation_size // self.batch_size,
+                callbacks=[
+                    early_stop,
+                    terminate_on_nan,
+                    csv_logger
+                ])
+
+            fitness_score = model.evaluate(x=self.dataset.x_fit,y=self.dataset.y_fit, verbose=0, callbacks=[])
         
         results = self.collect_results(score, fitness_score)
         return results['test_score'], results

@@ -1,28 +1,43 @@
 from sklearn.model_selection import train_test_split
 from tensorflow.keras import backend as K
+import tensorflow as tf
 import os
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 from dataset_loaders.dataset_utils import validate_benchmark_test_size
 
 
 class TINY_IMAGENET_Dataset:
-    """Canonical Tiny ImageNet loader with path-first splitting.
+    """Canonical Tiny ImageNet loader with path-first splitting and streaming.
 
     Unlike the smaller Keras-backed loaders, canonical Tiny ImageNet is large
-    enough that loading every image and then splitting arrays can OOM modest
-    machines. The evaluator-facing API still exposes NumPy arrays, but this
-    loader indexes image paths first, splits those lightweight records, and only
-    materializes the final train/validation/fitness or test arrays.
+    enough that loading every image into NumPy arrays can OOM modest machines.
+    The normal evaluator path therefore indexes image paths first, splits those
+    lightweight records, and streams the final train/validation/fitness or test
+    splits through ``tf.data``. The legacy ``load_data()`` method still returns
+    NumPy arrays for explicit callers that need the old behavior.
     """
 
-    def __init__(self, validation_size=3500, fitness_size=3500, seed=0, normalize=True, subtract_mean=True, path=None):
+    def __init__(
+        self,
+        validation_size=3500,
+        fitness_size=3500,
+        seed=0,
+        normalize=True,
+        subtract_mean=True,
+        path=None,
+        batch_size=32,
+        streaming=True,
+    ):
         self.n_classes = 200
         self.validation_size = validation_size
         self.fitness_size = fitness_size
         self.seed = seed
         self.normalize = normalize
         self.subtract_mean = subtract_mean
+        self.batch_size = batch_size
+        self.streaming = streaming
         self.img_rows, self.img_cols, self.channels = 64, 64, 3
         if path is None:
             from sge.parameters import params
@@ -48,6 +63,12 @@ class TINY_IMAGENET_Dataset:
             random_state=self.seed,
         )
 
+        if self.streaming:
+            self._set_streaming_evolution_splits(
+                train_examples, val_examples, fit_examples, class_index
+            )
+            return
+
         x_train, y_train = self._load_examples(train_examples, class_index)
         x_val, y_val = self._load_examples(val_examples, class_index)
         x_fit, y_fit = self._load_examples(fit_examples, class_index)
@@ -72,6 +93,12 @@ class TINY_IMAGENET_Dataset:
             stratify=self._example_class_names(train_examples),
             random_state=self.seed,
         )
+
+        if self.streaming:
+            self._set_streaming_benchmark_splits(
+                train_examples, val_examples, test_examples, class_index
+            )
+            return
 
         x_train, y_train = self._load_examples(train_examples, class_index)
         x_val, y_val = self._load_examples(val_examples, class_index)
@@ -103,6 +130,55 @@ class TINY_IMAGENET_Dataset:
             preprocess=False,
         )
         return (x, y), (x_test, y_test)
+
+    def _set_streaming_evolution_splits(
+        self, train_examples, val_examples, fit_examples, class_index
+    ):
+        mean_image = self._compute_train_mean(train_examples, class_index)
+        self.train_data = self._make_streaming_dataset(
+            train_examples, class_index, mean_image=mean_image, training=True
+        )
+        self.validation_data = self._make_streaming_dataset(
+            val_examples, class_index, mean_image=mean_image
+        )
+        self.fitness_data = self._make_streaming_dataset(
+            fit_examples, class_index, mean_image=mean_image
+        )
+
+        self.train_steps = self._steps_for_examples(train_examples)
+        self.validation_steps = self._steps_for_examples(val_examples)
+        self.fitness_steps = self._steps_for_examples(fit_examples)
+        self.train_example_count = len(train_examples)
+        self.validation_example_count = len(val_examples)
+        self.fitness_example_count = len(fit_examples)
+
+    def _set_streaming_benchmark_splits(
+        self, train_examples, val_examples, test_examples, class_index
+    ):
+        test_labels = self._example_class_names(test_examples)
+        validate_benchmark_test_size(
+            test_examples,
+            test_labels,
+            expected_test_size=getattr(self, "test_size", None),
+        )
+
+        mean_image = self._compute_train_mean(train_examples, class_index)
+        self.train_data = self._make_streaming_dataset(
+            train_examples, class_index, mean_image=mean_image, training=True
+        )
+        self.validation_data = self._make_streaming_dataset(
+            val_examples, class_index, mean_image=mean_image
+        )
+        self.test_data = self._make_streaming_dataset(
+            test_examples, class_index, mean_image=mean_image
+        )
+
+        self.train_steps = self._steps_for_examples(train_examples)
+        self.validation_steps = self._steps_for_examples(val_examples)
+        self.test_steps = self._steps_for_examples(test_examples)
+        self.train_example_count = len(train_examples)
+        self.validation_example_count = len(val_examples)
+        self.test_example_count = len(test_examples)
 
     def _load_class_names(self):
         metadata_wnids = os.path.join(self.path, 'metadata', 'wnids.txt')
@@ -241,3 +317,75 @@ class TINY_IMAGENET_Dataset:
         raise FileNotFoundError(
             f"Could not find Tiny ImageNet validation annotations under {self.path}"
         )
+
+    def _paths_and_label_indices(self, examples, class_index):
+        paths = [image_path for image_path, _ in examples]
+        labels = [class_index[class_name] for _, class_name in examples]
+        return paths, labels
+
+    def _decode_image_tensor(self, image_path):
+        image = tf.io.read_file(image_path)
+        image = tf.image.decode_jpeg(image, channels=self.channels)
+        image = tf.ensure_shape(image, [self.img_rows, self.img_cols, self.channels])
+        image = tf.cast(image, tf.float32)
+        if self.normalize:
+            image = image / 255.0
+        if K.image_data_format() == 'channels_first':
+            image = tf.transpose(image, [2, 0, 1])
+        return image
+
+    def _make_unbatched_image_dataset(self, examples, class_index):
+        paths, labels = self._paths_and_label_indices(examples, class_index)
+        dataset = tf.data.Dataset.from_tensor_slices((paths, labels))
+
+        def load_image(image_path, label_index):
+            return self._decode_image_tensor(image_path), label_index
+
+        return dataset.map(load_image, num_parallel_calls=tf.data.AUTOTUNE)
+
+    def _compute_train_mean(self, train_examples, class_index):
+        if not self.subtract_mean:
+            return None
+
+        image_dataset = self._make_unbatched_image_dataset(train_examples, class_index)
+        image_shape = self._streaming_image_shape()
+        initial_sum = tf.zeros(image_shape, dtype=tf.float32)
+        initial_count = tf.constant(0, dtype=tf.int64)
+
+        def accumulate(state, element):
+            image_sum, count = state
+            image, _ = element
+            return image_sum + image, count + 1
+
+        total, count = image_dataset.reduce((initial_sum, initial_count), accumulate)
+        return total / tf.cast(count, tf.float32)
+
+    def _make_streaming_dataset(
+        self, examples, class_index, mean_image=None, training=False
+    ):
+        dataset = self._make_unbatched_image_dataset(examples, class_index)
+
+        if training:
+            dataset = dataset.shuffle(
+                buffer_size=min(len(examples), 10000),
+                seed=self.seed,
+                reshuffle_each_iteration=True,
+            )
+
+        def finalize(image, label_index):
+            if mean_image is not None:
+                image = image - mean_image
+            label = tf.one_hot(label_index, depth=len(class_index), dtype=tf.float32)
+            return image, label
+
+        dataset = dataset.map(finalize, num_parallel_calls=tf.data.AUTOTUNE)
+        dataset = dataset.batch(self.batch_size)
+        return dataset.prefetch(tf.data.AUTOTUNE)
+
+    def _streaming_image_shape(self):
+        if K.image_data_format() == 'channels_first':
+            return (self.channels, self.img_rows, self.img_cols)
+        return (self.img_rows, self.img_cols, self.channels)
+
+    def _steps_for_examples(self, examples):
+        return int(math.ceil(len(examples) / self.batch_size))
