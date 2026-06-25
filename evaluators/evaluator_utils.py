@@ -223,6 +223,11 @@ class Evaluator():
         results['test_score'] = test_score[-1]
         return results
 
+    def _restore_best_early_stopping_weights(self, model, early_stop):
+        best_weights = getattr(early_stop, "best_weights", None)
+        if best_weights is not None:
+            model.set_weights(best_weights)
+
     def train_model(self, phen, fake=False, optimizer=None):
         model = tf.keras.models.clone_model(self.model)
 
@@ -256,6 +261,7 @@ class Evaluator():
                     csv_logger
                 ],
             )
+            self._restore_best_early_stopping_weights(model, early_stop)
 
             fitness_score = model.evaluate(
                 self.dataset.fitness_data,
@@ -275,6 +281,7 @@ class Evaluator():
                     terminate_on_nan,
                     csv_logger
                 ])
+            self._restore_best_early_stopping_weights(model, early_stop)
 
             fitness_score = model.evaluate(x=self.dataset.x_fit,y=self.dataset.y_fit, verbose=0, callbacks=[])
         
