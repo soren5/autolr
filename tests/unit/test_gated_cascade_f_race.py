@@ -46,7 +46,7 @@ def test_multi_task_evaluator_emits_structured_cascade_record():
 
     fitness, other_info = evaluator.evaluate("phenotype", params)
 
-    assert fitness == pytest.approx(-1.60)
+    assert fitness == pytest.approx(-1.51)
     assert other_info["multi_task"] == {
         "task_order": ["fmnist", "cifar10"],
         "scores": {"fmnist": 0.91, "cifar10": 0.60},
@@ -94,7 +94,7 @@ def test_canonical_and_custom_tiny_imagenet_can_coexist_as_separate_tasks():
 
     fitness, other_info = evaluator.evaluate("phenotype", params)
 
-    assert fitness == pytest.approx(-1.43)
+    assert fitness == pytest.approx(-0.84)
     assert other_info["multi_task"]["task_order"] == [
         "tiny_imagenet",
         "tiny_imagenet_custom",
@@ -103,6 +103,30 @@ def test_canonical_and_custom_tiny_imagenet_can_coexist_as_separate_tasks():
         "tiny_imagenet": 0.41,
         "tiny_imagenet_custom": 0.43,
     }
+
+
+def test_multi_task_threshold_uses_current_task_not_cumulative_score():
+    from fitness_functions.fitness_functions import Optimizer_Evaluator_Multi_Task
+
+    evaluator = object.__new__(Optimizer_Evaluator_Multi_Task)
+    evaluator.fmnist_evaluator = FixedTaskEvaluator(0.99)
+    evaluator.cifar10_evaluator = FixedTaskEvaluator(0.10)
+    evaluator.cifar100_evaluator = None
+    evaluator.tiny_imagenet_evaluator = None
+    evaluator.tiny_imagenet_custom_evaluator = None
+    params = {
+        "FMNIST_THRESHOLD": 0.8,
+        "CIFAR10_THRESHOLD": 0.7,
+    }
+
+    fitness, other_info = evaluator.evaluate("phenotype", params)
+
+    assert fitness == pytest.approx(-1.09)
+    assert other_info["multi_task"]["passed"] == {
+        "fmnist": True,
+        "cifar10": False,
+    }
+    assert other_info["multi_task"]["failed_task"] == "cifar10"
 
 
 def test_archive_multi_task_trial_sync_to_individual():
