@@ -288,58 +288,54 @@ class Optimizer_Evaluator_Multi_Task:
         other_info = {}
         multi_task_record = self._init_multi_task_record(params)
         other_info['multi_task'] = multi_task_record
-        evaluated_tasks = 0
+        fitness = 0.0
         if self.fmnist_evaluator is not None:
             # Evaluate FMNIST
             fmnist_results = self.fmnist_evaluator.evaluate(phen) if opt is None else self.fmnist_evaluator.evaluate_optimizer(opt)
-            fitness = fmnist_results[0] + evaluated_tasks
+            fitness += fmnist_results[0]
             other_info['fmnist'] = fmnist_results[1]
             other_info['source'] = 'fmnist_evaluation'
             self._record_multi_task_result(multi_task_record, 'fmnist', fmnist_results[0], params['FMNIST_THRESHOLD'])
-            if fitness <= params['FMNIST_THRESHOLD'] + evaluated_tasks:
+            if fmnist_results[0] <= params['FMNIST_THRESHOLD']:
                 multi_task_record['failed_task'] = 'fmnist'
                 fitness = -fitness
                 return fitness, other_info
-            evaluated_tasks += 1
 
         if self.cifar10_evaluator is not None:
             cifar10_results = self.cifar10_evaluator.evaluate(phen) if opt is None else self.cifar10_evaluator.evaluate_optimizer(opt)
-            fitness = cifar10_results[0] + evaluated_tasks
+            fitness += cifar10_results[0]
             other_info['cifar10'] = cifar10_results[1]
             other_info['source'] = 'cifar10_evaluation'
             self._record_multi_task_result(multi_task_record, 'cifar10', cifar10_results[0], params['CIFAR10_THRESHOLD'])
-            if fitness <= params['CIFAR10_THRESHOLD'] + evaluated_tasks:
+            if cifar10_results[0] <= params['CIFAR10_THRESHOLD']:
                 multi_task_record['failed_task'] = 'cifar10'
                 fitness = -fitness
                 return fitness, other_info
-            evaluated_tasks += 1
 
         if self.cifar100_evaluator is not None:
             cifar100_results = self.cifar100_evaluator.evaluate(phen) if opt is None else self.cifar100_evaluator.evaluate_optimizer(opt)
-            fitness = cifar100_results[0] + evaluated_tasks
+            fitness += cifar100_results[0]
             other_info['cifar100'] = cifar100_results[1]
             other_info['source'] = 'cifar100_evaluation'
             self._record_multi_task_result(multi_task_record, 'cifar100', cifar100_results[0], params['CIFAR100_THRESHOLD'])
-            if fitness <= params['CIFAR100_THRESHOLD'] + evaluated_tasks:
+            if cifar100_results[0] <= params['CIFAR100_THRESHOLD']:
                 multi_task_record['failed_task'] = 'cifar100'
                 fitness = -fitness
                 return fitness, other_info
-            evaluated_tasks += 1
 
         for task_name, evaluator, threshold_key in self._tiny_imagenet_tasks():
             if evaluator is None:
                 continue
             task_results = evaluator.evaluate(phen) if opt is None else evaluator.evaluate_optimizer(opt)
             tiny_imagenet_results[task_name] = task_results
-            fitness = task_results[0] + evaluated_tasks
+            fitness += task_results[0]
             other_info[task_name] = task_results[1]
             other_info['source'] = f'{task_name}_evaluation'
             self._record_multi_task_result(multi_task_record, task_name, task_results[0], params[threshold_key])
-            if fitness <= params[threshold_key] + evaluated_tasks:
+            if task_results[0] <= params[threshold_key]:
                 multi_task_record['failed_task'] = task_name
                 fitness = -fitness
                 return fitness, other_info
-            evaluated_tasks += 1
             
         tiny_parts = ', '.join(
             f"{task}: {results[0]:.4f}"
