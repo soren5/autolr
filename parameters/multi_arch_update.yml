@@ -4,7 +4,7 @@ GRAMMAR: 'grammars/deep_architecture_optimizer_with_update.txt'
 MIN_TREE_DEPTH: 6
 MAX_TREE_DEPTH: 40
 POPSIZE: 100
-GENERATIONS: 100
+GENERATIONS: 500
 ELITISM: 1   
 TSIZE: 2
 PROB_CROSSOVER: 0.01
