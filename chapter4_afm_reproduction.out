@@ -1,0 +1,57 @@
+Chapter 4 AFM/PSGE reproduction runner
+PSGE_DIR=/Users/soren/Work/cenas_do_pedro/psge/sge
+LOG_ROOT=/Users/soren/Work/autolr/chapter4_afm_reproduction_logs/20260701_115701
+TASKS=pagie bh quartic
+SETUPS=standard fgg afm afm+fgg
+RUNS=1..30
+RERUN_INCOMPLETE=0
+DRY_RUN=0
+SKIP complete: pagie/standard run_1
+SKIP complete: pagie/fgg run_1
+SKIP complete: pagie/afm run_1
+SKIP complete: pagie/afm+fgg run_1
+SKIP complete: pagie/standard run_2
+SKIP complete: pagie/fgg run_2
+SKIP complete: pagie/afm run_2
+SKIP complete: pagie/afm+fgg run_2
+SKIP complete: pagie/standard run_3
+SKIP complete: pagie/fgg run_3
+SKIP complete: pagie/afm run_3
+SKIP complete: pagie/afm+fgg run_3
+SKIP complete: pagie/standard run_4
+SKIP complete: pagie/fgg run_4
+SKIP complete: pagie/afm run_4
+SKIP complete: pagie/afm+fgg run_4
+SKIP complete: pagie/standard run_5
+SKIP complete: pagie/fgg run_5
+SKIP complete: pagie/afm run_5
+SKIP complete: pagie/afm+fgg run_5
+SKIP incomplete existing run folder: pagie/standard run_6
+     Missing: /Users/soren/Work/cenas_do_pedro/psge/sge/dumps/pagie/base/1.0/run_6/iteration_100.json
+     Set RERUN_INCOMPLETE=1 to rerun and overwrite this run folder's generated files.
+SKIP incomplete existing run folder: pagie/fgg run_6
+     Missing: /Users/soren/Work/cenas_do_pedro/psge/sge/dumps/pagie/fgg/1.0/run_6/iteration_100.json
+     Set RERUN_INCOMPLETE=1 to rerun and overwrite this run folder's generated files.
+SKIP incomplete existing run folder: pagie/afm run_6
+     Missing: /Users/soren/Work/cenas_do_pedro/psge/sge/dumps/pagie/afm/1.0/run_6/iteration_100.json
+     Set RERUN_INCOMPLETE=1 to rerun and overwrite this run folder's generated files.
+SKIP incomplete existing run folder: pagie/afm+fgg run_6
+     Missing: /Users/soren/Work/cenas_do_pedro/psge/sge/dumps/pagie/afm+fgg/1.0/run_6/iteration_100.json
+     Set RERUN_INCOMPLETE=1 to rerun and overwrite this run folder's generated files.
+RUN pagie/standard run_7 seed=2120024179
+LOG /Users/soren/Work/autolr/chapter4_afm_reproduction_logs/20260701_115701/pagie/standard/run_7.log
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/soren/Work/cenas_do_pedro/psge/sge/examples/pagie.py", line 2, in <module>
+    from sge.utilities.protected_math import _log_, _div_, _exp_, _inv_, _sqrt_, protdiv
+  File "/Users/soren/Work/cenas_do_pedro/psge/sge/sge/__init__.py", line 1, in <module>
+    from .engine import *
+  File "/Users/soren/Work/cenas_do_pedro/psge/sge/sge/engine.py", line 2, in <module>
+    import sge.grammar as grammar
+  File "/Users/soren/Work/cenas_do_pedro/psge/sge/sge/grammar.py", line 2, in <module>
+    from sge.utilities import ordered_set
+  File "/Users/soren/Work/cenas_do_pedro/psge/sge/sge/utilities/ordered_set.py", line 4, in <module>
+    class OrderedSet(collections.MutableSet):
+                     ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'collections' has no attribute 'MutableSet'

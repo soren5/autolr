@@ -1,0 +1,102 @@
+[
+  {
+    "mechanism": "all",
+    "observations": 255156,
+    "counts": [
+      [
+        41363,
+        3989
+      ],
+      [
+        13548,
+        196256
+      ]
+    ],
+    "normalized": [
+      [
+        0.16210867077395788,
+        0.01563357318659957
+      ],
+      [
+        0.05309692893759112,
+        0.7691608271018514
+      ]
+    ],
+    "output": "/Users/soren/Work/autolr/analysis/reproduced_speedup_mechanism_plots/all_confusion_matrix.png"
+  },
+  {
+    "mechanism": "archive",
+    "observations": 154914,
+    "counts": [
+      [
+        29522,
+        3704
+      ],
+      [
+        13548,
+        108140
+      ]
+    ],
+    "normalized": [
+      [
+        0.1905702518816892,
+        0.02391004040951754
+      ],
+      [
+        0.0874549750183973,
+        0.6980647326903959
+      ]
+    ],
+    "output": "/Users/soren/Work/autolr/analysis/reproduced_speedup_mechanism_plots/archive_confusion_matrix.png"
+  },
+  {
+    "mechanism": "invalid detection",
+    "observations": 12049,
+    "counts": [
+      [
+        0,
+        277
+      ],
+      [
+        0,
+        11772
+      ]
+    ],
+    "normalized": [
+      [
+        0.0,
+        0.022989459706199686
+      ],
+      [
+        0.0,
+        0.9770105402938003
+      ]
+    ],
+    "output": "/Users/soren/Work/autolr/analysis/reproduced_speedup_mechanism_plots/invalid_detection_confusion_matrix.png"
+  },
+  {
+    "mechanism": "degenerate detection",
+    "observations": 16066,
+    "counts": [
+      [
+        0,
+        8
+      ],
+      [
+        0,
+        16058
+      ]
+    ],
+    "normalized": [
+      [
+        0.0,
+        0.0004979459728619445
+      ],
+      [
+        0.0,
+        0.9995020540271381
+      ]
+    ],
+    "output": "/Users/soren/Work/autolr/analysis/reproduced_speedup_mechanism_plots/degenerate_detection_confusion_matrix.png"
+  }
+]

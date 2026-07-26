@@ -1,0 +1,33 @@
+{
+  "assessment_split": "fitness",
+  "complete": false,
+  "max_score": 0.847000002861023,
+  "mean_score": 0.8404351949691773,
+  "median_score": 0.8396909236907959,
+  "min_score": 0.8363395929336548,
+  "optimizer": {
+    "class_name": "Adam",
+    "config": {
+      "amsgrad": false,
+      "beta_1": 0.9,
+      "beta_2": 0.999,
+      "decay": 0.0,
+      "epsilon": 1e-07,
+      "learning_rate": 0.001,
+      "name": "Adam"
+    }
+  },
+  "optimizer_name": "adam",
+  "requested_runs": 30,
+  "runs": 5,
+  "scores": [
+    0.8363395929336548,
+    0.8411636352539062,
+    0.847000002861023,
+    0.8396909236907959,
+    0.8379818201065063
+  ],
+  "std_score": 0.00409189051329701,
+  "subject_type": "optimizer",
+  "task_name": "fmnist"
+}

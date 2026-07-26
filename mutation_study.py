@@ -157,12 +157,14 @@ def mass_mutate_from_dataframe(
         
         # Get a list of all solutions that have the least represented mutation target as a valid mutation target
         solutions_with_least_represented_mutation_target = valid_solutions_for_mutation_target[least_represented_mutation_target]
+        
         #for phen_id, mutation_targets in valid_mutation_targets.items():
         #    if least_represented_mutation_target in mutation_targets:
         #        solutions_with_least_represented_mutation_target.append(phen_id)
+
         # Choose a solution based on a random selection, weighed by the fitness of the solutions
-        fitnesses = fitness_for_mutation_target[least_represented_mutation_target]
-        probabilities = fitnesses / fitnesses.sum()
+        #fitnesses = fitness_for_mutation_target[least_represented_mutation_target]
+        #probabilities = fitnesses / fitnesses.sum()
 
 
         #chosen_solution = np.random.choice(solutions_with_least_represented_mutation_target, p=probabilities)

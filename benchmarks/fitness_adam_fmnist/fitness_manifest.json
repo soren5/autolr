@@ -1,0 +1,18 @@
+{
+  "assessment_split": "fitness",
+  "optimizer": {
+    "class_name": "Adam",
+    "config": {
+      "amsgrad": false,
+      "beta_1": 0.9,
+      "beta_2": 0.999,
+      "decay": 0.0,
+      "epsilon": 1e-07,
+      "learning_rate": 0.001,
+      "name": "Adam"
+    }
+  },
+  "optimizer_name": "adam",
+  "subject_type": "optimizer",
+  "task_name": "fmnist"
+}
